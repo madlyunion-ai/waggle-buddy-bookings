@@ -212,7 +212,9 @@ function DashboardPage() {
       </div>
 
 
-      <section className="surface-card mb-6 p-5">
+      <div className="grid h-[calc(100vh-320px)] min-h-[520px] grid-cols-1 gap-4 lg:grid-cols-[80%_20%]">
+      <section className="surface-card flex h-full min-h-0 flex-col overflow-hidden p-5">
+
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-bold">
             {anchor.getFullYear()}년 {anchor.getMonth() + 1}월
