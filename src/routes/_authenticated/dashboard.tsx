@@ -542,13 +542,21 @@ function NewReservationDialog({ defaultDate }: { defaultDate: string }) {
         dogId = insertedDog.id;
       }
 
-      const { data: pass } = await supabase
-        .from("passes")
-        .select("id, total_count, used_count")
-        .eq("dog_id", dogId)
-        .eq("payment_status", "paid")
-        .order("purchased_on", { ascending: true });
-      const usable = (pass ?? []).find((p) => p.used_count < p.total_count);
+      // 이용권 적용: 사용자가 선택한 이용권이 있으면 그것을 사용, "자동"이면 사용 가능한 이용권을 사용
+      let appliedPassId: string | null = null;
+      if (passId !== "none") {
+        if (passId === "auto") {
+          const { data: pass } = await supabase
+            .from("passes")
+            .select("id, total_count, used_count")
+            .eq("dog_id", dogId)
+            .eq("payment_status", "paid")
+            .order("purchased_on", { ascending: true });
+          appliedPassId = (pass ?? []).find((p) => p.used_count < p.total_count)?.id ?? null;
+        } else {
+          appliedPassId = passId;
+        }
+      }
 
       const times =
         serviceType === "grooming"
@@ -562,7 +570,7 @@ function NewReservationDialog({ defaultDate }: { defaultDate: string }) {
         end_date: serviceType === "hotel" ? endDate : null,
         ...times,
         memo: memo || null,
-        pass_id: serviceType === "kindergarten" ? (usable?.id ?? null) : null,
+        pass_id: appliedPassId,
       });
       if (error) throw error;
     },
