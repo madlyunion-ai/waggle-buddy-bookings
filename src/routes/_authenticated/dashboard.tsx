@@ -318,77 +318,86 @@ function DashboardPage() {
         </p>
       </section>
 
-      <section className="space-y-3">
-        <h2 className="text-base font-bold">{formatDateKorean(selected)} 예약</h2>
-        {rows.length === 0 ? (
-          <div className="surface-card p-10 text-center">
-            <p className="font-semibold">이 날짜에 등록된 예약이 없습니다.</p>
-            <p className="mt-1 text-sm text-muted-foreground">오른쪽 위 “예약 등록”으로 추가해 보세요.</p>
-          </div>
-        ) : (
-          rows.map((row) => (
-            <article key={row.id} className="surface-card flex flex-wrap items-center gap-4 p-4">
-              <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-secondary font-display text-lg font-extrabold text-primary">
-                {row.dogs?.name?.slice(0, 1) ?? "?"}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="truncate font-bold">{row.dogs?.name ?? "삭제된 강아지"}</h3>
-                  <Badge variant="outline" className={SERVICE_STYLES[row.service_type]}>
+      <section className="surface-card flex h-full min-h-0 flex-col p-4">
+        <h2 className="mb-3 shrink-0 text-sm font-bold">
+          {formatDateKorean(selected)} 예약
+          <span className="ml-1 text-muted-foreground">({rows.length})</span>
+        </h2>
+        <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
+          {rows.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-border p-6 text-center">
+              <p className="text-sm font-semibold">예약이 없습니다.</p>
+              <p className="mt-1 text-xs text-muted-foreground">“예약 등록”으로 추가해 보세요.</p>
+            </div>
+          ) : (
+            rows.map((row) => (
+              <article key={row.id} className="rounded-xl border border-border bg-card p-3">
+                <div className="flex items-center gap-2">
+                  <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-secondary font-display text-sm font-extrabold text-primary">
+                    {row.dogs?.name?.slice(0, 1) ?? "?"}
+                  </div>
+                  <h3 className="min-w-0 flex-1 truncate text-sm font-bold">
+                    {row.dogs?.name ?? "삭제된 강아지"}
+                  </h3>
+                </div>
+                <div className="mt-2 flex flex-wrap gap-1">
+                  <Badge variant="outline" className={`text-[10px] ${SERVICE_STYLES[row.service_type]}`}>
                     {SERVICE_LABELS[row.service_type]}
                   </Badge>
-                  <Badge className={STATUS_STYLES[row.status]}>{STATUS_LABELS[row.status]}</Badge>
+                  <Badge className={`text-[10px] ${STATUS_STYLES[row.status]}`}>
+                    {STATUS_LABELS[row.status]}
+                  </Badge>
                 </div>
-                <p className="truncate text-sm text-muted-foreground">
-                  {row.dogs?.breed ?? "견종 미입력"} · 보호자 {row.dogs?.owners?.name ?? "-"} ·{" "}
-                  {row.dogs?.owners?.phone ?? "-"}
+                <p className="mt-2 truncate text-[11px] text-muted-foreground">
+                  {row.dogs?.owners?.name ?? "-"} · {row.dogs?.owners?.phone ?? "-"}
                 </p>
-                {row.memo ? <p className="mt-1 text-sm text-accent-foreground">메모: {row.memo}</p> : null}
-              </div>
-              <div className="text-right text-sm text-muted-foreground">
-                {row.service_type === "hotel" && row.end_date ? (
-                  <>
-                    <p className="font-semibold text-foreground">{stayLabel(row.reserved_date, row.end_date)}</p>
-                    <p>
-                      {row.reserved_date} ~ {row.end_date}
-                    </p>
-                  </>
-                ) : (
-                  <p>
-                    {formatTime(row.drop_off_time)} ~ {formatTime(row.pick_up_time)}
-                  </p>
-                )}
-              </div>
-              <div className="flex gap-2">
-                {row.status === "reserved" ? (
-                  <>
-                    <Button size="sm" onClick={() => updateStatus.mutate({ row, status: "checked_in" })}>
-                      <LogIn className="size-4" /> 등원
-                    </Button>
+                <p className="mt-1 text-[11px] font-semibold text-foreground">
+                  {row.service_type === "hotel" && row.end_date
+                    ? `${stayLabel(row.reserved_date, row.end_date)} (${row.reserved_date} ~ ${row.end_date})`
+                    : `${formatTime(row.drop_off_time)} ~ ${formatTime(row.pick_up_time)}`}
+                </p>
+                {row.memo ? (
+                  <p className="mt-1 line-clamp-2 text-[11px] text-accent-foreground">메모: {row.memo}</p>
+                ) : null}
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {row.status === "reserved" ? (
+                    <>
+                      <Button
+                        size="sm"
+                        className="h-7 flex-1 px-2 text-[11px]"
+                        onClick={() => updateStatus.mutate({ row, status: "checked_in" })}
+                      >
+                        <LogIn className="size-3.5" /> 등원
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 px-2 text-[11px]"
+                        onClick={() => updateStatus.mutate({ row, status: "cancelled" })}
+                      >
+                        취소
+                      </Button>
+                    </>
+                  ) : null}
+                  {row.status === "checked_in" ? (
                     <Button
                       size="sm"
-                      variant="outline"
-                      onClick={() => updateStatus.mutate({ row, status: "cancelled" })}
+                      variant="secondary"
+                      className="h-7 flex-1 px-2 text-[11px]"
+                      onClick={() => updateStatus.mutate({ row, status: "checked_out" })}
                     >
-                      취소
+                      <LogOut className="size-3.5" /> 하원
                     </Button>
-                  </>
-                ) : null}
-                {row.status === "checked_in" ? (
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={() => updateStatus.mutate({ row, status: "checked_out" })}
-                  >
-                    <LogOut className="size-4" /> 하원
-                  </Button>
-                ) : null}
-              </div>
-            </article>
-          ))
-        )}
+                  ) : null}
+                </div>
+              </article>
+            ))
+          )}
+        </div>
       </section>
+      </div>
     </AppShell>
+
   );
 }
 
