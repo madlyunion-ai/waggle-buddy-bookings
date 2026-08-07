@@ -191,7 +191,9 @@ function StaffPage() {
                     <td className="px-4 py-3">
                       <Badge variant={row.role === "STAFF" ? "secondary" : "default"}>{roleLabel(row.role)}</Badge>
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground">{row.email ?? row.username ?? "-"}</td>
+                    <td className="px-4 py-3 font-medium">{row.username ?? "-"}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{row.email ?? "-"}</td>
+
                     <td className="px-4 py-3 text-muted-foreground">{formatPhone(row.phone)}</td>
                     <td className="px-4 py-3 text-muted-foreground">
                       {row.status ? (STATUS_LABELS[row.status] ?? row.status) : "-"}
