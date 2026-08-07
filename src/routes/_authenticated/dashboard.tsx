@@ -38,6 +38,7 @@ import { listExternalMembers, listExternalPets } from "@/lib/projectpet.function
 import {
 
   GROOMING_SLOTS,
+  SERVICE_ACTION_LABELS,
   SERVICE_LABELS,
   SERVICE_STYLES,
   SERVICE_TYPES,
@@ -368,7 +369,7 @@ function DashboardPage() {
                         className="h-7 flex-1 px-2 text-[11px]"
                         onClick={() => updateStatus.mutate({ row, status: "checked_in" })}
                       >
-                        <LogIn className="size-3.5" /> 등원
+                        <LogIn className="size-3.5" /> {SERVICE_ACTION_LABELS[row.service_type].checkIn}
                       </Button>
                       <Button
                         size="sm"
@@ -387,7 +388,7 @@ function DashboardPage() {
                       className="h-7 flex-1 px-2 text-[11px]"
                       onClick={() => updateStatus.mutate({ row, status: "checked_out" })}
                     >
-                      <LogOut className="size-3.5" /> 하원
+                      <LogOut className="size-3.5" /> {SERVICE_ACTION_LABELS[row.service_type].checkOut}
                     </Button>
                   ) : null}
                 </div>
