@@ -94,7 +94,11 @@ function DogsPage() {
           />
         </div>
         <Button onClick={applySearch}>검색</Button>
-        <span className="ml-auto text-sm text-muted-foreground">전체 {total.toLocaleString("ko-KR")}마리</span>
+        <span className="ml-auto text-sm text-muted-foreground">
+          전체 {total.toLocaleString("ko-KR")}마리
+          {lastSyncedAt ? ` · 최근 동기화 ${new Date(lastSyncedAt).toLocaleString("ko-KR")}` : ""}
+        </span>
+
       </div>
 
       <div className="surface-card overflow-hidden p-0">
