@@ -158,3 +158,42 @@ export const listAllExternalPets = createServerFn({ method: "GET" })
     const total = res.data?.total ?? res.data?.totalCount ?? res.data?.meta?.total ?? res.total ?? rows.length;
     return { pets: rows.map(mapPet), total };
   });
+
+export type ExternalProfile = {
+  id: string;
+  name: string;
+  username: string | null;
+  email: string | null;
+  phone: string | null;
+  role: string | null;
+  branchName: string | null;
+  avatarUrl: string | null;
+};
+
+/** 외부 API 로그인 사용자 정보 조회 (/auth/profile) */
+export const getExternalProfile = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async (): Promise<ExternalProfile | null> => {
+    const { apiGet } = await import("./projectpet.server");
+    try {
+      const res = await apiGet<
+        Record<string, unknown> & { data?: Record<string, unknown>; user?: Record<string, unknown> }
+      >("/auth/profile");
+      const dto = (res.data ?? res.user ?? res) as Record<string, unknown>;
+      const str = (k: string) => (typeof dto[k] === "string" ? (dto[k] as string) : null);
+      const branch = dto["branch"] as { name?: string } | undefined;
+      return {
+        id: String(dto["id"] ?? ""),
+        name: str("realname") || str("name") || str("username") || "사용자",
+        username: str("username"),
+        email: str("email"),
+        phone: str("phoneNumber"),
+        role: str("role"),
+        branchName: str("branchName") ?? branch?.name ?? null,
+        avatarUrl: str("profileImageUrl") ?? str("avatarUrl") ?? str("photoUrl"),
+      };
+    } catch (e) {
+      console.error("ProjectPet profile fetch failed:", e);
+      return null;
+    }
+  });
