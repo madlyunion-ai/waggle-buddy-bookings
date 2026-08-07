@@ -42,19 +42,31 @@ export const listLocalStaff = createServerFn({ method: "GET" })
 export const createStaff = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
-    (input: { name: string; email: string; password: string; phone: string; role: StaffRoleInput }) => {
+    (input: {
+      name: string;
+      username: string;
+      email?: string;
+      password: string;
+      phone: string;
+      role: StaffRoleInput;
+    }) => {
       const name = String(input?.name ?? "").trim().slice(0, 100);
-      const email = String(input?.email ?? "").trim().slice(0, 200);
+      const username = String(input?.username ?? "").trim().slice(0, 50);
+      const rawEmail = String(input?.email ?? "").trim().slice(0, 200);
       const password = String(input?.password ?? "");
       const phone = String(input?.phone ?? "").replace(/[^0-9]/g, "").slice(0, 11);
       const role: StaffRoleInput = input?.role === "BRANCH_MANAGER" ? "BRANCH_MANAGER" : "STAFF";
       if (!name) throw new Error("이름을 입력해 주세요.");
+      if (!/^[A-Za-z0-9._-]{3,50}$/.test(username))
+        throw new Error("아이디는 영문·숫자 3자 이상으로 입력해 주세요.");
+      const email = rawEmail || `${username.toLowerCase()}@hugandmung.kr`;
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("올바른 이메일을 입력해 주세요.");
       if (password.length < 6) throw new Error("비밀번호는 6자 이상이어야 합니다.");
       if (phone.length < 10) throw new Error("휴대폰 번호를 정확히 입력해 주세요.");
-      return { name, email, password, phone, role };
+      return { name, username, email, password, phone, role };
     },
   )
+
   .handler(async ({ data, context }): Promise<{ id: string; externalSynced: boolean; loginEnabled: boolean }> => {
     let externalId: string | null = null;
     try {
