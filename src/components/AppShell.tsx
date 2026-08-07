@@ -1,12 +1,34 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { CalendarDays, Dog, LogOut, PawPrint, Ticket } from "lucide-react";
+import { CalendarDays, Dog, LogOut, Ticket, Users } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import logo from "@/assets/hugandmung-logo.png";
 
-const NAV = [
+const NAV_GROUPS = [
+  {
+    label: "운영 현황",
+    items: [
+      { to: "/dashboard", label: "오늘 현황", icon: CalendarDays },
+      { to: "/dashboard", label: "예약 캘린더", icon: CalendarDays },
+    ],
+  },
+  {
+    label: "원생 관리",
+    items: [
+      { to: "/dogs", label: "강아지 프로필", icon: Dog },
+      { to: "/dogs", label: "보호자 관리", icon: Users },
+    ],
+  },
+  {
+    label: "이용권 · 정산",
+    items: [{ to: "/passes", label: "이용권 · 결제", icon: Ticket }],
+  },
+] as const;
+
+const MOBILE_NAV = [
   { to: "/dashboard", label: "오늘 현황", icon: CalendarDays },
   { to: "/dogs", label: "강아지 · 보호자", icon: Dog },
   { to: "/passes", label: "이용권 · 결제", icon: Ticket },
@@ -35,34 +57,31 @@ export function AppShell({
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-30 border-b border-border bg-card/85 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-6xl items-center gap-6 px-4">
-          <Link to="/dashboard" className="flex items-center gap-2 font-display text-lg font-extrabold">
-            <PawPrint className="size-6 text-primary" />
-            멍멍유치원
+      <header className="sticky top-0 z-30 border-b border-border bg-card">
+        <div className="flex h-14 items-center gap-3 px-4 lg:px-6">
+          <Link to="/dashboard" className="flex items-center gap-2">
+            <img src={logo} alt="허그앤멍 로고" width={28} height={28} className="size-7 rounded-md" />
+            <span className="font-display text-[17px] font-extrabold tracking-tight">허그앤멍</span>
+            <span className="hidden rounded bg-secondary px-1.5 py-0.5 text-[11px] font-semibold text-muted-foreground sm:inline">
+              유치원 관리
+            </span>
           </Link>
-          <nav className="hidden items-center gap-1 md:flex">
-            {NAV.map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
-                className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground data-[status=active]:bg-primary/10 data-[status=active]:text-primary"
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-          <Button variant="ghost" size="sm" className="ml-auto" onClick={signOut}>
-            <LogOut className="size-4" />
-            로그아웃
-          </Button>
+          <div className="ml-auto flex items-center gap-2">
+            <span className="hidden rounded-md border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground md:inline">
+              허그앤멍 본원
+            </span>
+            <Button variant="ghost" size="sm" onClick={signOut}>
+              <LogOut className="size-4" />
+              로그아웃
+            </Button>
+          </div>
         </div>
-        <nav className="flex gap-1 overflow-x-auto border-t border-border px-4 py-2 md:hidden">
-          {NAV.map((item) => (
+        <nav className="flex gap-1 overflow-x-auto border-t border-border px-4 py-2 lg:hidden">
+          {MOBILE_NAV.map((item) => (
             <Link
-              key={item.to}
+              key={item.label}
               to={item.to}
-              className="flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-1.5 text-sm text-muted-foreground data-[status=active]:bg-primary/10 data-[status=active]:text-primary"
+              className="flex items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1.5 text-sm text-muted-foreground data-[status=active]:bg-sidebar-accent data-[status=active]:font-semibold data-[status=active]:text-sidebar-accent-foreground"
             >
               <item.icon className="size-4" />
               {item.label}
@@ -71,16 +90,36 @@ export function AppShell({
         </nav>
       </header>
 
-      <main className="mx-auto max-w-6xl px-4 py-8">
-        <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-extrabold sm:text-3xl">{title}</h1>
-            {description ? <p className="mt-1 text-sm text-muted-foreground">{description}</p> : null}
+      <div className="flex">
+        <aside className="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-56 shrink-0 overflow-y-auto border-r border-border bg-sidebar px-3 py-4 lg:block">
+          {NAV_GROUPS.map((group) => (
+            <div key={group.label} className="mb-5">
+              <p className="px-3 pb-1.5 text-[11px] font-bold tracking-wide text-muted-foreground">{group.label}</p>
+              {group.items.map((item) => (
+                <Link
+                  key={item.label}
+                  to={item.to}
+                  className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent data-[status=active]:bg-sidebar-accent data-[status=active]:font-semibold data-[status=active]:text-sidebar-accent-foreground"
+                >
+                  <item.icon className="size-4 opacity-70" />
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+          ))}
+        </aside>
+
+        <main className="min-w-0 flex-1 px-4 py-6 lg:px-8">
+          <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h1 className="text-xl font-extrabold sm:text-2xl">{title}</h1>
+              {description ? <p className="mt-1 text-sm text-muted-foreground">{description}</p> : null}
+            </div>
+            {action}
           </div>
-          {action}
-        </div>
-        {children}
-      </main>
+          {children}
+        </main>
+      </div>
     </div>
   );
 }
