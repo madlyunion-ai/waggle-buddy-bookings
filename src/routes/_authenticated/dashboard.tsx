@@ -174,40 +174,11 @@ function DashboardPage() {
       description={`${formatDateKorean(selected)} · 서비스별 예약과 다가오는 시간을 한곳에서 확인하세요.`}
       action={<NewReservationDialog defaultDate={selected} />}
     >
-      <div className="mb-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <SummaryCard
-          icon={<CalendarCheck className="size-4" />}
-          tint="bg-primary/12 text-primary"
-          label="오늘 등원 예정"
-          value={byType.kindergarten.length}
-          unit="마리"
-        />
-        <SummaryCard
-          icon={<BedDouble className="size-4" />}
-          tint="bg-accent/25 text-accent-foreground"
-          label="오늘 호텔 이용"
-          value={byType.hotel.length}
-          unit="마리"
-        />
-        <SummaryCard
-          icon={<Clock className="size-4" />}
-          tint="bg-secondary text-primary"
-          label="오늘 데이케어"
-          value={byType.daily_care.length}
-          unit="건"
-        />
-        <SummaryCard
-          icon={<Scissors className="size-4" />}
-          tint="bg-warning/25 text-warning-foreground"
-          label="오늘 미용"
-          value={byType.grooming.length}
-          unit="건"
-        />
-      </div>
-
-      <div className="grid h-[calc(100vh-260px)] min-h-[560px] grid-cols-1 gap-4 lg:grid-cols-[80%_20%]">
+      <div className="grid min-h-[560px] grid-cols-1 gap-4 lg:h-[calc(100vh-190px)] lg:grid-cols-[80%_20%]">
 
       <section className="surface-card flex h-full min-h-0 flex-col overflow-hidden p-5">
+
+
 
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-bold">
