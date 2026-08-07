@@ -2,6 +2,9 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { CalendarCheck, CalendarDays, Dog, LogOut, Ticket, Users } from "lucide-react";
+
+import { NewReservationDialog } from "@/components/NewReservationDialog";
+import { toDateKey } from "@/lib/kindergarten";
 import type { ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -62,10 +65,6 @@ export function AppShell({
   const displayName = profile.data?.name ?? "사용자";
   const initial = displayName.slice(0, 1);
 
-  const now = new Date();
-  const todayLabel = `${now.getFullYear()}년 ${now.getMonth() + 1}월 ${now.getDate()}일 (${
-    ["일", "월", "화", "수", "목", "금", "토"][now.getDay()]
-  })`;
 
   async function signOut() {
     await queryClient.cancelQueries();
@@ -81,11 +80,6 @@ export function AppShell({
           <Link to="/dashboard" className="flex items-center gap-2">
             <span className="font-display text-[17px] font-bold tracking-tight">허그앤멍 예약관리시스템</span>
           </Link>
-
-          <span className="hidden items-center gap-1.5 rounded-full bg-secondary px-3 py-1.5 text-xs font-bold text-primary sm:inline-flex">
-            <CalendarDays className="size-3.5" />
-            {todayLabel}
-          </span>
 
 
           <div className="ml-auto flex items-center gap-2">
@@ -129,13 +123,15 @@ export function AppShell({
             <div className="min-w-0">
               <p className="truncate text-sm font-bold">{profile.isLoading ? "불러오는 중…" : displayName}</p>
               <p className="truncate text-[11px] text-muted-foreground">
-                {profile.data?.branchId ? `지점 ID: ${profile.data.branchId}` : "지점 ID 없음"}
+{profile.data?.email ?? "이메일 없음"}
               </p>
 
             </div>
           </div>
 
-          {sidebarAction ? <div className="mb-4 [&_button]:w-full">{sidebarAction}</div> : null}
+          <div className="mb-4 [&_button]:w-full">
+            {sidebarAction ?? <NewReservationDialog defaultDate={toDateKey(new Date())} />}
+          </div>
 
           {NAV_GROUPS.map((group) => (
             <div key={group.label} className="mb-5">
