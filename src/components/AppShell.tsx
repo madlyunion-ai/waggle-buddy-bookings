@@ -76,7 +76,7 @@ export function AppShell({
 
           <div className="ml-auto flex items-center gap-2">
             <span className="hidden rounded-md border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground md:inline">
-              허그앤멍 본원
+              허그앤멍 왕십리지점
             </span>
             <Button variant="ghost" size="sm" onClick={signOut}>
               <LogOut className="size-4" />
