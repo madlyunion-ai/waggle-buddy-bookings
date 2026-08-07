@@ -14,7 +14,241 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      dogs: {
+        Row: {
+          active: boolean
+          birth_date: string | null
+          breed: string | null
+          created_at: string
+          gender: string
+          id: string
+          name: string
+          neutered: boolean
+          notes: string | null
+          owner_id: string
+          photo_url: string | null
+          updated_at: string
+          vaccine_expires_on: string | null
+          weight_kg: number | null
+        }
+        Insert: {
+          active?: boolean
+          birth_date?: string | null
+          breed?: string | null
+          created_at?: string
+          gender?: string
+          id?: string
+          name: string
+          neutered?: boolean
+          notes?: string | null
+          owner_id: string
+          photo_url?: string | null
+          updated_at?: string
+          vaccine_expires_on?: string | null
+          weight_kg?: number | null
+        }
+        Update: {
+          active?: boolean
+          birth_date?: string | null
+          breed?: string | null
+          created_at?: string
+          gender?: string
+          id?: string
+          name?: string
+          neutered?: boolean
+          notes?: string | null
+          owner_id?: string
+          photo_url?: string | null
+          updated_at?: string
+          vaccine_expires_on?: string | null
+          weight_kg?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dogs_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "owners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      owners: {
+        Row: {
+          address: string | null
+          created_at: string
+          email: string | null
+          id: string
+          memo: string | null
+          name: string
+          phone: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          memo?: string | null
+          name: string
+          phone: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          memo?: string | null
+          name?: string
+          phone?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      passes: {
+        Row: {
+          created_at: string
+          dog_id: string
+          expires_on: string | null
+          id: string
+          paid_at: string | null
+          pass_type: string
+          payment_status: string
+          price: number
+          purchased_on: string
+          title: string
+          total_count: number
+          updated_at: string
+          used_count: number
+        }
+        Insert: {
+          created_at?: string
+          dog_id: string
+          expires_on?: string | null
+          id?: string
+          paid_at?: string | null
+          pass_type?: string
+          payment_status?: string
+          price?: number
+          purchased_on?: string
+          title: string
+          total_count?: number
+          updated_at?: string
+          used_count?: number
+        }
+        Update: {
+          created_at?: string
+          dog_id?: string
+          expires_on?: string | null
+          id?: string
+          paid_at?: string | null
+          pass_type?: string
+          payment_status?: string
+          price?: number
+          purchased_on?: string
+          title?: string
+          total_count?: number
+          updated_at?: string
+          used_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "passes_dog_id_fkey"
+            columns: ["dog_id"]
+            isOneToOne: false
+            referencedRelation: "dogs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          full_name: string | null
+          id: string
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string | null
+          id: string
+          role?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          role?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      reservations: {
+        Row: {
+          checked_in_at: string | null
+          checked_out_at: string | null
+          created_at: string
+          created_by: string | null
+          dog_id: string
+          drop_off_time: string
+          id: string
+          memo: string | null
+          pass_id: string | null
+          pick_up_time: string
+          reserved_date: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          checked_in_at?: string | null
+          checked_out_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          dog_id: string
+          drop_off_time?: string
+          id?: string
+          memo?: string | null
+          pass_id?: string | null
+          pick_up_time?: string
+          reserved_date: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          checked_in_at?: string | null
+          checked_out_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          dog_id?: string
+          drop_off_time?: string
+          id?: string
+          memo?: string | null
+          pass_id?: string | null
+          pick_up_time?: string
+          reserved_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservations_dog_id_fkey"
+            columns: ["dog_id"]
+            isOneToOne: false
+            referencedRelation: "dogs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservations_pass_id_fkey"
+            columns: ["pass_id"]
+            isOneToOne: false
+            referencedRelation: "passes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
