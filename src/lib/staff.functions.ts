@@ -4,6 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 export type LocalStaff = {
   id: string;
   name: string;
+  username: string | null;
   email: string;
   phone: string | null;
   role: string;
@@ -20,12 +21,13 @@ export const listLocalStaff = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<LocalStaff[]> => {
     const { data, error } = await context.supabase
       .from("staff")
-      .select("id, name, email, phone, role, status, branch_name, created_at")
+      .select("id, name, username, email, phone, role, status, branch_name, created_at")
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
     return (data ?? []).map((r) => ({
       id: r.id,
       name: r.name,
+      username: r.username,
       email: r.email,
       phone: r.phone,
       role: r.role,
@@ -34,6 +36,7 @@ export const listLocalStaff = createServerFn({ method: "GET" })
       createdAt: r.created_at,
     }));
   });
+
 
 /** 직원 등록: DB에 저장하고, 외부 API 연동은 선택적으로 시도 */
 export const createStaff = createServerFn({ method: "POST" })
