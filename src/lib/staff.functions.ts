@@ -52,7 +52,7 @@ export const createStaff = createServerFn({ method: "POST" })
       return { name, email, password, phone, role };
     },
   )
-  .handler(async ({ data, context }): Promise<{ id: string; externalSynced: boolean }> => {
+  .handler(async ({ data, context }): Promise<{ id: string; externalSynced: boolean; loginEnabled: boolean }> => {
     let externalId: string | null = null;
     try {
       const { apiPost } = await import("./projectpet.server");
@@ -75,6 +75,18 @@ export const createStaff = createServerFn({ method: "POST" })
       console.error("ProjectPet staff create failed (saved locally only):", e);
     }
 
+    // 사이트 로그인 계정 생성 (이메일 확인 없이 즉시 로그인 가능)
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error: authError } = await supabaseAdmin.auth.admin.createUser({
+      email: data.email,
+      password: data.password,
+      email_confirm: true,
+      user_metadata: { full_name: data.name, phone: data.phone, staff_role: data.role },
+    });
+    if (authError && !/already|registered|exists/i.test(authError.message)) {
+      throw new Error(`로그인 계정 생성에 실패했습니다: ${authError.message}`);
+    }
+
     const { data: row, error } = await context.supabase
       .from("staff")
       .insert({
@@ -95,8 +107,9 @@ export const createStaff = createServerFn({ method: "POST" })
       throw new Error(error.message);
     }
 
-    return { id: row.id, externalSynced: externalId !== null };
+    return { id: row.id, externalSynced: externalId !== null, loginEnabled: true };
   });
+
 
 /** 내부 DB 직원 삭제 */
 export const deleteLocalStaff = createServerFn({ method: "POST" })
