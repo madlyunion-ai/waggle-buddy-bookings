@@ -22,22 +22,32 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import {
+  GROOMING_SLOTS,
+  SERVICE_LABELS,
+  SERVICE_STYLES,
+  SERVICE_TYPES,
   STATUS_LABELS,
   STATUS_STYLES,
+  addDays,
+  addMinutes,
+  dateRangeKeys,
   formatDateKorean,
   formatTime,
   monthMatrix,
+  nightsBetween,
+  stayLabel,
   toDateKey,
   type ReservationStatus,
+  type ServiceType,
 } from "@/lib/kindergarten";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
       { title: "오늘 등원 현황 | 허그앤멍 예약관리" },
-      { name: "description", content: "날짜별 예약 캘린더와 등하원 체크인으로 유치원 하루를 한눈에 관리합니다." },
+      { name: "description", content: "유치원·호텔·데일리케어·미용 예약을 캘린더에서 한눈에 보고 등하원을 체크합니다." },
       { property: "og:title", content: "오늘 등원 현황 | 허그앤멍 예약관리" },
-      { property: "og:description", content: "날짜별 예약 캘린더와 등하원 체크인 현황" },
+      { property: "og:description", content: "예약 캘린더와 등하원 체크인 현황" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -48,13 +58,18 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 type Row = {
   id: string;
   reserved_date: string;
+  end_date: string | null;
   drop_off_time: string;
   pick_up_time: string;
   status: ReservationStatus;
+  service_type: ServiceType;
   memo: string | null;
   pass_id: string | null;
   dogs: { id: string; name: string; breed: string | null; owners: { name: string; phone: string } | null } | null;
 };
+
+const SELECT_COLUMNS =
+  "id, reserved_date, end_date, drop_off_time, pick_up_time, status, service_type, memo, pass_id, dogs(id, name, breed, owners(name, phone))";
 
 function DashboardPage() {
   const queryClient = useQueryClient();
@@ -63,45 +78,34 @@ function DashboardPage() {
 
   const monthStart = toDateKey(new Date(anchor.getFullYear(), anchor.getMonth(), 1));
   const monthEnd = toDateKey(new Date(anchor.getFullYear(), anchor.getMonth() + 1, 0));
+  const gridStart = toDateKey(monthMatrix(anchor)[0]!);
+  const gridEnd = toDateKey(monthMatrix(anchor)[41]!);
 
   const monthQuery = useQuery({
     queryKey: ["reservations", "month", monthStart],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("reservations")
-        .select("id, reserved_date, status")
-        .gte("reserved_date", monthStart)
-        .lte("reserved_date", monthEnd);
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
-
-  const dayQuery = useQuery({
-    queryKey: ["reservations", "day", selected],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("reservations")
-        .select(
-          "id, reserved_date, drop_off_time, pick_up_time, status, memo, pass_id, dogs(id, name, breed, owners(name, phone))",
-        )
-        .eq("reserved_date", selected)
+        .select(SELECT_COLUMNS)
+        .lte("reserved_date", gridEnd)
+        .or(`end_date.gte.${gridStart},and(end_date.is.null,reserved_date.gte.${gridStart})`)
         .order("drop_off_time");
       if (error) throw error;
       return (data ?? []) as unknown as Row[];
     },
   });
 
-  const countsByDate = useMemo(() => {
-    const map: Record<string, number> = {};
+  const byDate = useMemo(() => {
+    const map: Record<string, Row[]> = {};
     for (const r of monthQuery.data ?? []) {
-      if (r.status === "cancelled") continue;
-      map[r.reserved_date] = (map[r.reserved_date] ?? 0) + 1;
+      for (const key of dateRangeKeys(r.reserved_date, r.end_date)) {
+        (map[key] ??= []).push(r);
+      }
     }
     return map;
   }, [monthQuery.data]);
 
-  const rows = dayQuery.data ?? [];
+  const rows = byDate[selected] ?? [];
   const active = rows.filter((r) => r.status !== "cancelled");
   const inside = rows.filter((r) => r.status === "checked_in");
   const done = rows.filter((r) => r.status === "checked_out");
@@ -140,11 +144,12 @@ function DashboardPage() {
   });
 
   const cells = monthMatrix(anchor);
+  const todayKey = toDateKey(new Date());
 
   return (
     <AppShell
       title={formatDateKorean(selected)}
-      description="예약 캘린더에서 날짜를 선택하면 해당 날짜의 등하원 현황이 표시됩니다."
+      description="캘린더에서 날짜를 선택하면 해당 날짜의 예약과 등하원 현황이 표시됩니다."
       action={<NewReservationDialog defaultDate={selected} />}
     >
       <div className="mb-4 grid gap-3 lg:grid-cols-3">
@@ -156,9 +161,9 @@ function DashboardPage() {
           <p className="mt-1 text-xs text-muted-foreground">이용권이 연결된 예약은 등원 시 1회 자동 차감됩니다.</p>
         </div>
         <div className="promo-card p-4">
-          <p className="text-[11px] font-bold text-accent-foreground">백신 확인</p>
-          <p className="mt-1.5 text-sm font-bold leading-snug">백신 만료 아이는 등원 전 보호자에게 안내</p>
-          <p className="mt-1 text-xs text-muted-foreground">강아지 프로필에서 만료일을 한 번에 확인할 수 있어요.</p>
+          <p className="text-[11px] font-bold text-accent-foreground">예약 타입</p>
+          <p className="mt-1.5 text-sm font-bold leading-snug">유치원 · 호텔 · 데일리케어 · 미용</p>
+          <p className="mt-1 text-xs text-muted-foreground">호텔은 여러 날, 미용은 30분 단위로 예약할 수 있어요.</p>
         </div>
         <div className="promo-card p-4">
           <p className="text-[11px] font-bold text-primary">이용권 정산</p>
@@ -168,130 +173,185 @@ function DashboardPage() {
       </div>
 
       <div className="mb-5 grid gap-3 sm:grid-cols-3">
-        <StatCard icon={<CalendarCheck className="size-4" />} label="오늘 예약" value={active.length} />
+        <StatCard icon={<CalendarCheck className="size-4" />} label="선택일 예약" value={active.length} />
         <StatCard icon={<Users className="size-4" />} label="현재 등원 중" value={inside.length} highlight />
         <StatCard icon={<Clock className="size-4" />} label="하원 완료" value={done.length} />
       </div>
 
-
-      <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
-        <section className="surface-card p-4">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-bold">
-              {anchor.getFullYear()}년 {anchor.getMonth() + 1}월
-            </h2>
-            <div className="flex gap-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setAnchor(new Date(anchor.getFullYear(), anchor.getMonth() - 1, 1))}
-              >
-                <ChevronLeft className="size-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setAnchor(new Date(anchor.getFullYear(), anchor.getMonth() + 1, 1))}
-              >
-                <ChevronRight className="size-4" />
-              </Button>
-            </div>
-          </div>
-          <div className="grid grid-cols-7 gap-1 text-center text-xs text-muted-foreground">
-            {["일", "월", "화", "수", "목", "금", "토"].map((d) => (
-              <div key={d} className="py-1">
-                {d}
-              </div>
-            ))}
-          </div>
-          <div className="grid grid-cols-7 gap-1">
-            {cells.map((d) => {
-              const key = toDateKey(d);
-              const isMonth = d.getMonth() === anchor.getMonth();
-              const isSelected = key === selected;
-              const count = countsByDate[key] ?? 0;
-              return (
-                <button
-                  key={key}
-                  onClick={() => setSelected(key)}
-                  className={`flex h-14 flex-col items-center justify-center rounded-lg text-sm transition-colors ${
-                    isSelected
-                      ? "bg-primary text-primary-foreground"
-                      : isMonth
-                        ? "hover:bg-secondary"
-                        : "text-muted-foreground/50"
-                  }`}
+      <section className="surface-card mb-6 p-5">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-bold">
+            {anchor.getFullYear()}년 {anchor.getMonth() + 1}월
+          </h2>
+          <div className="flex items-center gap-2">
+            <div className="mr-2 hidden items-center gap-2 md:flex">
+              {SERVICE_TYPES.map((t) => (
+                <span
+                  key={t}
+                  className={`rounded-full border px-2 py-0.5 text-[11px] font-bold ${SERVICE_STYLES[t]}`}
                 >
-                  <span>{d.getDate()}</span>
-                  {count > 0 ? (
+                  {SERVICE_LABELS[t]}
+                </span>
+              ))}
+            </div>
+            <Button variant="outline" size="sm" onClick={() => setSelected(todayKey)}>
+              오늘
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setAnchor(new Date(anchor.getFullYear(), anchor.getMonth() - 1, 1))}
+            >
+              <ChevronLeft className="size-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setAnchor(new Date(anchor.getFullYear(), anchor.getMonth() + 1, 1))}
+            >
+              <ChevronRight className="size-4" />
+            </Button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-7 gap-1.5 text-center text-xs font-semibold text-muted-foreground">
+          {["일", "월", "화", "수", "목", "금", "토"].map((d) => (
+            <div key={d} className="py-1.5">
+              {d}
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-7 gap-1.5">
+          {cells.map((d) => {
+            const key = toDateKey(d);
+            const isMonth = d.getMonth() === anchor.getMonth();
+            const isSelected = key === selected;
+            const items = (byDate[key] ?? []).filter((r) => r.status !== "cancelled");
+            return (
+              <button
+                key={key}
+                onClick={() => setSelected(key)}
+                className={`flex min-h-[112px] flex-col items-stretch gap-1 rounded-xl border p-1.5 text-left transition-colors ${
+                  isSelected
+                    ? "border-primary bg-primary/8"
+                    : isMonth
+                      ? "border-border bg-card hover:bg-secondary/60"
+                      : "border-transparent bg-muted/40"
+                }`}
+              >
+                <div className="flex items-center justify-between px-0.5">
+                  <span
+                    className={`text-xs font-bold ${
+                      key === todayKey
+                        ? "rounded-full bg-primary px-1.5 py-0.5 text-primary-foreground"
+                        : isMonth
+                          ? ""
+                          : "text-muted-foreground/50"
+                    }`}
+                  >
+                    {d.getDate()}
+                  </span>
+                  {items.length > 0 ? (
+                    <span className="text-[10px] font-bold text-muted-foreground">{items.length}건</span>
+                  ) : null}
+                </div>
+                <div className="flex flex-col gap-0.5 overflow-hidden">
+                  {items.slice(0, 3).map((r) => (
                     <span
-                      className={`mt-0.5 rounded-full px-1.5 text-[10px] font-bold ${
-                        isSelected ? "bg-primary-foreground/20" : "bg-accent/30 text-accent-foreground"
-                      }`}
+                      key={`${key}-${r.id}`}
+                      className={`truncate rounded-md border px-1.5 py-0.5 text-[10px] font-semibold ${SERVICE_STYLES[r.service_type]}`}
                     >
-                      {count}
+                      {SERVICE_LABELS[r.service_type]} · {r.dogs?.name ?? "-"}
+                    </span>
+                  ))}
+                  {items.length > 3 ? (
+                    <span className="px-1 text-[10px] font-semibold text-muted-foreground">
+                      +{items.length - 3}건 더
                     </span>
                   ) : null}
-                </button>
-              );
-            })}
-          </div>
-        </section>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+        {monthQuery.isLoading ? (
+          <p className="mt-3 text-center text-xs text-muted-foreground">예약을 불러오는 중…</p>
+        ) : null}
+        <p className="mt-3 text-center text-[11px] text-muted-foreground">
+          {monthStart.slice(0, 7)} 기준 · 호텔 예약은 숙박 기간 내내 표시됩니다.
+        </p>
+      </section>
 
-        <section className="space-y-3">
-          {dayQuery.isLoading ? (
-            <div className="surface-card p-8 text-center text-sm text-muted-foreground">불러오는 중…</div>
-          ) : rows.length === 0 ? (
-            <div className="surface-card p-10 text-center">
-              <p className="font-semibold">이 날짜에 등록된 예약이 없습니다.</p>
-              <p className="mt-1 text-sm text-muted-foreground">오른쪽 위 “예약 등록”으로 추가해 보세요.</p>
-            </div>
-          ) : (
-            rows.map((row) => (
-              <article key={row.id} className="surface-card flex flex-wrap items-center gap-4 p-4">
-                <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-secondary font-display text-lg font-extrabold text-primary">
-                  {row.dogs?.name?.slice(0, 1) ?? "?"}
+      <section className="space-y-3">
+        <h2 className="text-base font-bold">{formatDateKorean(selected)} 예약</h2>
+        {rows.length === 0 ? (
+          <div className="surface-card p-10 text-center">
+            <p className="font-semibold">이 날짜에 등록된 예약이 없습니다.</p>
+            <p className="mt-1 text-sm text-muted-foreground">오른쪽 위 “예약 등록”으로 추가해 보세요.</p>
+          </div>
+        ) : (
+          rows.map((row) => (
+            <article key={row.id} className="surface-card flex flex-wrap items-center gap-4 p-4">
+              <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-secondary font-display text-lg font-extrabold text-primary">
+                {row.dogs?.name?.slice(0, 1) ?? "?"}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="truncate font-bold">{row.dogs?.name ?? "삭제된 강아지"}</h3>
+                  <Badge variant="outline" className={SERVICE_STYLES[row.service_type]}>
+                    {SERVICE_LABELS[row.service_type]}
+                  </Badge>
+                  <Badge className={STATUS_STYLES[row.status]}>{STATUS_LABELS[row.status]}</Badge>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <h3 className="truncate font-bold">{row.dogs?.name ?? "삭제된 강아지"}</h3>
-                    <Badge className={STATUS_STYLES[row.status]}>{STATUS_LABELS[row.status]}</Badge>
-                  </div>
-                  <p className="truncate text-sm text-muted-foreground">
-                    {row.dogs?.breed ?? "견종 미입력"} · 보호자 {row.dogs?.owners?.name ?? "-"} ·{" "}
-                    {row.dogs?.owners?.phone ?? "-"}
+                <p className="truncate text-sm text-muted-foreground">
+                  {row.dogs?.breed ?? "견종 미입력"} · 보호자 {row.dogs?.owners?.name ?? "-"} ·{" "}
+                  {row.dogs?.owners?.phone ?? "-"}
+                </p>
+                {row.memo ? <p className="mt-1 text-sm text-accent-foreground">메모: {row.memo}</p> : null}
+              </div>
+              <div className="text-right text-sm text-muted-foreground">
+                {row.service_type === "hotel" && row.end_date ? (
+                  <>
+                    <p className="font-semibold text-foreground">{stayLabel(row.reserved_date, row.end_date)}</p>
+                    <p>
+                      {row.reserved_date} ~ {row.end_date}
+                    </p>
+                  </>
+                ) : (
+                  <p>
+                    {formatTime(row.drop_off_time)} ~ {formatTime(row.pick_up_time)}
                   </p>
-                  {row.memo ? <p className="mt-1 text-sm text-accent-foreground">메모: {row.memo}</p> : null}
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  {formatTime(row.drop_off_time)} ~ {formatTime(row.pick_up_time)}
-                </div>
-                <div className="flex gap-2">
-                  {row.status === "reserved" ? (
-                    <>
-                      <Button size="sm" onClick={() => updateStatus.mutate({ row, status: "checked_in" })}>
-                        <LogIn className="size-4" /> 등원
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => updateStatus.mutate({ row, status: "cancelled" })}
-                      >
-                        취소
-                      </Button>
-                    </>
-                  ) : null}
-                  {row.status === "checked_in" ? (
-                    <Button size="sm" variant="secondary" onClick={() => updateStatus.mutate({ row, status: "checked_out" })}>
-                      <LogOut className="size-4" /> 하원
+                )}
+              </div>
+              <div className="flex gap-2">
+                {row.status === "reserved" ? (
+                  <>
+                    <Button size="sm" onClick={() => updateStatus.mutate({ row, status: "checked_in" })}>
+                      <LogIn className="size-4" /> 등원
                     </Button>
-                  ) : null}
-                </div>
-              </article>
-            ))
-          )}
-        </section>
-      </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => updateStatus.mutate({ row, status: "cancelled" })}
+                    >
+                      취소
+                    </Button>
+                  </>
+                ) : null}
+                {row.status === "checked_in" ? (
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => updateStatus.mutate({ row, status: "checked_out" })}
+                  >
+                    <LogOut className="size-4" /> 하원
+                  </Button>
+                ) : null}
+              </div>
+            </article>
+          ))
+        )}
+      </section>
     </AppShell>
   );
 }
@@ -325,16 +385,18 @@ function StatCard({
       </div>
     </div>
   );
-
 }
 
 function NewReservationDialog({ defaultDate }: { defaultDate: string }) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [serviceType, setServiceType] = useState<ServiceType>("kindergarten");
   const [dogId, setDogId] = useState("");
   const [date, setDate] = useState(defaultDate);
+  const [endDate, setEndDate] = useState(() => addDays(defaultDate, 1));
   const [dropOff, setDropOff] = useState("09:00");
   const [pickUp, setPickUp] = useState("18:00");
+  const [slot, setSlot] = useState("10:00");
   const [memo, setMemo] = useState("");
 
   const dogsQuery = useQuery({
@@ -361,13 +423,21 @@ function NewReservationDialog({ defaultDate }: { defaultDate: string }) {
         .order("purchased_on", { ascending: true });
       const usable = (pass ?? []).find((p) => p.used_count < p.total_count);
 
+      const times =
+        serviceType === "grooming"
+          ? { drop_off_time: slot, pick_up_time: addMinutes(slot, 30) }
+          : serviceType === "hotel"
+            ? { drop_off_time: dropOff, pick_up_time: pickUp }
+            : { drop_off_time: dropOff, pick_up_time: pickUp };
+
       const { error } = await supabase.from("reservations").insert({
         dog_id: dogId,
+        service_type: serviceType,
         reserved_date: date,
-        drop_off_time: dropOff,
-        pick_up_time: pickUp,
+        end_date: serviceType === "hotel" ? endDate : null,
+        ...times,
         memo: memo || null,
-        pass_id: usable?.id ?? null,
+        pass_id: serviceType === "kindergarten" ? (usable?.id ?? null) : null,
       });
       if (error) throw error;
     },
@@ -381,12 +451,17 @@ function NewReservationDialog({ defaultDate }: { defaultDate: string }) {
     onError: (e: Error) => toast.error("예약 등록에 실패했습니다", { description: e.message }),
   });
 
+  const hotelInvalid = serviceType === "hotel" && nightsBetween(date, endDate) < 1;
+
   return (
     <Dialog
       open={open}
       onOpenChange={(next) => {
         setOpen(next);
-        if (next) setDate(defaultDate);
+        if (next) {
+          setDate(defaultDate);
+          setEndDate(addDays(defaultDate, 1));
+        }
       }}
     >
       <DialogTrigger asChild>
@@ -394,12 +469,29 @@ function NewReservationDialog({ defaultDate }: { defaultDate: string }) {
           <Plus className="size-4" /> 예약 등록
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>예약 등록</DialogTitle>
-          <DialogDescription>결제 완료된 이용권이 있으면 자동으로 연결되어 등원 시 1회 차감됩니다.</DialogDescription>
+          <DialogDescription>예약 타입에 따라 날짜와 시간 입력 방식이 달라집니다.</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
+          <div className="space-y-2">
+            <Label>예약 타입</Label>
+            <div className="grid grid-cols-4 gap-2">
+              {SERVICE_TYPES.map((t) => (
+                <Button
+                  key={t}
+                  type="button"
+                  size="sm"
+                  variant={serviceType === t ? "default" : "outline"}
+                  onClick={() => setServiceType(t)}
+                >
+                  {SERVICE_LABELS[t]}
+                </Button>
+              ))}
+            </div>
+          </div>
+
           <div className="space-y-2">
             <Label>강아지</Label>
             <Select value={dogId} onValueChange={setDogId}>
@@ -415,20 +507,79 @@ function NewReservationDialog({ defaultDate }: { defaultDate: string }) {
               </SelectContent>
             </Select>
           </div>
-          <div className="grid grid-cols-3 gap-3">
-            <div className="space-y-2">
-              <Label>날짜</Label>
-              <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+
+          {serviceType === "hotel" ? (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>입실일</Label>
+                  <Input
+                    type="date"
+                    value={date}
+                    onChange={(e) => {
+                      setDate(e.target.value);
+                      if (e.target.value >= endDate) setEndDate(addDays(e.target.value, 1));
+                    }}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>퇴실일</Label>
+                  <Input type="date" min={addDays(date, 1)} value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+                </div>
+              </div>
+              <p className="rounded-lg bg-secondary px-3 py-2 text-sm font-semibold">
+                숙박 기간: {stayLabel(date, endDate)}
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>입실 시간</Label>
+                  <Input type="time" value={dropOff} onChange={(e) => setDropOff(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label>퇴실 시간</Label>
+                  <Input type="time" value={pickUp} onChange={(e) => setPickUp(e.target.value)} />
+                </div>
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label>등원</Label>
-              <Input type="time" value={dropOff} onChange={(e) => setDropOff(e.target.value)} />
+          ) : serviceType === "grooming" ? (
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>날짜</Label>
+                <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>시간 (30분 단위)</Label>
+                <Select value={slot} onValueChange={setSlot}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {GROOMING_SLOTS.map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {s} ~ {addMinutes(s, 30)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label>하원</Label>
-              <Input type="time" value={pickUp} onChange={(e) => setPickUp(e.target.value)} />
+          ) : (
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-2">
+                <Label>날짜{serviceType === "daily_care" ? " (하루)" : ""}</Label>
+                <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>등원</Label>
+                <Input type="time" value={dropOff} onChange={(e) => setDropOff(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>하원</Label>
+                <Input type="time" value={pickUp} onChange={(e) => setPickUp(e.target.value)} />
+              </div>
             </div>
-          </div>
+          )}
+
           <div className="space-y-2">
             <Label>메모</Label>
             <Textarea
@@ -440,7 +591,7 @@ function NewReservationDialog({ defaultDate }: { defaultDate: string }) {
           </div>
         </div>
         <DialogFooter>
-          <Button disabled={!dogId || create.isPending} onClick={() => create.mutate()}>
+          <Button disabled={!dogId || hotelInvalid || create.isPending} onClick={() => create.mutate()}>
             등록하기
           </Button>
         </DialogFooter>
