@@ -98,7 +98,7 @@ function StaffPage() {
   const localRows: StaffRow[] = (localQuery.data ?? []).map((r) => ({
     id: `local-${r.id}`,
     name: r.name,
-    username: r.email,
+    username: r.username ?? r.email,
     email: r.email,
     phone: r.phone,
     role: r.role,
@@ -107,6 +107,7 @@ function StaffPage() {
     createdAt: r.createdAt,
     local: true,
   }));
+
 
   const externalRows: StaffRow[] = query.isError ? [] : (query.data ?? []);
   const localEmails = new Set(localRows.map((r) => (r.email ?? "").toLowerCase()));
