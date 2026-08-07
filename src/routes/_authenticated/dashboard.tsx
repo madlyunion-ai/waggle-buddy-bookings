@@ -449,6 +449,7 @@ function NewReservationDialog({ defaultDate }: { defaultDate: string }) {
   const [pickUp, setPickUp] = useState("18:00");
   const [slot, setSlot] = useState("10:00");
   const [memo, setMemo] = useState("");
+  const [passId, setPassId] = useState("none");
 
   const fetchMembers = useServerFn(listExternalMembers);
   const fetchPets = useServerFn(listExternalPets);
@@ -468,6 +469,27 @@ function NewReservationDialog({ defaultDate }: { defaultDate: string }) {
   });
 
   const pet = (petsQuery.data ?? []).find((p) => p.id === petId) ?? null;
+
+  // 선택한 반려견의 내부 이용권 목록 (동기화된 강아지 기준)
+  const passesQuery = useQuery({
+    queryKey: ["passes", "for-external-pet", petId],
+    queryFn: async () => {
+      const { data: dog } = await supabase.from("dogs").select("id").eq("external_id", petId).maybeSingle();
+      if (!dog) return [];
+      const { data, error } = await supabase
+        .from("passes")
+        .select("id, title, total_count, used_count, payment_status, expires_on")
+        .eq("dog_id", dog.id)
+        .order("purchased_on", { ascending: true });
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: open && !!petId,
+  });
+
+  const availablePasses = (passesQuery.data ?? []).filter(
+    (p) => p.payment_status === "paid" && p.used_count < p.total_count,
+  );
 
   const create = useMutation({
     mutationFn: async () => {
@@ -597,7 +619,7 @@ function NewReservationDialog({ defaultDate }: { defaultDate: string }) {
           </div>
 
           <div className="space-y-2">
-            <Label>회원 검색 (외부 회원 시스템)</Label>
+            <Label>회원 검색</Label>
             <Input
               value={memberSearch}
               placeholder="이름 또는 전화번호로 검색"
