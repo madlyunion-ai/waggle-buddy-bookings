@@ -163,12 +163,14 @@ function StaffPage() {
               <tr>
                 <th className="px-4 py-3">이름</th>
                 <th className="px-4 py-3">구분</th>
-                <th className="px-4 py-3">아이디(이메일)</th>
+                <th className="px-4 py-3">아이디</th>
+                <th className="px-4 py-3">이메일</th>
                 <th className="px-4 py-3">핸드폰번호</th>
                 <th className="px-4 py-3">상태</th>
                 <th className="px-4 py-3 text-right">관리</th>
               </tr>
             </thead>
+
             <tbody>
               {localQuery.isLoading && query.isLoading ? (
                 <tr>
