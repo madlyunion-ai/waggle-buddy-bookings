@@ -276,6 +276,7 @@ export type Database = {
           role: string
           status: string
           updated_at: string
+          username: string | null
         }
         Insert: {
           branch_name?: string | null
@@ -288,6 +289,7 @@ export type Database = {
           role?: string
           status?: string
           updated_at?: string
+          username?: string | null
         }
         Update: {
           branch_name?: string | null
@@ -300,6 +302,7 @@ export type Database = {
           role?: string
           status?: string
           updated_at?: string
+          username?: string | null
         }
         Relationships: []
       }
@@ -308,7 +311,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      staff_login_email: { Args: { _username: string }; Returns: string }
     }
     Enums: {
       [_ in never]: never
