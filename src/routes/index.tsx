@@ -1,9 +1,11 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { CalendarDays, Dog, PawPrint, Ticket } from "lucide-react";
+import { CalendarDays, Dog, Ticket } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import logo from "@/assets/hugandmung-logo.png";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -56,8 +58,9 @@ function Landing() {
     <div className="paw-grid min-h-screen">
       <header className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
         <span className="flex items-center gap-2 font-display text-lg font-extrabold">
-          <PawPrint className="size-6 text-primary" /> 허그앤멍
+          <img src={logo} alt="허그앤멍 로고" width={32} height={32} className="size-8 rounded-md" /> 허그앤멍
         </span>
+
         <Button asChild variant="outline" size="sm">
           <Link to="/auth">직원 로그인</Link>
         </Button>

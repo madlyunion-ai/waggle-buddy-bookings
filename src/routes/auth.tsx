@@ -1,6 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { PawPrint } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -9,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
+import logo from "@/assets/hugandmung-logo.png";
+
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -89,12 +90,17 @@ function AuthPage() {
     <div className="paw-grid flex min-h-screen items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
         <div className="mb-6 text-center">
-          <div className="mx-auto mb-3 flex size-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-[var(--shadow-lift)]">
-            <PawPrint className="size-7" />
-          </div>
+          <img
+            src={logo}
+            alt="허그앤멍 로고"
+            width={56}
+            height={56}
+            className="mx-auto mb-3 size-14 rounded-2xl shadow-[var(--shadow-lift)]"
+          />
           <h1 className="text-2xl font-extrabold">허그앤멍 예약관리</h1>
           <p className="mt-1 text-sm text-muted-foreground">원장·직원 전용 관리 시스템입니다.</p>
         </div>
+
 
         <div className="surface-card p-6">
           {emailSent ? (
