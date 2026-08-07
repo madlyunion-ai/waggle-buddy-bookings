@@ -676,22 +676,23 @@ function NewReservationDialog({
 
   const hotelInvalid = serviceType === "hotel" && nightsBetween(date, endDate) < 1;
 
+  useEffect(() => {
+    if (open) {
+      setDate(defaultDate);
+      setEndDate(addDays(defaultDate, 1));
+    }
+  }, [open, defaultDate]);
+
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(next) => {
-        setOpen(next);
-        if (next) {
-          setDate(defaultDate);
-          setEndDate(addDays(defaultDate, 1));
-        }
-      }}
-    >
-      <DialogTrigger asChild>
-        <Button>
-          <Plus className="size-4" /> 예약 등록
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={setOpen}>
+      {hideTrigger ? null : (
+        <DialogTrigger asChild>
+          <Button>
+            <Plus className="size-4" /> 예약 등록
+          </Button>
+        </DialogTrigger>
+      )}
+
       <DialogContent className="max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>예약 등록</DialogTitle>
