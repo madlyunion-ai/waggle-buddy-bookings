@@ -13,7 +13,7 @@ import {
   LogOut,
   Plus,
   Scissors,
-  Users,
+  
 } from "lucide-react";
 import { toast } from "sonner";
 
