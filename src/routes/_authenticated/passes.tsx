@@ -26,9 +26,9 @@ import { PAYMENT_LABELS, formatWon } from "@/lib/kindergarten";
 export const Route = createFileRoute("/_authenticated/passes")({
   head: () => ({
     meta: [
-      { title: "이용권 · 결제 관리 | 멍멍유치원 예약관리" },
+      { title: "이용권 · 결제 관리 | 허그앤멍 예약관리" },
       { name: "description", content: "횟수권 잔여 횟수와 결제 상태를 관리하고 미결제 건을 바로 확인합니다." },
-      { property: "og:title", content: "이용권 · 결제 관리 | 멍멍유치원 예약관리" },
+      { property: "og:title", content: "이용권 · 결제 관리 | 허그앤멍 예약관리" },
       { property: "og:description", content: "횟수권 잔여 횟수와 결제 상태 관리" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

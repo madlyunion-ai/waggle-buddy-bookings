@@ -27,9 +27,9 @@ import { GENDER_LABELS, ageLabel, vaccineWarning } from "@/lib/kindergarten";
 export const Route = createFileRoute("/_authenticated/dogs")({
   head: () => ({
     meta: [
-      { title: "강아지 · 보호자 프로필 | 멍멍유치원 예약관리" },
+      { title: "강아지 · 보호자 프로필 | 허그앤멍 예약관리" },
       { name: "description", content: "견종, 나이, 몸무게, 백신 만료일, 특이사항과 보호자 연락처를 함께 관리합니다." },
-      { property: "og:title", content: "강아지 · 보호자 프로필 | 멍멍유치원 예약관리" },
+      { property: "og:title", content: "강아지 · 보호자 프로필 | 허그앤멍 예약관리" },
       { property: "og:description", content: "강아지 프로필과 보호자 연락처 관리" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

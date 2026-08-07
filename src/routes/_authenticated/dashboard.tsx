@@ -34,9 +34,9 @@ import {
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
-      { title: "오늘 등원 현황 | 멍멍유치원 예약관리" },
+      { title: "오늘 등원 현황 | 허그앤멍 예약관리" },
       { name: "description", content: "날짜별 예약 캘린더와 등하원 체크인으로 유치원 하루를 한눈에 관리합니다." },
-      { property: "og:title", content: "오늘 등원 현황 | 멍멍유치원 예약관리" },
+      { property: "og:title", content: "오늘 등원 현황 | 허그앤멍 예약관리" },
       { property: "og:description", content: "날짜별 예약 캘린더와 등하원 체크인 현황" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
