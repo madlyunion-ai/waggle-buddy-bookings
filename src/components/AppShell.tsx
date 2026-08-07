@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { CalendarDays, Dog, LogOut, Ticket } from "lucide-react";
+import { CalendarCheck, CalendarDays, Dog, LogOut, Ticket } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,10 @@ const NAV_GROUPS = [
 
   {
     label: "원생 관리",
-    items: [{ to: "/dogs", label: "반려견 리스트", icon: Dog }],
+    items: [
+      { to: "/dogs", label: "반려견 리스트", icon: Dog },
+      { to: "/reservations", label: "예약 정보", icon: CalendarCheck },
+    ],
   },
   {
     label: "이용권 · 정산",
@@ -25,6 +28,7 @@ const NAV_GROUPS = [
 const MOBILE_NAV = [
   { to: "/dashboard", label: "오늘 현황", icon: CalendarDays },
   { to: "/dogs", label: "반려견 리스트", icon: Dog },
+  { to: "/reservations", label: "예약 정보", icon: CalendarCheck },
   { to: "/passes", label: "이용권 · 결제", icon: Ticket },
 ] as const;
 
