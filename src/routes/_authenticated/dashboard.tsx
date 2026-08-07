@@ -91,6 +91,9 @@ function DashboardPage() {
   const queryClient = useQueryClient();
   const [anchor, setAnchor] = useState(() => new Date());
   const [selected, setSelected] = useState(() => toDateKey(new Date()));
+  const [createDate, setCreateDate] = useState<string | null>(null);
+  const [dayListDate, setDayListDate] = useState<string | null>(null);
+
 
   const monthStart = toDateKey(new Date(anchor.getFullYear(), anchor.getMonth(), 1));
   const monthEnd = toDateKey(new Date(anchor.getFullYear(), anchor.getMonth() + 1, 0));
