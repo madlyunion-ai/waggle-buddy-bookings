@@ -121,6 +121,7 @@ export const createStaff = createServerFn({ method: "POST" })
       .from("staff")
       .insert({
         name: data.name,
+        username: data.username,
         email: data.email,
         phone: data.phone,
         role: data.role,
@@ -135,7 +136,13 @@ export const createStaff = createServerFn({ method: "POST" })
         // 이미 등록된 이메일이면 기존 직원 정보를 갱신 (비밀번호는 위에서 재설정됨)
         const { data: updated, error: updErr } = await context.supabase
           .from("staff")
-          .update({ name: data.name, phone: data.phone, role: data.role, status: "ACTIVE" })
+          .update({
+            name: data.name,
+            username: data.username,
+            phone: data.phone,
+            role: data.role,
+            status: "ACTIVE",
+          })
           .eq("email", data.email)
           .select("id")
           .single();
@@ -144,6 +151,7 @@ export const createStaff = createServerFn({ method: "POST" })
       }
       throw new Error(error.message);
     }
+
 
     return { id: row.id, externalSynced: externalId !== null, loginEnabled: true };
   });
