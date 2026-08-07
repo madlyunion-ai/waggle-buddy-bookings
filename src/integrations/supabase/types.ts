@@ -28,6 +28,7 @@ export type Database = {
           notes: string | null
           owner_id: string
           photo_url: string | null
+          synced_at: string | null
           updated_at: string
           vaccine_expires_on: string | null
           weight_kg: number | null
@@ -45,6 +46,7 @@ export type Database = {
           notes?: string | null
           owner_id: string
           photo_url?: string | null
+          synced_at?: string | null
           updated_at?: string
           vaccine_expires_on?: string | null
           weight_kg?: number | null
@@ -62,6 +64,7 @@ export type Database = {
           notes?: string | null
           owner_id?: string
           photo_url?: string | null
+          synced_at?: string | null
           updated_at?: string
           vaccine_expires_on?: string | null
           weight_kg?: number | null
@@ -303,6 +306,36 @@ export type Database = {
           status?: string
           updated_at?: string
           username?: string | null
+        }
+        Relationships: []
+      }
+      sync_log: {
+        Row: {
+          created_at: string
+          dogs_upserted: number
+          error_message: string | null
+          id: string
+          kind: string
+          owners_upserted: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          dogs_upserted?: number
+          error_message?: string | null
+          id?: string
+          kind?: string
+          owners_upserted?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          dogs_upserted?: number
+          error_message?: string | null
+          id?: string
+          kind?: string
+          owners_upserted?: number
+          updated_at?: string
         }
         Relationships: []
       }
