@@ -43,7 +43,10 @@ type PetDto = {
   breed?: { name?: string; nameKo?: string } | null;
   birthDate?: string;
   weight?: number;
-  owners?: Array<{ name?: string; realname?: string }>;
+  gender?: string;
+  neutered?: boolean;
+  isNeutered?: boolean;
+  owners?: Array<{ id?: string | number; name?: string; realname?: string; phoneNumber?: string }>;
 };
 
 function mapMember(dto: OwnerDto, source: "owner" | "user"): ExternalMember {
@@ -59,13 +62,18 @@ function mapMember(dto: OwnerDto, source: "owner" | "user"): ExternalMember {
 }
 
 function mapPet(dto: PetDto): ExternalPet {
+  const owner = (dto.owners ?? [])[0];
   return {
     id: String(dto.id),
     name: dto.name || "이름 없음",
     breed: dto.breed?.nameKo ?? dto.breed?.name ?? null,
     birthDate: dto.birthDate ? dto.birthDate.slice(0, 10) : null,
     weight: typeof dto.weight === "number" ? dto.weight : null,
+    gender: dto.gender ? String(dto.gender).toLowerCase() : null,
+    neutered: Boolean(dto.neutered ?? dto.isNeutered ?? false),
     ownerNames: (dto.owners ?? []).map((o) => o.name || o.realname || "").filter(Boolean),
+    ownerId: owner?.id !== undefined && owner?.id !== null ? String(owner.id) : null,
+    ownerPhone: owner?.phoneNumber ?? null,
   };
 }
 
