@@ -241,12 +241,9 @@ function NewStaffDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (
 
   const mutation = useMutation({
     mutationFn: () => submit({ data: { name, email, password, phone, role } }),
-    onSuccess: (res) => {
-      toast.success(
-        res?.externalSynced
-          ? "직원이 등록되었습니다."
-          : "직원이 등록되었습니다. (외부 시스템 연동은 건너뜀)",
-      );
+    onSuccess: () => {
+      toast.success("직원이 등록되었습니다. 등록한 이메일·비밀번호로 로그인할 수 있습니다.");
+
       queryClient.invalidateQueries({ queryKey: ["local-staff"] });
       queryClient.invalidateQueries({ queryKey: ["external-staff"] });
       reset();
