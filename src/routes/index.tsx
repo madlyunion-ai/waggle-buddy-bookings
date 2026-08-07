@@ -141,12 +141,7 @@ function Landing() {
             </Button>
           </form>
 
-          <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground">
-            <span className="h-px flex-1 bg-border" /> 또는 <span className="h-px flex-1 bg-border" />
-          </div>
-          <Button variant="outline" className="w-full" onClick={google}>
-            Google 계정으로 계속하기
-          </Button>
+        
         </div>
       </section>
 
