@@ -5,6 +5,7 @@ import { useState } from "react";
 import { ChevronLeft, ChevronRight, RefreshCw, Search } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
+import { OwnerInfoDialog } from "@/components/OwnerInfoDialog";
 import { ReserveDialog } from "@/components/ReserveDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -117,9 +118,12 @@ function DogsPage() {
                 <span>{GENDER_LABELS[pet.gender ?? "unknown"] ?? "미입력"}</span>
                 <span className="text-muted-foreground">{ageLabel(pet.birthDate)}</span>
                 <span className="text-muted-foreground">{pet.weight ? `${pet.weight}kg` : "-"}</span>
-                <span className="truncate text-muted-foreground">
-                  {pet.ownerNames[0] ?? "보호자 미확인"}
-                  {pet.ownerPhone ? ` · ${pet.ownerPhone}` : ""}
+                <span className="flex min-w-0 items-center gap-1 text-muted-foreground">
+                  <span className="truncate">
+                    {pet.ownerNames[0] ?? "보호자 미확인"}
+                    {pet.ownerPhone ? ` · ${pet.ownerPhone}` : ""}
+                  </span>
+                  <OwnerInfoDialog pet={pet} />
                 </span>
                 <span className="col-span-2 flex justify-end lg:col-span-1">
                   <ReserveDialog pet={pet} />
