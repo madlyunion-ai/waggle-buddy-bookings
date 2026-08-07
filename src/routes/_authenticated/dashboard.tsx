@@ -147,11 +147,32 @@ function DashboardPage() {
       description="예약 캘린더에서 날짜를 선택하면 해당 날짜의 등하원 현황이 표시됩니다."
       action={<NewReservationDialog defaultDate={selected} />}
     >
-      <div className="mb-6 grid gap-4 sm:grid-cols-3">
-        <StatCard icon={<CalendarCheck className="size-5" />} label="오늘 예약" value={active.length} />
-        <StatCard icon={<Users className="size-5" />} label="현재 등원 중" value={inside.length} highlight />
-        <StatCard icon={<Clock className="size-5" />} label="하원 완료" value={done.length} />
+      <div className="mb-4 grid gap-3 lg:grid-cols-3">
+        <div className="promo-card p-4">
+          <p className="text-[11px] font-bold text-primary">오늘의 운영 체크</p>
+          <p className="mt-1.5 text-sm font-bold leading-snug">
+            등원 체크인은 <span className="text-primary">아이 도착 즉시</span> 눌러주세요
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">이용권이 연결된 예약은 등원 시 1회 자동 차감됩니다.</p>
+        </div>
+        <div className="promo-card p-4">
+          <p className="text-[11px] font-bold text-accent-foreground">백신 확인</p>
+          <p className="mt-1.5 text-sm font-bold leading-snug">백신 만료 아이는 등원 전 보호자에게 안내</p>
+          <p className="mt-1 text-xs text-muted-foreground">강아지 프로필에서 만료일을 한 번에 확인할 수 있어요.</p>
+        </div>
+        <div className="promo-card p-4">
+          <p className="text-[11px] font-bold text-primary">이용권 정산</p>
+          <p className="mt-1.5 text-sm font-bold leading-snug">미결제 건은 이용권 화면에서 바로 처리</p>
+          <p className="mt-1 text-xs text-muted-foreground">결제 완료 합계도 함께 집계됩니다.</p>
+        </div>
       </div>
+
+      <div className="mb-5 grid gap-3 sm:grid-cols-3">
+        <StatCard icon={<CalendarCheck className="size-4" />} label="오늘 예약" value={active.length} />
+        <StatCard icon={<Users className="size-4" />} label="현재 등원 중" value={inside.length} highlight />
+        <StatCard icon={<Clock className="size-4" />} label="하원 완료" value={done.length} />
+      </div>
+
 
       <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
         <section className="surface-card p-4">
