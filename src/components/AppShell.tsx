@@ -9,11 +9,9 @@ import { supabase } from "@/integrations/supabase/client";
 const NAV_GROUPS = [
   {
     label: "운영 현황",
-    items: [
-      { to: "/dashboard", label: "오늘 현황", icon: CalendarDays },
-      { to: "/dashboard", label: "예약 캘린더", icon: CalendarDays },
-    ],
+    items: [{ to: "/dashboard", label: "오늘 현황", icon: CalendarDays }],
   },
+
   {
     label: "원생 관리",
     items: [
