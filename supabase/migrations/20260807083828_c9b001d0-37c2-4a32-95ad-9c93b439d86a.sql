@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.staff_login_email(text);
