@@ -241,12 +241,18 @@ function NewStaffDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (
 
   const mutation = useMutation({
     mutationFn: () => submit({ data: { name, email, password, phone, role } }),
-    onSuccess: () => {
-      toast.success("직원이 등록되었습니다.");
+    onSuccess: (res) => {
+      toast.success(
+        res?.externalSynced
+          ? "직원이 등록되었습니다."
+          : "직원이 등록되었습니다. (외부 시스템 연동은 건너뜀)",
+      );
+      queryClient.invalidateQueries({ queryKey: ["local-staff"] });
       queryClient.invalidateQueries({ queryKey: ["external-staff"] });
       reset();
       onOpenChange(false);
     },
+
     onError: (error: unknown) => {
       toast.error(error instanceof Error ? error.message : "직원 등록에 실패했습니다.");
     },
