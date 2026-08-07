@@ -628,20 +628,63 @@ function NewReservationDialog({ defaultDate }: { defaultDate: string }) {
           </div>
 
           <div className="space-y-2">
-            <Label>강아지</Label>
-            <Select value={dogId} onValueChange={setDogId}>
+            <Label>회원 검색 (외부 회원 시스템)</Label>
+            <Input
+              value={memberSearch}
+              placeholder="이름 또는 전화번호로 검색"
+              onChange={(e) => {
+                setMemberSearch(e.target.value);
+                setMemberId("");
+                setPetId("");
+              }}
+            />
+            <Select
+              value={memberId}
+              onValueChange={(v) => {
+                setMemberId(v);
+                setPetId("");
+              }}
+            >
               <SelectTrigger>
-                <SelectValue placeholder="강아지를 선택하세요" />
+                <SelectValue
+                  placeholder={membersQuery.isLoading ? "회원을 불러오는 중…" : "회원을 선택하세요"}
+                />
               </SelectTrigger>
               <SelectContent>
-                {(dogsQuery.data ?? []).map((d) => (
-                  <SelectItem key={d.id} value={d.id}>
-                    {d.name} ({(d.owners as { name: string } | null)?.name ?? "보호자 미등록"})
+                {(membersQuery.data ?? []).map((m) => (
+                  <SelectItem key={`${m.source}-${m.id}`} value={m.id}>
+                    {m.name} · {m.phone ?? "연락처 없음"}
+                    {m.source === "user" ? " (직원)" : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {membersQuery.isError ? (
+              <p className="text-xs font-semibold text-destructive">외부 회원 목록을 불러오지 못했습니다.</p>
+            ) : null}
+          </div>
+
+          <div className="space-y-2">
+            <Label>강아지</Label>
+            <Select value={petId} onValueChange={setPetId} disabled={!memberId}>
+              <SelectTrigger>
+                <SelectValue
+                  placeholder={
+                    !memberId ? "회원을 먼저 선택하세요" : petsQuery.isLoading ? "불러오는 중…" : "강아지를 선택하세요"
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {(petsQuery.data ?? []).map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.name}
+                    {p.breed ? ` · ${p.breed}` : ""}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
+
 
           {serviceType === "hotel" ? (
             <div className="space-y-3">
