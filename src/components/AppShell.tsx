@@ -48,6 +48,16 @@ export function AppShell({
 }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const fetchProfile = useServerFn(getExternalProfile);
+  const profile = useQuery({
+    queryKey: ["external-profile"],
+    queryFn: () => fetchProfile(),
+    staleTime: 5 * 60 * 1000,
+  });
+  const displayName = profile.data?.name ?? "사용자";
+  const initial = displayName.slice(0, 1);
+
+
 
   async function signOut() {
     await queryClient.cancelQueries();
