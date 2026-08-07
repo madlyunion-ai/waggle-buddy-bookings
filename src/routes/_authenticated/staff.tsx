@@ -19,12 +19,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { listExternalStaff, type ExternalStaff } from "@/lib/projectpet.functions";
 import {
-  createExternalStaff,
-  listExternalStaff,
-  type ExternalStaff,
-  type StaffRole,
-} from "@/lib/projectpet.functions";
+  createStaff,
+  deleteLocalStaff,
+  listLocalStaff,
+  type StaffRoleInput as StaffRole,
+} from "@/lib/staff.functions";
+
 
 export const Route = createFileRoute("/_authenticated/staff")({
   head: () => ({
@@ -63,17 +65,56 @@ function formatPhone(phone: string | null) {
   return phone;
 }
 
+type StaffRow = ExternalStaff & { local?: boolean };
+
 function StaffPage() {
   const [keyword, setKeyword] = useState("");
   const [open, setOpen] = useState(false);
   const fetchStaff = useServerFn(listExternalStaff);
+  const fetchLocal = useServerFn(listLocalStaff);
+  const removeLocal = useServerFn(deleteLocalStaff);
+  const queryClient = useQueryClient();
 
   const query = useQuery({
     queryKey: ["external-staff"],
     queryFn: () => fetchStaff({ data: { limit: 100 } }),
+    retry: false,
   });
 
-  const rows: ExternalStaff[] = (query.data ?? []).filter((row) => {
+  const localQuery = useQuery({
+    queryKey: ["local-staff"],
+    queryFn: () => fetchLocal({}),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => removeLocal({ data: { id } }),
+    onSuccess: () => {
+      toast.success("직원이 삭제되었습니다.");
+      queryClient.invalidateQueries({ queryKey: ["local-staff"] });
+    },
+    onError: () => toast.error("삭제에 실패했습니다."),
+  });
+
+  const localRows: StaffRow[] = (localQuery.data ?? []).map((r) => ({
+    id: `local-${r.id}`,
+    name: r.name,
+    username: r.email,
+    email: r.email,
+    phone: r.phone,
+    role: r.role,
+    status: r.status,
+    branchName: r.branchName,
+    createdAt: r.createdAt,
+    local: true,
+  }));
+
+  const externalRows: StaffRow[] = query.isError ? [] : (query.data ?? []);
+  const localEmails = new Set(localRows.map((r) => (r.email ?? "").toLowerCase()));
+
+  const rows: StaffRow[] = [
+    ...localRows,
+    ...externalRows.filter((r) => !localEmails.has((r.email ?? "").toLowerCase())),
+  ].filter((row) => {
     const k = keyword.trim().toLowerCase();
     if (!k) return true;
     return [row.name, row.email, row.username, row.phone, roleLabel(row.role)]
@@ -82,6 +123,7 @@ function StaffPage() {
   });
 
   const managers = rows.filter((r) => r.role !== "STAFF").length;
+
 
   return (
     <AppShell
@@ -123,24 +165,19 @@ function StaffPage() {
                 <th className="px-4 py-3">아이디(이메일)</th>
                 <th className="px-4 py-3">핸드폰번호</th>
                 <th className="px-4 py-3">상태</th>
+                <th className="px-4 py-3 text-right">관리</th>
               </tr>
             </thead>
             <tbody>
-              {query.isLoading ? (
+              {localQuery.isLoading && query.isLoading ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-10 text-center text-muted-foreground">
+                  <td colSpan={6} className="px-4 py-10 text-center text-muted-foreground">
                     직원 정보를 불러오는 중…
-                  </td>
-                </tr>
-              ) : query.isError ? (
-                <tr>
-                  <td colSpan={5} className="px-4 py-10 text-center text-destructive">
-                    직원 정보를 불러오지 못했습니다.
                   </td>
                 </tr>
               ) : rows.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-10 text-center text-muted-foreground">
+                  <td colSpan={6} className="px-4 py-10 text-center text-muted-foreground">
                     표시할 직원이 없습니다.
                   </td>
                 </tr>
@@ -156,9 +193,22 @@ function StaffPage() {
                     <td className="px-4 py-3 text-muted-foreground">
                       {row.status ? (STATUS_LABELS[row.status] ?? row.status) : "-"}
                     </td>
+                    <td className="px-4 py-3 text-right">
+                      {row.local ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={deleteMutation.isPending}
+                          onClick={() => deleteMutation.mutate(row.id.replace("local-", ""))}
+                        >
+                          삭제
+                        </Button>
+                      ) : null}
+                    </td>
                   </tr>
                 ))
               )}
+
             </tbody>
           </table>
         </div>
@@ -171,7 +221,7 @@ function StaffPage() {
 
 function NewStaffDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const queryClient = useQueryClient();
-  const submit = useServerFn(createExternalStaff);
+  const submit = useServerFn(createStaff);
 
   const [role, setRole] = useState<StaffRole>("STAFF");
   const [name, setName] = useState("");
@@ -191,12 +241,18 @@ function NewStaffDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (
 
   const mutation = useMutation({
     mutationFn: () => submit({ data: { name, email, password, phone, role } }),
-    onSuccess: () => {
-      toast.success("직원이 등록되었습니다.");
+    onSuccess: (res) => {
+      toast.success(
+        res?.externalSynced
+          ? "직원이 등록되었습니다."
+          : "직원이 등록되었습니다. (외부 시스템 연동은 건너뜀)",
+      );
+      queryClient.invalidateQueries({ queryKey: ["local-staff"] });
       queryClient.invalidateQueries({ queryKey: ["external-staff"] });
       reset();
       onOpenChange(false);
     },
+
     onError: (error: unknown) => {
       toast.error(error instanceof Error ? error.message : "직원 등록에 실패했습니다.");
     },
