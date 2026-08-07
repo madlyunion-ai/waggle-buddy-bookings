@@ -581,7 +581,7 @@ function NewReservationDialog({ defaultDate }: { defaultDate: string }) {
       toast.success("예약을 등록했습니다");
       setOpen(false);
       setMemo("");
-      setDogId("");
+      setPetId("");
     },
     onError: (e: Error) => toast.error("예약 등록에 실패했습니다", { description: e.message }),
   });
