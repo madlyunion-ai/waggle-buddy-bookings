@@ -471,7 +471,9 @@ function NewReservationDialog({ defaultDate }: { defaultDate: string }) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [serviceType, setServiceType] = useState<ServiceType>("kindergarten");
-  const [dogId, setDogId] = useState("");
+  const [memberSearch, setMemberSearch] = useState("");
+  const [memberId, setMemberId] = useState("");
+  const [petId, setPetId] = useState("");
   const [date, setDate] = useState(defaultDate);
   const [endDate, setEndDate] = useState(() => addDays(defaultDate, 1));
   const [dropOff, setDropOff] = useState("09:00");
@@ -479,22 +481,76 @@ function NewReservationDialog({ defaultDate }: { defaultDate: string }) {
   const [slot, setSlot] = useState("10:00");
   const [memo, setMemo] = useState("");
 
-  const dogsQuery = useQuery({
-    queryKey: ["dogs", "options"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("dogs")
-        .select("id, name, owners(name)")
-        .eq("active", true)
-        .order("name");
-      if (error) throw error;
-      return data ?? [];
-    },
+  const fetchMembers = useServerFn(listExternalMembers);
+  const fetchPets = useServerFn(listExternalPets);
+
+  const membersQuery = useQuery({
+    queryKey: ["external-members", memberSearch],
+    queryFn: () => fetchMembers({ data: { search: memberSearch, limit: 30 } }),
     enabled: open,
   });
 
+  const member = (membersQuery.data ?? []).find((m) => m.id === memberId) ?? null;
+
+  const petsQuery = useQuery({
+    queryKey: ["external-pets", memberId, member?.source ?? "owner"],
+    queryFn: () => fetchPets({ data: { memberId, source: member?.source ?? "owner", search: member?.name ?? "" } }),
+    enabled: open && !!memberId,
+  });
+
+  const pet = (petsQuery.data ?? []).find((p) => p.id === petId) ?? null;
+
   const create = useMutation({
     mutationFn: async () => {
+      if (!member || !pet) throw new Error("회원과 반려견을 선택해 주세요.");
+
+      // 외부 회원을 내부 보호자 레코드와 동기화
+      const { data: existingOwner } = await supabase
+        .from("owners")
+        .select("id")
+        .eq("external_id", member.id)
+        .maybeSingle();
+      let ownerId = existingOwner?.id ?? null;
+      if (!ownerId) {
+        const { data: inserted, error: ownerError } = await supabase
+          .from("owners")
+          .insert({
+            name: member.name,
+            phone: member.phone ?? "-",
+            email: member.email,
+            external_id: member.id,
+            external_source: member.source,
+          })
+          .select("id")
+          .single();
+        if (ownerError) throw ownerError;
+        ownerId = inserted.id;
+      }
+
+      // 외부 반려견을 내부 강아지 레코드와 동기화
+      const { data: existingDog } = await supabase
+        .from("dogs")
+        .select("id")
+        .eq("external_id", pet.id)
+        .maybeSingle();
+      let dogId = existingDog?.id ?? null;
+      if (!dogId) {
+        const { data: insertedDog, error: dogError } = await supabase
+          .from("dogs")
+          .insert({
+            owner_id: ownerId,
+            name: pet.name,
+            breed: pet.breed,
+            birth_date: pet.birthDate,
+            weight_kg: pet.weight,
+            external_id: pet.id,
+          })
+          .select("id")
+          .single();
+        if (dogError) throw dogError;
+        dogId = insertedDog.id;
+      }
+
       const { data: pass } = await supabase
         .from("passes")
         .select("id, total_count, used_count")
@@ -506,9 +562,7 @@ function NewReservationDialog({ defaultDate }: { defaultDate: string }) {
       const times =
         serviceType === "grooming"
           ? { drop_off_time: slot, pick_up_time: addMinutes(slot, 30) }
-          : serviceType === "hotel"
-            ? { drop_off_time: dropOff, pick_up_time: pickUp }
-            : { drop_off_time: dropOff, pick_up_time: pickUp };
+          : { drop_off_time: dropOff, pick_up_time: pickUp };
 
       const { error } = await supabase.from("reservations").insert({
         dog_id: dogId,
@@ -521,6 +575,7 @@ function NewReservationDialog({ defaultDate }: { defaultDate: string }) {
       });
       if (error) throw error;
     },
+
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reservations"] });
       toast.success("예약을 등록했습니다");
