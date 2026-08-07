@@ -22,7 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
-import { GENDER_LABELS, ageLabel, vaccineWarning } from "@/lib/kindergarten";
+import { GENDER_LABELS, ageLabel } from "@/lib/kindergarten";
 
 export const Route = createFileRoute("/_authenticated/dogs")({
   head: () => ({
@@ -128,17 +128,6 @@ function DogsPage() {
                 <div>
                   <dt className="text-muted-foreground">연락처</dt>
                   <dd className="font-medium">{dog.owners?.phone ?? "-"}</dd>
-                </div>
-                <div className="col-span-2">
-                  <dt className="text-muted-foreground">백신 만료일</dt>
-                  <dd
-                    className={`flex items-center gap-1.5 font-medium ${
-                      vaccineWarning(dog.vaccine_expires_on) ? "text-destructive" : ""
-                    }`}
-                  >
-                    {vaccineWarning(dog.vaccine_expires_on) ? <AlertTriangle className="size-4" /> : null}
-                    {dog.vaccine_expires_on ?? "미입력 — 확인 필요"}
-                  </dd>
                 </div>
               </dl>
 
