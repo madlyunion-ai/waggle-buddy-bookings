@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedDogsRouteImport } from './routes/_authenticated/dogs'
+import { Route as AuthenticatedPassesRouteImport } from './routes/_authenticated/passes'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -39,18 +40,25 @@ const AuthenticatedDogsRoute = AuthenticatedDogsRouteImport.update({
   path: '/dogs',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPassesRoute = AuthenticatedPassesRouteImport.update({
+  id: '/passes',
+  path: '/passes',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/dogs': typeof AuthenticatedDogsRoute
+  '/passes': typeof AuthenticatedPassesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/dogs': typeof AuthenticatedDogsRoute
+  '/passes': typeof AuthenticatedPassesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -59,12 +67,13 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/dogs': typeof AuthenticatedDogsRoute
+  '/_authenticated/passes': typeof AuthenticatedPassesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/dashboard' | '/dogs'
+  fullPaths: '/' | '/auth' | '/dashboard' | '/dogs' | '/passes'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/dashboard' | '/dogs'
+  to: '/' | '/auth' | '/dashboard' | '/dogs' | '/passes'
   id:
     | '__root__'
     | '/'
@@ -72,6 +81,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/dashboard'
     | '/_authenticated/dogs'
+    | '/_authenticated/passes'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -117,17 +127,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDogsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/passes': {
+      id: '/_authenticated/passes'
+      path: '/passes'
+      fullPath: '/passes'
+      preLoaderRoute: typeof AuthenticatedPassesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDogsRoute: typeof AuthenticatedDogsRoute
+  AuthenticatedPassesRoute: typeof AuthenticatedPassesRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDogsRoute: AuthenticatedDogsRoute,
+  AuthenticatedPassesRoute: AuthenticatedPassesRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
