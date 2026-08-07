@@ -71,7 +71,7 @@ export function AppShell({
       <header className="sticky top-0 z-30 border-b border-border bg-card">
         <div className="flex h-14 items-center gap-3 px-4 lg:px-6">
           <Link to="/dashboard" className="flex items-center gap-2">
-            <span className="font-display text-[17px] font-extrabold tracking-tight">허그앤멍 예약관리시스템</span>
+            <span className="font-display text-[17px] font-bold tracking-tight">허그앤멍 예약관리시스템</span>
           </Link>
 
           <div className="ml-auto flex items-center gap-2">
@@ -143,7 +143,7 @@ export function AppShell({
         <main className="min-w-0 flex-1 px-4 py-6 lg:px-8">
           <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h1 className="text-xl font-extrabold sm:text-2xl">{title}</h1>
+              <h1 className="text-xl font-bold sm:text-2xl">{title}</h1>
               {description ? <p className="mt-1 text-sm text-muted-foreground">{description}</p> : null}
             </div>
             {action}
