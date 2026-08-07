@@ -5,7 +5,6 @@ import type { ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import logo from "@/assets/hugandmung-logo.png";
 
 const NAV_GROUPS = [
   {
