@@ -117,7 +117,15 @@ export const createStaff = createServerFn({ method: "POST" })
 
     if (error) {
       if (error.code === "23505" || /duplicate|unique/i.test(error.message)) {
-        throw new Error("이미 등록된 이메일입니다.");
+        // 이미 등록된 이메일이면 기존 직원 정보를 갱신 (비밀번호는 위에서 재설정됨)
+        const { data: updated, error: updErr } = await context.supabase
+          .from("staff")
+          .update({ name: data.name, phone: data.phone, role: data.role, status: "ACTIVE" })
+          .eq("email", data.email)
+          .select("id")
+          .single();
+        if (updErr) throw new Error(updErr.message);
+        return { id: updated.id, externalSynced: externalId !== null, loginEnabled: true };
       }
       throw new Error(error.message);
     }
