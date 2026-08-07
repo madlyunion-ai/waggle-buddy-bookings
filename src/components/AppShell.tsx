@@ -39,13 +39,16 @@ export function AppShell({
   title,
   description,
   action,
+  sidebarAction,
   children,
 }: {
-  title: string;
+  title?: string;
   description?: string;
   action?: ReactNode;
+  sidebarAction?: ReactNode;
   children: ReactNode;
 }) {
+
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const fetchProfile = useServerFn(getExternalProfile);
