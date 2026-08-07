@@ -264,6 +264,45 @@ export type Database = {
           },
         ]
       }
+      staff: {
+        Row: {
+          branch_name: string | null
+          created_at: string
+          email: string
+          external_id: string | null
+          id: string
+          name: string
+          phone: string | null
+          role: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          branch_name?: string | null
+          created_at?: string
+          email: string
+          external_id?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          role?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          branch_name?: string | null
+          created_at?: string
+          email?: string
+          external_id?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          role?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
