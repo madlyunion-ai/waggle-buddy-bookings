@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { AlertTriangle, Plus, Search } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/AppShell";
@@ -28,7 +28,7 @@ export const Route = createFileRoute("/_authenticated/dogs")({
   head: () => ({
     meta: [
       { title: "강아지 · 보호자 프로필 | 허그앤멍 예약관리" },
-      { name: "description", content: "견종, 나이, 몸무게, 백신 만료일, 특이사항과 보호자 연락처를 함께 관리합니다." },
+      { name: "description", content: "견종, 나이, 몸무게, 특이사항과 보호자 연락처를 함께 관리합니다." },
       { property: "og:title", content: "강아지 · 보호자 프로필 | 허그앤멍 예약관리" },
       { property: "og:description", content: "강아지 프로필과 보호자 연락처 관리" },
       { property: "og:type", content: "website" },
@@ -46,7 +46,6 @@ type DogRow = {
   neutered: boolean;
   birth_date: string | null;
   weight_kg: number | null;
-  vaccine_expires_on: string | null;
   notes: string | null;
   active: boolean;
   owners: { id: string; name: string; phone: string; memo: string | null } | null;
@@ -61,7 +60,7 @@ function DogsPage() {
       const { data, error } = await supabase
         .from("dogs")
         .select(
-          "id, name, breed, gender, neutered, birth_date, weight_kg, vaccine_expires_on, notes, active, owners(id, name, phone, memo)",
+          "id, name, breed, gender, neutered, birth_date, weight_kg, notes, active, owners(id, name, phone, memo)",
         )
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -155,7 +154,6 @@ function NewDogDialog() {
   const [neutered, setNeutered] = useState(false);
   const [birthDate, setBirthDate] = useState("");
   const [weight, setWeight] = useState("");
-  const [vaccine, setVaccine] = useState("");
   const [notes, setNotes] = useState("");
 
   const ownersQuery = useQuery({
@@ -188,7 +186,6 @@ function NewDogDialog() {
         neutered,
         birth_date: birthDate || null,
         weight_kg: weight ? Number(weight) : null,
-        vaccine_expires_on: vaccine || null,
         notes: notes.trim() || null,
       });
       if (error) throw error;
@@ -305,10 +302,6 @@ function NewDogDialog() {
             <div className="space-y-2">
               <Label>생일</Label>
               <Input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label>백신 만료일</Label>
-              <Input type="date" value={vaccine} onChange={(e) => setVaccine(e.target.value)} />
             </div>
           </div>
 
