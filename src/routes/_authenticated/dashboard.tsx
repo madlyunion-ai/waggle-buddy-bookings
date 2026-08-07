@@ -324,7 +324,7 @@ function DashboardPage() {
                       }}
                       className="mt-auto flex shrink-0 items-center gap-1 rounded-md px-1 text-[10px] font-bold text-primary hover:bg-primary/10"
                     >
-                      <Plus className="size-3" /> {items.length - 2}개 더보기
+                      <Plus className="size-3" /> {items.length - 3}개 더보기
                     </button>
                   ) : null}
                 </div>
