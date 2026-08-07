@@ -183,7 +183,8 @@ export const getExternalProfile = createServerFn({ method: "GET" })
       >("/auth/profile");
       const dto = (res.data ?? res.user ?? res) as Record<string, unknown>;
       const str = (k: string) => (typeof dto[k] === "string" ? (dto[k] as string) : null);
-      const branch = dto["branch"] as { name?: string } | undefined;
+      const branch = dto["branch"] as { id?: string | number; name?: string } | undefined;
+      const branchIdRaw = dto["branchId"] ?? dto["branch_id"] ?? branch?.id ?? null;
       return {
         id: String(dto["id"] ?? ""),
         name: str("realname") || str("name") || str("username") || "사용자",
@@ -192,8 +193,13 @@ export const getExternalProfile = createServerFn({ method: "GET" })
         phone: str("phoneNumber"),
         role: str("role"),
         branchName: str("branchName") ?? branch?.name ?? null,
+        branchId:
+          branchIdRaw === null || branchIdRaw === undefined || branchIdRaw === ""
+            ? null
+            : String(branchIdRaw),
         avatarUrl: str("profileImageUrl") ?? str("avatarUrl") ?? str("photoUrl"),
       };
+
     } catch (e) {
       console.error("ProjectPet profile fetch failed:", e);
       return null;
