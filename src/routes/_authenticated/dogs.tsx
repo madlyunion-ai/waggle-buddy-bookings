@@ -113,7 +113,8 @@ function DogsPage() {
         </div>
 
         {petsQuery.isLoading ? (
-          <p className="p-8 text-center text-sm text-muted-foreground">외부 API에서 불러오는 중…</p>
+          <p className="p-8 text-center text-sm text-muted-foreground">데이터베이스에서 불러오는 중…</p>
+
         ) : petsQuery.isError ? (
           <p className="p-8 text-center text-sm font-semibold text-destructive">
             반려견 목록을 불러오지 못했습니다. 다시 시도해 주세요.
