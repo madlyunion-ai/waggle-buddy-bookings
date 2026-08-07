@@ -5,7 +5,6 @@ import type { ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import logo from "@/assets/hugandmung-logo.png";
 
 const NAV_GROUPS = [
   {
@@ -60,12 +59,9 @@ export function AppShell({
       <header className="sticky top-0 z-30 border-b border-border bg-card">
         <div className="flex h-14 items-center gap-3 px-4 lg:px-6">
           <Link to="/dashboard" className="flex items-center gap-2">
-            <img src={logo} alt="허그앤멍 로고" width={28} height={28} className="size-7 rounded-md" />
-            <span className="font-display text-[17px] font-extrabold tracking-tight">허그앤멍</span>
-            <span className="hidden rounded bg-secondary px-1.5 py-0.5 text-[11px] font-semibold text-muted-foreground sm:inline">
-              유치원 관리
-            </span>
+            <span className="font-display text-[17px] font-extrabold tracking-tight">허그앤멍 예약관리시스템</span>
           </Link>
+
           <div className="ml-auto flex items-center gap-2">
             <span className="hidden rounded-md border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground md:inline">
               허그앤멍 본원

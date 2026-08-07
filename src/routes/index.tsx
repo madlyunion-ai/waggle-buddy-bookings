@@ -1,21 +1,24 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { CalendarDays, Dog, Ticket } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import logo from "@/assets/hugandmung-logo.png";
+import { lovable } from "@/integrations/lovable/index";
 
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "허그앤멍 예약관리 | 반려견 유치원 운영 시스템" },
+      { title: "허그앤멍 예약관리시스템 | 반려견 유치원 운영" },
       {
         name: "description",
         content: "예약 캘린더, 등하원 체크인, 강아지 프로필, 이용권·결제까지 한 곳에서 관리하는 반려견 유치원 관리 시스템.",
       },
-      { property: "og:title", content: "허그앤멍 예약관리 | 반려견 유치원 운영 시스템" },
+      { property: "og:title", content: "허그앤멍 예약관리시스템 | 반려견 유치원 운영" },
       {
         property: "og:description",
         content: "예약 캘린더, 등하원 체크인, 강아지 프로필, 이용권·결제 관리를 한 곳에서.",
@@ -31,12 +34,12 @@ const FEATURES = [
   {
     icon: CalendarDays,
     title: "예약 캘린더 · 일별 현황",
-    body: "월간 캘린더에서 날짜별 예약 수를 확인하고, 오늘 등원·하원 현황을 실시간으로 체크합니다.",
+    body: "월간 캘린더에서 날짜별 예약을 확인하고, 오늘 등원·하원 현황을 실시간으로 체크합니다.",
   },
   {
     icon: Dog,
     title: "강아지 · 보호자 프로필",
-    body: "견종, 나이, 몸무게, 백신 만료일, 특이사항과 보호자 연락처를 한 카드에서 관리합니다.",
+    body: "견종, 나이, 몸무게, 특이사항과 보호자 연락처를 한 카드에서 관리합니다.",
   },
   {
     icon: Ticket,
@@ -47,44 +50,102 @@ const FEATURES = [
 
 function Landing() {
   const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) navigate({ to: "/dashboard", replace: true });
     });
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session && (event === "SIGNED_IN" || event === "INITIAL_SESSION")) {
+        navigate({ to: "/dashboard", replace: true });
+      }
+    });
+    return () => sub.subscription.unsubscribe();
   }, [navigate]);
+
+  async function signIn(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    setLoading(false);
+    if (error) {
+      toast.error("로그인에 실패했습니다", { description: error.message });
+      return;
+    }
+    navigate({ to: "/dashboard", replace: true });
+  }
+
+  async function google() {
+    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
+    if (result.error) {
+      toast.error("Google 로그인에 실패했습니다");
+      return;
+    }
+    if (result.redirected) return;
+    navigate({ to: "/dashboard", replace: true });
+  }
 
   return (
     <div className="paw-grid min-h-screen">
-      <header className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
-        <span className="flex items-center gap-2 font-display text-lg font-extrabold">
-          <img src={logo} alt="허그앤멍 로고" width={32} height={32} className="size-8 rounded-md" /> 허그앤멍
-        </span>
-
-        <Button asChild variant="outline" size="sm">
-          <Link to="/auth">직원 로그인</Link>
-        </Button>
+      <header className="mx-auto flex h-16 max-w-6xl items-center px-4">
+        <span className="font-display text-lg font-extrabold tracking-tight">허그앤멍 예약관리시스템</span>
       </header>
 
-      <section className="mx-auto max-w-3xl px-4 py-20 text-center">
-        <span className="inline-block rounded-full bg-accent/25 px-3 py-1 text-xs font-semibold text-accent-foreground">
-          원장·직원 전용 관리 시스템
-        </span>
-        <h1 className="mt-5 text-4xl font-extrabold leading-tight sm:text-5xl">
-          반려견 유치원의 하루를
-          <br />
-          한 화면에서 관리하세요
-        </h1>
-        <p className="mx-auto mt-5 max-w-xl text-muted-foreground">
-          예약 등록부터 등하원 체크인, 원생 프로필, 이용권 잔여 횟수와 결제까지 — 수첩과 단체 채팅방 대신 하나의 시스템으로
-          정리합니다.
-        </p>
-        <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <Button asChild size="lg">
-            <Link to="/auth">시작하기</Link>
-          </Button>
-          <Button asChild size="lg" variant="outline">
-            <Link to="/auth">직원 계정 만들기</Link>
+      <section className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-16 lg:grid-cols-[1.1fr_0.9fr]">
+        <div>
+          <span className="inline-block rounded-full bg-accent/25 px-3 py-1 text-xs font-semibold text-accent-foreground">
+            원장·직원 전용 관리 시스템
+          </span>
+          <h1 className="mt-5 text-4xl font-extrabold leading-tight sm:text-5xl">
+            반려견 유치원의 하루를
+            <br />
+            한 화면에서 관리하세요
+          </h1>
+          <p className="mt-5 max-w-xl text-muted-foreground">
+            예약 등록부터 등하원 체크인, 원생 프로필, 이용권 잔여 횟수와 결제까지 — 수첩과 단체 채팅방 대신 하나의
+            시스템으로 정리합니다.
+          </p>
+        </div>
+
+        <div className="surface-card w-full p-6">
+          <h2 className="text-lg font-bold">직원 로그인</h2>
+          <p className="mt-1 text-sm text-muted-foreground">등록된 직원 계정으로 로그인해 주세요.</p>
+
+          <form className="mt-5 space-y-4" onSubmit={signIn}>
+            <div className="space-y-2">
+              <Label htmlFor="email">이메일</Label>
+              <Input
+                id="email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="staff@example.com"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">비밀번호</Label>
+              <Input
+                id="password"
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+            <Button type="submit" className="w-full" disabled={loading}>
+              로그인
+            </Button>
+          </form>
+
+          <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground">
+            <span className="h-px flex-1 bg-border" /> 또는 <span className="h-px flex-1 bg-border" />
+          </div>
+          <Button variant="outline" className="w-full" onClick={google}>
+            Google 계정으로 계속하기
           </Button>
         </div>
       </section>
