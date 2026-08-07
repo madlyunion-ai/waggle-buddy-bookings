@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedDogsRouteImport } from './routes/_authenticated/dogs'
 import { Route as AuthenticatedPassesRouteImport } from './routes/_authenticated/passes'
+import { Route as AuthenticatedReservationsRouteImport } from './routes/_authenticated/reservations'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -45,6 +46,12 @@ const AuthenticatedPassesRoute = AuthenticatedPassesRouteImport.update({
   path: '/passes',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedReservationsRoute =
+  AuthenticatedReservationsRouteImport.update({
+    id: '/reservations',
+    path: '/reservations',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -52,6 +59,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/dogs': typeof AuthenticatedDogsRoute
   '/passes': typeof AuthenticatedPassesRoute
+  '/reservations': typeof AuthenticatedReservationsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -59,6 +67,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/dogs': typeof AuthenticatedDogsRoute
   '/passes': typeof AuthenticatedPassesRoute
+  '/reservations': typeof AuthenticatedReservationsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -68,12 +77,14 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/dogs': typeof AuthenticatedDogsRoute
   '/_authenticated/passes': typeof AuthenticatedPassesRoute
+  '/_authenticated/reservations': typeof AuthenticatedReservationsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/dashboard' | '/dogs' | '/passes'
+  fullPaths:
+    '/' | '/auth' | '/dashboard' | '/dogs' | '/passes' | '/reservations'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/dashboard' | '/dogs' | '/passes'
+  to: '/' | '/auth' | '/dashboard' | '/dogs' | '/passes' | '/reservations'
   id:
     | '__root__'
     | '/'
@@ -82,6 +93,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/dogs'
     | '/_authenticated/passes'
+    | '/_authenticated/reservations'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -134,6 +146,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPassesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/reservations': {
+      id: '/_authenticated/reservations'
+      path: '/reservations'
+      fullPath: '/reservations'
+      preLoaderRoute: typeof AuthenticatedReservationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -141,12 +160,14 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDogsRoute: typeof AuthenticatedDogsRoute
   AuthenticatedPassesRoute: typeof AuthenticatedPassesRoute
+  AuthenticatedReservationsRoute: typeof AuthenticatedReservationsRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDogsRoute: AuthenticatedDogsRoute,
   AuthenticatedPassesRoute: AuthenticatedPassesRoute,
+  AuthenticatedReservationsRoute: AuthenticatedReservationsRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -160,3 +181,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
