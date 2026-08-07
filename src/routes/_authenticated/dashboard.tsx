@@ -488,21 +488,22 @@ function SummaryCard({
   unit: string;
 }) {
   return (
-    <div className="surface-card relative shrink-0 overflow-hidden p-4">
+    <div className="surface-card relative shrink-0 overflow-hidden px-3 py-2.5">
       <div
-        className={`absolute -right-4 -top-4 flex size-16 items-end justify-start rounded-full p-3 ${tint}`}
+        className={`absolute -right-4 -top-4 flex size-12 items-end justify-start rounded-full p-2.5 ${tint}`}
       >
         {icon}
       </div>
-      <p className="text-sm font-bold">{label}</p>
+      <p className="text-[13px] font-bold">{label}</p>
       <p
-        className={`mt-2 text-3xl font-extrabold tracking-tight ${
+        className={`mt-1 text-2xl font-extrabold leading-tight tracking-tight ${
           value > 0 ? "text-primary" : "text-foreground"
         }`}
       >
         {value}
         <span className="ml-1 text-xs font-semibold text-muted-foreground">{unit}</span>
       </p>
+
     </div>
   );
 
