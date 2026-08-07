@@ -577,10 +577,12 @@ function NewReservationDialog({ defaultDate }: { defaultDate: string }) {
 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reservations"] });
+      queryClient.invalidateQueries({ queryKey: ["passes"] });
       toast.success("예약을 등록했습니다");
       setOpen(false);
       setMemo("");
       setPetId("");
+      setPassId("none");
     },
     onError: (e: Error) => toast.error("예약 등록에 실패했습니다", { description: e.message }),
   });
