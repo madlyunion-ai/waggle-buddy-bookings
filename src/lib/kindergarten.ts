@@ -90,6 +90,14 @@ export const SERVICE_STYLES: Record<ServiceType, string> = {
   grooming: "bg-warning/20 text-warning-foreground border-warning/35",
 };
 
+/** 서비스별 등원/하원 버튼 문구 */
+export const SERVICE_ACTION_LABELS: Record<ServiceType, { checkIn: string; checkOut: string }> = {
+  kindergarten: { checkIn: "등원", checkOut: "하원" },
+  hotel: { checkIn: "입실", checkOut: "퇴실" },
+  daily_care: { checkIn: "케어 시작", checkOut: "케어 종료" },
+  grooming: { checkIn: "미용 시작", checkOut: "미용 완료" },
+};
+
 /** 09:00 ~ 19:00, 30분 단위 미용 예약 슬롯 */
 export const GROOMING_SLOTS: string[] = Array.from({ length: 21 }, (_, i) => {
   const total = 9 * 60 + i * 30;
