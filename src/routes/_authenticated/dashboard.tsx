@@ -7,6 +7,7 @@ import {
   BedDouble,
   CalendarCheck,
   ChevronLeft,
+  CalendarDays,
   ChevronRight,
   Clock,
   LogIn,
@@ -182,9 +183,15 @@ function DashboardPage() {
 
 
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold">
-            {anchor.getFullYear()}년 {anchor.getMonth() + 1}월
-          </h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-bold">
+              {anchor.getFullYear()}년 {anchor.getMonth() + 1}월
+            </h2>
+            <span className="hidden items-center gap-1.5 rounded-full bg-secondary px-2.5 py-1 text-xs font-bold text-primary sm:inline-flex">
+              <CalendarDays className="size-3.5" />
+              {formatDateKorean(todayKey)}
+            </span>
+          </div>
           <div className="flex items-center gap-2">
             <div className="mr-2 hidden items-center gap-2 md:flex">
               {SERVICE_TYPES.map((t) => (
@@ -223,7 +230,7 @@ function DashboardPage() {
             </div>
           ))}
         </div>
-        <div className="grid min-h-0 flex-1 grid-cols-7 gap-1.5 overflow-y-auto">
+        <div className="grid min-h-0 flex-1 auto-rows-fr grid-cols-7 gap-1.5 overflow-hidden">
           {cells.map((d) => {
             const key = toDateKey(d);
             const isMonth = d.getMonth() === anchor.getMonth();
@@ -244,7 +251,7 @@ function DashboardPage() {
                     setCreateDate(key);
                   }
                 }}
-                className={`flex min-h-[124px] cursor-pointer flex-col items-stretch gap-1 rounded-xl border p-1.5 text-left align-top transition-colors ${
+                className={`flex min-h-0 cursor-pointer overflow-hidden flex-col items-stretch gap-1 rounded-xl border p-1.5 text-left align-top transition-colors ${
                   isSelected
                     ? "border-primary bg-primary/8"
                     : isMonth
