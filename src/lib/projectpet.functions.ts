@@ -18,7 +18,11 @@ export type ExternalPet = {
   breed: string | null;
   birthDate: string | null;
   weight: number | null;
+  gender: string | null;
+  neutered: boolean;
   ownerNames: string[];
+  ownerId: string | null;
+  ownerPhone: string | null;
 };
 
 type OwnerDto = {
