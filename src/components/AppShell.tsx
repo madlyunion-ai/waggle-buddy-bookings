@@ -153,7 +153,7 @@ export function AppShell({
           ))}
         </aside>
 
-        <main className="min-w-0 flex-1 px-4 py-4 lg:px-8">
+        <main className="min-w-0 flex-1 px-4 py-4 lg:px-6">
           {title || action ? (
             <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
               <div>
