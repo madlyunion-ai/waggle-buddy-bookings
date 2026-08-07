@@ -230,6 +230,7 @@ function NewStaffDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (
 
   const [role, setRole] = useState<StaffRole>("STAFF");
   const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -238,6 +239,7 @@ function NewStaffDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (
   function reset() {
     setRole("STAFF");
     setName("");
+    setUsername("");
     setEmail("");
     setPassword("");
     setConfirm("");
@@ -245,9 +247,10 @@ function NewStaffDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (
   }
 
   const mutation = useMutation({
-    mutationFn: () => submit({ data: { name, email, password, phone, role } }),
+    mutationFn: () => submit({ data: { name, username, email, password, phone, role } }),
     onSuccess: () => {
-      toast.success("직원이 등록되었습니다. 등록한 이메일·비밀번호로 로그인할 수 있습니다.");
+      toast.success("직원이 등록되었습니다. 등록한 아이디·비밀번호로 로그인할 수 있습니다.");
+
 
       queryClient.invalidateQueries({ queryKey: ["local-staff"] });
       queryClient.invalidateQueries({ queryKey: ["external-staff"] });
