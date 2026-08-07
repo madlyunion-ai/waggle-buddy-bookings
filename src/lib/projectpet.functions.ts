@@ -205,3 +205,113 @@ export const getExternalProfile = createServerFn({ method: "GET" })
       return null;
     }
   });
+
+export type StaffRole = "BRANCH_MANAGER" | "STAFF";
+
+export type ExternalStaff = {
+  id: string;
+  name: string;
+  username: string | null;
+  email: string | null;
+  phone: string | null;
+  role: string | null;
+  status: string | null;
+  branchName: string | null;
+  createdAt: string | null;
+};
+
+type StaffDto = {
+  id: string | number;
+  name?: string;
+  realname?: string;
+  username?: string;
+  email?: string;
+  phoneNumber?: string;
+  role?: string;
+  status?: string;
+  branchName?: string;
+  branch?: { name?: string } | null;
+  createdAt?: string;
+  created_at?: string;
+};
+
+function mapStaff(dto: StaffDto): ExternalStaff {
+  return {
+    id: String(dto.id),
+    name: dto.realname || dto.name || dto.username || "이름 없음",
+    username: dto.username ?? null,
+    email: dto.email ?? null,
+    phone: dto.phoneNumber ?? null,
+    role: dto.role ?? null,
+    status: dto.status ?? null,
+    branchName: dto.branchName ?? dto.branch?.name ?? null,
+    createdAt: dto.createdAt ?? dto.created_at ?? null,
+  };
+}
+
+/** 외부 API 직원(사용자) 목록 조회 */
+export const listExternalStaff = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { search?: string; limit?: number }) => ({
+    search: typeof input?.search === "string" ? input.search.slice(0, 100) : "",
+    limit: Math.min(Math.max(Number(input?.limit) || 100, 1), 100),
+  }))
+  .handler(async ({ data }): Promise<ExternalStaff[]> => {
+    const { apiGet } = await import("./projectpet.server");
+    const res = await apiGet<{ users?: StaffDto[]; data?: { users?: StaffDto[] } }>("/users", {
+      page: 1,
+      limit: data.limit,
+      search: data.search || undefined,
+    });
+    const rows = res.users ?? res.data?.users ?? [];
+    return rows.map(mapStaff).filter((s) => s.role !== "OWNER");
+  });
+
+/** 외부 API 직원 신규 등록 */
+export const createExternalStaff = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (input: { name: string; email: string; password: string; phone: string; role: StaffRole }) => {
+      const name = String(input?.name ?? "").trim().slice(0, 100);
+      const email = String(input?.email ?? "").trim().slice(0, 200);
+      const password = String(input?.password ?? "");
+      const phone = String(input?.phone ?? "").replace(/[^0-9]/g, "").slice(0, 11);
+      const role: StaffRole = input?.role === "BRANCH_MANAGER" ? "BRANCH_MANAGER" : "STAFF";
+      if (!name) throw new Error("이름을 입력해 주세요.");
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("올바른 이메일을 입력해 주세요.");
+      if (password.length < 6) throw new Error("비밀번호는 6자 이상이어야 합니다.");
+      if (phone.length < 10) throw new Error("휴대폰 번호를 정확히 입력해 주세요.");
+      return { name, email, password, phone, role };
+    },
+  )
+  .handler(async ({ data }): Promise<{ id: string }> => {
+    const { apiGet, apiPost } = await import("./projectpet.server");
+
+    let branchId: number | undefined;
+    try {
+      const profile = await apiGet<Record<string, unknown> & { data?: Record<string, unknown> }>(
+        "/auth/profile",
+      );
+      const dto = (profile.data ?? profile) as Record<string, unknown>;
+      const branch = dto["branch"] as { id?: string | number } | undefined;
+      const raw = dto["branchId"] ?? dto["branch_id"] ?? branch?.id;
+      if (raw !== undefined && raw !== null && raw !== "") branchId = Number(raw);
+    } catch (e) {
+      console.error("ProjectPet profile fetch for staff create failed:", e);
+    }
+
+    const res = await apiPost<{ id?: string | number; data?: { id?: string | number } }>("/mobile/users", {
+      username: data.email,
+      email: data.email,
+      password: data.password,
+      name: data.name,
+      realname: data.name,
+      phoneNumber: data.phone,
+      role: data.role,
+      status: "ACTIVE",
+      ...(branchId !== undefined && Number.isFinite(branchId) ? { branchId } : {}),
+    });
+
+    const id = res.id ?? res.data?.id ?? "";
+    return { id: String(id) };
+  });

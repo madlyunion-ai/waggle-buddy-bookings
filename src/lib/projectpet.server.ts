@@ -60,3 +60,33 @@ export async function apiGet<T>(path: string, params?: Record<string, string | n
   }
   return (await res.json()) as T;
 }
+
+export async function apiPost<T>(path: string, body: unknown): Promise<T> {
+  const call = async (token: string) =>
+    fetch(`${BASE_URL}${path}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+
+  let res = await call(await getToken());
+  if (res.status === 401) res = await call(await getToken(true));
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.error(`ProjectPet POST ${path} failed [${res.status}]: ${text}`);
+    let message = `외부 API 요청 실패 [${res.status}]`;
+    try {
+      const parsed = JSON.parse(text) as { message?: string | string[] };
+      if (parsed.message) message = Array.isArray(parsed.message) ? parsed.message.join(", ") : parsed.message;
+    } catch {
+      // keep default message
+    }
+    throw new Error(message);
+  }
+  return (await res.json()) as T;
+}

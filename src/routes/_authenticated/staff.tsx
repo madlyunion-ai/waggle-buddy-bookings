@@ -1,0 +1,310 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { useState } from "react";
+import { Plus, RefreshCw, Search } from "lucide-react";
+import { toast } from "sonner";
+
+import { AppShell } from "@/components/AppShell";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  createExternalStaff,
+  listExternalStaff,
+  type ExternalStaff,
+  type StaffRole,
+} from "@/lib/projectpet.functions";
+
+export const Route = createFileRoute("/_authenticated/staff")({
+  head: () => ({
+    meta: [
+      { title: "직원 관리 | 허그앤멍 예약관리" },
+      { name: "description", content: "원장·선생님 계정을 조회하고 신규 직원을 등록합니다." },
+      { property: "og:title", content: "직원 관리 | 허그앤멍 예약관리" },
+      { property: "og:description", content: "허그앤멍 직원 계정 관리" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
+  component: StaffPage,
+});
+
+const ROLE_LABELS: Record<string, string> = {
+  BRANCH_MANAGER: "원장",
+  SUPER_ADMIN: "원장",
+  STAFF: "선생님",
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  ACTIVE: "활성",
+  INACTIVE: "비활성",
+  PENDING_APPROVAL: "승인 대기",
+};
+
+function roleLabel(role: string | null) {
+  return role ? (ROLE_LABELS[role] ?? role) : "-";
+}
+
+function formatPhone(phone: string | null) {
+  if (!phone) return "-";
+  const digits = phone.replace(/[^0-9]/g, "");
+  if (digits.length === 11) return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+  return phone;
+}
+
+function StaffPage() {
+  const [keyword, setKeyword] = useState("");
+  const [open, setOpen] = useState(false);
+  const fetchStaff = useServerFn(listExternalStaff);
+
+  const query = useQuery({
+    queryKey: ["external-staff"],
+    queryFn: () => fetchStaff({ data: { limit: 100 } }),
+  });
+
+  const rows: ExternalStaff[] = (query.data ?? []).filter((row) => {
+    const k = keyword.trim().toLowerCase();
+    if (!k) return true;
+    return [row.name, row.email, row.username, row.phone, roleLabel(row.role)]
+      .filter(Boolean)
+      .some((v) => String(v).toLowerCase().includes(k));
+  });
+
+  const managers = rows.filter((r) => r.role !== "STAFF").length;
+
+  return (
+    <AppShell
+      title="직원 관리"
+      description="원장·선생님 계정을 조회하고 신규 직원을 등록합니다."
+      action={
+        <Button onClick={() => setOpen(true)}>
+          <Plus className="size-4" />
+          직원 추가
+        </Button>
+      }
+    >
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <div className="relative min-w-[220px] flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            placeholder="이름, 아이디, 연락처 검색"
+            className="pl-9"
+          />
+        </div>
+        <Button variant="outline" onClick={() => query.refetch()} disabled={query.isFetching}>
+          <RefreshCw className={`size-4 ${query.isFetching ? "animate-spin" : ""}`} />
+          새로고침
+        </Button>
+        <span className="text-sm text-muted-foreground">
+          총 {rows.length}명 · 원장 {managers}명
+        </span>
+      </div>
+
+      <div className="overflow-hidden rounded-lg border border-border bg-card">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[720px] text-sm">
+            <thead className="bg-secondary/60 text-left text-xs font-bold text-muted-foreground">
+              <tr>
+                <th className="px-4 py-3">이름</th>
+                <th className="px-4 py-3">구분</th>
+                <th className="px-4 py-3">아이디(이메일)</th>
+                <th className="px-4 py-3">핸드폰번호</th>
+                <th className="px-4 py-3">상태</th>
+              </tr>
+            </thead>
+            <tbody>
+              {query.isLoading ? (
+                <tr>
+                  <td colSpan={5} className="px-4 py-10 text-center text-muted-foreground">
+                    직원 정보를 불러오는 중…
+                  </td>
+                </tr>
+              ) : query.isError ? (
+                <tr>
+                  <td colSpan={5} className="px-4 py-10 text-center text-destructive">
+                    직원 정보를 불러오지 못했습니다.
+                  </td>
+                </tr>
+              ) : rows.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-4 py-10 text-center text-muted-foreground">
+                    표시할 직원이 없습니다.
+                  </td>
+                </tr>
+              ) : (
+                rows.map((row) => (
+                  <tr key={row.id} className="border-t border-border">
+                    <td className="px-4 py-3 font-semibold">{row.name}</td>
+                    <td className="px-4 py-3">
+                      <Badge variant={row.role === "STAFF" ? "secondary" : "default"}>{roleLabel(row.role)}</Badge>
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">{row.email ?? row.username ?? "-"}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{formatPhone(row.phone)}</td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {row.status ? (STATUS_LABELS[row.status] ?? row.status) : "-"}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <NewStaffDialog open={open} onOpenChange={setOpen} />
+    </AppShell>
+  );
+}
+
+function NewStaffDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
+  const queryClient = useQueryClient();
+  const submit = useServerFn(createExternalStaff);
+
+  const [role, setRole] = useState<StaffRole>("STAFF");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [phone, setPhone] = useState("");
+
+  function reset() {
+    setRole("STAFF");
+    setName("");
+    setEmail("");
+    setPassword("");
+    setConfirm("");
+    setPhone("");
+  }
+
+  const mutation = useMutation({
+    mutationFn: () => submit({ data: { name, email, password, phone, role } }),
+    onSuccess: () => {
+      toast.success("직원이 등록되었습니다.");
+      queryClient.invalidateQueries({ queryKey: ["external-staff"] });
+      reset();
+      onOpenChange(false);
+    },
+    onError: (error: unknown) => {
+      toast.error(error instanceof Error ? error.message : "직원 등록에 실패했습니다.");
+    },
+  });
+
+  function handleSubmit() {
+    if (password !== confirm) {
+      toast.error("비밀번호가 일치하지 않습니다.");
+      return;
+    }
+    mutation.mutate();
+  }
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        onOpenChange(v);
+        if (!v) reset();
+      }}
+    >
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>직원 추가</DialogTitle>
+          <DialogDescription>원장 또는 선생님 계정을 새로 등록합니다.</DialogDescription>
+        </DialogHeader>
+
+        <div className="grid gap-3">
+          <div className="grid gap-1.5">
+            <Label>구분</Label>
+            <Select value={role} onValueChange={(v) => setRole(v as StaffRole)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="BRANCH_MANAGER">원장</SelectItem>
+                <SelectItem value="STAFF">선생님</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid gap-1.5">
+            <Label htmlFor="staff-name">이름</Label>
+            <Input
+              id="staff-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="홍길동"
+              maxLength={100}
+            />
+          </div>
+
+          <div className="grid gap-1.5">
+            <Label htmlFor="staff-email">아이디(이메일)</Label>
+            <Input
+              id="staff-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="teacher@hugandmung.com"
+              maxLength={200}
+            />
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-1.5">
+              <Label htmlFor="staff-pw">비밀번호</Label>
+              <Input
+                id="staff-pw"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="6자 이상"
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="staff-pw2">비밀번호 확인</Label>
+              <Input
+                id="staff-pw2"
+                type="password"
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+                placeholder="다시 입력"
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-1.5">
+            <Label htmlFor="staff-phone">핸드폰번호</Label>
+            <Input
+              id="staff-phone"
+              inputMode="numeric"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, "").slice(0, 11))}
+              placeholder="01012345678"
+            />
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            취소
+          </Button>
+          <Button onClick={handleSubmit} disabled={mutation.isPending}>
+            {mutation.isPending ? "등록 중…" : "등록"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

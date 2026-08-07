@@ -308,9 +308,6 @@ function DashboardPage() {
         {monthQuery.isLoading ? (
           <p className="mt-3 text-center text-xs text-muted-foreground">예약을 불러오는 중…</p>
         ) : null}
-        <p className="mt-3 text-center text-[11px] text-muted-foreground">
-          {monthStart.slice(0, 7)} 기준 · 호텔 예약은 숙박 기간 내내 표시됩니다.
-        </p>
       </section>
 
       <div className="flex h-full min-h-0 flex-col gap-3">
