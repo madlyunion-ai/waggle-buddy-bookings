@@ -308,7 +308,19 @@ function NewStaffDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (
           </div>
 
           <div className="grid gap-1.5">
-            <Label htmlFor="staff-email">아이디(이메일)</Label>
+            <Label htmlFor="staff-username">아이디</Label>
+            <Input
+              id="staff-username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value.replace(/[^A-Za-z0-9._-]/g, ""))}
+              placeholder="teacher01"
+              maxLength={50}
+            />
+            <p className="text-xs text-muted-foreground">영문·숫자 3자 이상. 이 아이디로 로그인합니다.</p>
+          </div>
+
+          <div className="grid gap-1.5">
+            <Label htmlFor="staff-email">이메일 (선택)</Label>
             <Input
               id="staff-email"
               type="email"
@@ -318,6 +330,7 @@ function NewStaffDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (
               maxLength={200}
             />
           </div>
+
 
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="grid gap-1.5">
