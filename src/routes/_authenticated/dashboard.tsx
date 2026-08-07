@@ -1,7 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { CalendarCheck, ChevronLeft, ChevronRight, Clock, LogIn, LogOut, Plus, Users } from "lucide-react";
+import {
+  BedDouble,
+  CalendarCheck,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  LogIn,
+  LogOut,
+  Plus,
+  Scissors,
+  Users,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/AppShell";
@@ -145,6 +156,13 @@ function DashboardPage() {
 
   const cells = monthMatrix(anchor);
   const todayKey = toDateKey(new Date());
+
+  const byType = useMemo(() => {
+    const base: Record<ServiceType, Row[]> = { kindergarten: [], hotel: [], daily_care: [], grooming: [] };
+    for (const r of active) base[r.service_type]?.push(r);
+    return base;
+  }, [active]);
+  const checkInToday = byType.hotel.filter((r) => r.reserved_date === selected).length;
 
   return (
     <AppShell
@@ -369,6 +387,41 @@ function DashboardPage() {
         )}
       </section>
     </AppShell>
+  );
+}
+
+function SummaryCard({
+  icon,
+  tint,
+  label,
+  value,
+  unit,
+  note,
+}: {
+  icon: React.ReactNode;
+  tint: string;
+  label: string;
+  value: number;
+  unit: string;
+  note: string;
+}) {
+  return (
+    <div className="surface-card relative overflow-hidden p-5">
+      <div
+        className={`absolute -right-4 -top-4 flex size-20 items-end justify-start rounded-full p-3.5 ${tint}`}
+      >
+        {icon}
+      </div>
+      <p className="text-sm font-bold">{label}</p>
+      <p className="mt-3 text-3xl font-extrabold tracking-tight">
+        {value}
+        <span className="ml-1 text-xs font-semibold text-muted-foreground">{unit}</span>
+      </p>
+      <p className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
+        <span className="size-2 rounded-full bg-primary" />
+        {note}
+      </p>
+    </div>
   );
 }
 
