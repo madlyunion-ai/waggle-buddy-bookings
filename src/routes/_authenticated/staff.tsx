@@ -98,7 +98,7 @@ function StaffPage() {
   const localRows: StaffRow[] = (localQuery.data ?? []).map((r) => ({
     id: `local-${r.id}`,
     name: r.name,
-    username: r.email,
+    username: r.username ?? r.email,
     email: r.email,
     phone: r.phone,
     role: r.role,
@@ -107,6 +107,7 @@ function StaffPage() {
     createdAt: r.createdAt,
     local: true,
   }));
+
 
   const externalRows: StaffRow[] = query.isError ? [] : (query.data ?? []);
   const localEmails = new Set(localRows.map((r) => (r.email ?? "").toLowerCase()));
@@ -162,22 +163,24 @@ function StaffPage() {
               <tr>
                 <th className="px-4 py-3">이름</th>
                 <th className="px-4 py-3">구분</th>
-                <th className="px-4 py-3">아이디(이메일)</th>
+                <th className="px-4 py-3">아이디</th>
+                <th className="px-4 py-3">이메일</th>
                 <th className="px-4 py-3">핸드폰번호</th>
                 <th className="px-4 py-3">상태</th>
                 <th className="px-4 py-3 text-right">관리</th>
               </tr>
             </thead>
+
             <tbody>
               {localQuery.isLoading && query.isLoading ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-10 text-center text-muted-foreground">
+                  <td colSpan={7} className="px-4 py-10 text-center text-muted-foreground">
                     직원 정보를 불러오는 중…
                   </td>
                 </tr>
               ) : rows.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-10 text-center text-muted-foreground">
+                  <td colSpan={7} className="px-4 py-10 text-center text-muted-foreground">
                     표시할 직원이 없습니다.
                   </td>
                 </tr>
@@ -188,7 +191,9 @@ function StaffPage() {
                     <td className="px-4 py-3">
                       <Badge variant={row.role === "STAFF" ? "secondary" : "default"}>{roleLabel(row.role)}</Badge>
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground">{row.email ?? row.username ?? "-"}</td>
+                    <td className="px-4 py-3 font-medium">{row.username ?? "-"}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{row.email ?? "-"}</td>
+
                     <td className="px-4 py-3 text-muted-foreground">{formatPhone(row.phone)}</td>
                     <td className="px-4 py-3 text-muted-foreground">
                       {row.status ? (STATUS_LABELS[row.status] ?? row.status) : "-"}
@@ -225,6 +230,7 @@ function NewStaffDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (
 
   const [role, setRole] = useState<StaffRole>("STAFF");
   const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -233,6 +239,7 @@ function NewStaffDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (
   function reset() {
     setRole("STAFF");
     setName("");
+    setUsername("");
     setEmail("");
     setPassword("");
     setConfirm("");
@@ -240,9 +247,10 @@ function NewStaffDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (
   }
 
   const mutation = useMutation({
-    mutationFn: () => submit({ data: { name, email, password, phone, role } }),
+    mutationFn: () => submit({ data: { name, username, email, password, phone, role } }),
     onSuccess: () => {
-      toast.success("직원이 등록되었습니다. 등록한 이메일·비밀번호로 로그인할 수 있습니다.");
+      toast.success("직원이 등록되었습니다. 등록한 아이디·비밀번호로 로그인할 수 있습니다.");
+
 
       queryClient.invalidateQueries({ queryKey: ["local-staff"] });
       queryClient.invalidateQueries({ queryKey: ["external-staff"] });
@@ -303,7 +311,19 @@ function NewStaffDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (
           </div>
 
           <div className="grid gap-1.5">
-            <Label htmlFor="staff-email">아이디(이메일)</Label>
+            <Label htmlFor="staff-username">아이디</Label>
+            <Input
+              id="staff-username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value.replace(/[^A-Za-z0-9._-]/g, ""))}
+              placeholder="teacher01"
+              maxLength={50}
+            />
+            <p className="text-xs text-muted-foreground">영문·숫자 3자 이상. 이 아이디로 로그인합니다.</p>
+          </div>
+
+          <div className="grid gap-1.5">
+            <Label htmlFor="staff-email">이메일 (선택)</Label>
             <Input
               id="staff-email"
               type="email"
@@ -313,6 +333,7 @@ function NewStaffDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (
               maxLength={200}
             />
           </div>
+
 
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="grid gap-1.5">

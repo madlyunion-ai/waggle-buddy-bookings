@@ -1,11 +1,15 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
+
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import { loginWithUsername } from "@/lib/auth-login.functions";
+
 
 
 
@@ -25,9 +29,10 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const login = useServerFn(loginWithUsername);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -44,14 +49,23 @@ function AuthPage() {
   async function signIn(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
-    if (error) {
-      toast.error("로그인에 실패했습니다", { description: error.message });
-      return;
+    try {
+      const { accessToken, refreshToken } = await login({ data: { username, password } });
+      const { error } = await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      });
+      if (error) throw new Error(error.message);
+      navigate({ to: "/dashboard", replace: true });
+    } catch (err) {
+      toast.error("로그인에 실패했습니다", {
+        description: err instanceof Error ? err.message : "아이디 또는 비밀번호를 확인해 주세요.",
+      });
+    } finally {
+      setLoading(false);
     }
-    navigate({ to: "/dashboard", replace: true });
   }
+
 
 
   return (
@@ -65,16 +79,17 @@ function AuthPage() {
         <div className="surface-card p-6">
           <form className="space-y-4" onSubmit={signIn}>
             <div className="space-y-2">
-              <Label htmlFor="email">이메일</Label>
+              <Label htmlFor="username">아이디</Label>
               <Input
-                id="email"
-                type="email"
+                id="username"
+                autoComplete="username"
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="staff@example.com"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="아이디를 입력하세요"
               />
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="password">비밀번호</Label>
               <Input
