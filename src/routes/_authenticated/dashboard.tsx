@@ -229,10 +229,21 @@ function DashboardPage() {
             const isSelected = key === selected;
             const items = (byDate[key] ?? []).filter((r) => r.status !== "cancelled");
             return (
-              <button
+              <div
                 key={key}
-                onClick={() => setSelected(key)}
-                className={`flex min-h-[124px] flex-col items-stretch gap-1 rounded-xl border p-1.5 text-left align-top transition-colors ${
+                role="button"
+                tabIndex={0}
+                onClick={() => {
+                  setSelected(key);
+                  setCreateDate(key);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    setSelected(key);
+                    setCreateDate(key);
+                  }
+                }}
+                className={`flex min-h-[124px] cursor-pointer flex-col items-stretch gap-1 rounded-xl border p-1.5 text-left align-top transition-colors ${
                   isSelected
                     ? "border-primary bg-primary/8"
                     : isMonth
@@ -258,30 +269,41 @@ function DashboardPage() {
                 </div>
                 <div className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-hidden">
                   {items.slice(0, 3).map((r) => (
-                    <span
+                    <div
                       key={`${key}-${r.id}`}
-                      className={`block shrink-0 rounded-md border px-1.5 py-0.5 text-[10px] font-semibold leading-tight ${SERVICE_STYLES[r.service_type]}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelected(key);
+                      }}
+                      className={`flex shrink-0 items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-semibold leading-tight ${SERVICE_STYLES[r.service_type]}`}
                     >
-                      <span className="block truncate">
-                        {SERVICE_LABELS[r.service_type]} · {r.dogs?.name ?? "-"}
-                      </span>
-                      <span className="block truncate opacity-80">
+                      <span className="min-w-0 flex-1 truncate">{r.dogs?.name ?? "-"}</span>
+                      <span className="shrink-0 opacity-80">
                         {r.service_type === "hotel" && r.end_date
-                          ? `${r.reserved_date.slice(5)} ~ ${r.end_date.slice(5)}`
-                          : `${formatTime(r.drop_off_time)} ~ ${formatTime(r.pick_up_time)}`}
+                          ? `~${r.end_date.slice(5).replace("-", "/")}`
+                          : formatTime(r.drop_off_time)}
                       </span>
-                    </span>
+                    </div>
                   ))}
                   {items.length > 3 ? (
-                    <span className="shrink-0 px-1 text-[10px] font-semibold text-muted-foreground">
-                      +{items.length - 3}건 더
-                    </span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelected(key);
+                        setDayListDate(key);
+                      }}
+                      className="mt-auto flex shrink-0 items-center gap-1 rounded-md px-1 text-[10px] font-bold text-primary hover:bg-primary/10"
+                    >
+                      <Plus className="size-3" /> {items.length - 3}개 더보기
+                    </button>
                   ) : null}
                 </div>
-              </button>
+              </div>
             );
           })}
         </div>
+
 
         {monthQuery.isLoading ? (
           <p className="mt-3 text-center text-xs text-muted-foreground">예약을 불러오는 중…</p>
