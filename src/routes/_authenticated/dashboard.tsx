@@ -223,13 +223,23 @@ function DashboardPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-7 gap-1.5 text-center text-xs font-semibold text-muted-foreground">
-          {["일", "월", "화", "수", "목", "금", "토"].map((d) => (
-            <div key={d} className="py-1.5">
+        <div className="mb-1.5 grid grid-cols-7 gap-1.5 text-center text-xs font-bold">
+          {["일", "월", "화", "수", "목", "금", "토"].map((d, i) => (
+            <div
+              key={d}
+              className={`rounded-xl border py-1.5 ${
+                i === 0
+                  ? "border-rose-300/70 bg-rose-50 text-rose-500"
+                  : i === 6
+                    ? "border-sky-300/70 bg-sky-50 text-sky-600"
+                    : "border-border bg-secondary/60 text-muted-foreground"
+              }`}
+            >
               {d}
             </div>
           ))}
         </div>
+
         <div className="grid min-h-0 flex-1 auto-rows-fr grid-cols-7 gap-1.5 overflow-hidden">
           {cells.map((d) => {
             const key = toDateKey(d);
