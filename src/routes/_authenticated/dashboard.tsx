@@ -726,7 +726,7 @@ function NewReservationDialog({ defaultDate }: { defaultDate: string }) {
           </div>
         </div>
         <DialogFooter>
-          <Button disabled={!dogId || hotelInvalid || create.isPending} onClick={() => create.mutate()}>
+          <Button disabled={!petId || hotelInvalid || create.isPending} onClick={() => create.mutate()}>
             등록하기
           </Button>
         </DialogFooter>
