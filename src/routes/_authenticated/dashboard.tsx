@@ -507,9 +507,25 @@ function SummaryCard({
 
 
 
-function NewReservationDialog({ defaultDate }: { defaultDate: string }) {
+function NewReservationDialog({
+  defaultDate,
+  open: openProp,
+  onOpenChange,
+  hideTrigger,
+}: {
+  defaultDate: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hideTrigger?: boolean;
+}) {
   const queryClient = useQueryClient();
-  const [open, setOpen] = useState(false);
+  const [openState, setOpenState] = useState(false);
+  const open = openProp ?? openState;
+  const setOpen = (next: boolean) => {
+    setOpenState(next);
+    onOpenChange?.(next);
+  };
+
   const [serviceType, setServiceType] = useState<ServiceType>("kindergarten");
   const [memberSearch, setMemberSearch] = useState("");
   const [memberId, setMemberId] = useState("");
