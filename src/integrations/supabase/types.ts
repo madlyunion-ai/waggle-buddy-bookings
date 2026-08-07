@@ -194,11 +194,13 @@ export type Database = {
           created_by: string | null
           dog_id: string
           drop_off_time: string
+          end_date: string | null
           id: string
           memo: string | null
           pass_id: string | null
           pick_up_time: string
           reserved_date: string
+          service_type: string
           status: string
           updated_at: string
         }
@@ -209,11 +211,13 @@ export type Database = {
           created_by?: string | null
           dog_id: string
           drop_off_time?: string
+          end_date?: string | null
           id?: string
           memo?: string | null
           pass_id?: string | null
           pick_up_time?: string
           reserved_date: string
+          service_type?: string
           status?: string
           updated_at?: string
         }
@@ -224,11 +228,13 @@ export type Database = {
           created_by?: string | null
           dog_id?: string
           drop_off_time?: string
+          end_date?: string | null
           id?: string
           memo?: string | null
           pass_id?: string | null
           pick_up_time?: string
           reserved_date?: string
+          service_type?: string
           status?: string
           updated_at?: string
         }
