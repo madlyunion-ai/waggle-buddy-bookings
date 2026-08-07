@@ -74,7 +74,7 @@ export const createStaff = createServerFn({ method: "POST" })
       const res = await apiPost<{ id?: string | number; data?: { id?: string | number } }>(
         "/mobile/users",
         {
-          username: data.email,
+          username: data.username,
           email: data.email,
           password: data.password,
           name: data.name,
