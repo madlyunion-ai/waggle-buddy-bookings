@@ -20,6 +20,7 @@ export type Database = {
           birth_date: string | null
           breed: string | null
           created_at: string
+          external_id: string | null
           gender: string
           id: string
           name: string
@@ -36,6 +37,7 @@ export type Database = {
           birth_date?: string | null
           breed?: string | null
           created_at?: string
+          external_id?: string | null
           gender?: string
           id?: string
           name: string
@@ -52,6 +54,7 @@ export type Database = {
           birth_date?: string | null
           breed?: string | null
           created_at?: string
+          external_id?: string | null
           gender?: string
           id?: string
           name?: string
@@ -78,6 +81,8 @@ export type Database = {
           address: string | null
           created_at: string
           email: string | null
+          external_id: string | null
+          external_source: string | null
           id: string
           memo: string | null
           name: string
@@ -88,6 +93,8 @@ export type Database = {
           address?: string | null
           created_at?: string
           email?: string | null
+          external_id?: string | null
+          external_source?: string | null
           id?: string
           memo?: string | null
           name: string
@@ -98,6 +105,8 @@ export type Database = {
           address?: string | null
           created_at?: string
           email?: string | null
+          external_id?: string | null
+          external_source?: string | null
           id?: string
           memo?: string | null
           name?: string
