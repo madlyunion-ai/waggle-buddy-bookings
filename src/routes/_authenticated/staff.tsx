@@ -19,12 +19,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { listExternalStaff, type ExternalStaff } from "@/lib/projectpet.functions";
 import {
-  createExternalStaff,
-  listExternalStaff,
-  type ExternalStaff,
-  type StaffRole,
-} from "@/lib/projectpet.functions";
+  createStaff,
+  deleteLocalStaff,
+  listLocalStaff,
+  type StaffRoleInput as StaffRole,
+} from "@/lib/staff.functions";
+
 
 export const Route = createFileRoute("/_authenticated/staff")({
   head: () => ({
