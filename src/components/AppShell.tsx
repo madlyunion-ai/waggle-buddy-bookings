@@ -133,6 +133,8 @@ export function AppShell({
             </div>
           </div>
 
+          {sidebarAction ? <div className="mb-4 [&_button]:w-full">{sidebarAction}</div> : null}
+
           {NAV_GROUPS.map((group) => (
             <div key={group.label} className="mb-5">
               <p className="px-3 pb-1.5 text-[11px] font-bold tracking-wide text-muted-foreground">{group.label}</p>
@@ -153,16 +155,19 @@ export function AppShell({
           ))}
         </aside>
 
-        <main className="min-w-0 flex-1 px-4 py-6 lg:px-8">
-          <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <h1 className="text-xl font-bold sm:text-2xl">{title}</h1>
-              {description ? <p className="mt-1 text-sm text-muted-foreground">{description}</p> : null}
+        <main className="min-w-0 flex-1 px-4 py-4 lg:px-8">
+          {title || action ? (
+            <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+              <div>
+                {title ? <h1 className="text-xl font-bold sm:text-2xl">{title}</h1> : null}
+                {description ? <p className="mt-1 text-sm text-muted-foreground">{description}</p> : null}
+              </div>
+              {action}
             </div>
-            {action}
-          </div>
+          ) : null}
           {children}
         </main>
+
       </div>
     </div>
   );
