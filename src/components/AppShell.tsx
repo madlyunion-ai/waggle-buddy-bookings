@@ -100,20 +100,43 @@ export function AppShell({
 
       <div className="flex">
         <aside className="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-56 shrink-0 overflow-y-auto border-r border-border bg-sidebar px-3 py-4 lg:block">
+          <div className="mb-4 flex items-center gap-2.5 rounded-lg border border-border bg-card px-3 py-2.5">
+            {profile.data?.avatarUrl ? (
+              <img
+                src={profile.data.avatarUrl}
+                alt={`${displayName} 프로필 사진`}
+                className="size-9 shrink-0 rounded-full object-cover"
+              />
+            ) : (
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 font-display text-sm font-extrabold text-primary">
+                {initial}
+              </span>
+            )}
+            <div className="min-w-0">
+              <p className="truncate text-sm font-bold">{profile.isLoading ? "불러오는 중…" : displayName}</p>
+              <p className="truncate text-[11px] text-muted-foreground">
+                {profile.data?.branchName ?? profile.data?.role ?? profile.data?.email ?? "로그인 정보"}
+              </p>
+            </div>
+          </div>
+
           {NAV_GROUPS.map((group) => (
             <div key={group.label} className="mb-5">
               <p className="px-3 pb-1.5 text-[11px] font-bold tracking-wide text-muted-foreground">{group.label}</p>
-              {group.items.map((item) => (
-                <Link
-                  key={item.label}
-                  to={item.to}
-                  className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent data-[status=active]:bg-sidebar-accent data-[status=active]:font-semibold data-[status=active]:text-sidebar-accent-foreground"
-                >
-                  <item.icon className="size-4 opacity-70" />
-                  {item.label}
-                </Link>
-              ))}
+              <div className="flex flex-col gap-1">
+                {group.items.map((item) => (
+                  <Link
+                    key={item.label}
+                    to={item.to}
+                    className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent data-[status=active]:bg-sidebar-accent data-[status=active]:font-semibold data-[status=active]:text-sidebar-accent-foreground"
+                  >
+                    <item.icon className="size-4 opacity-70" />
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
             </div>
+
           ))}
         </aside>
 
