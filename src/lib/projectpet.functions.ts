@@ -18,7 +18,11 @@ export type ExternalPet = {
   breed: string | null;
   birthDate: string | null;
   weight: number | null;
+  gender: string | null;
+  neutered: boolean;
   ownerNames: string[];
+  ownerId: string | null;
+  ownerPhone: string | null;
 };
 
 type OwnerDto = {
@@ -39,7 +43,10 @@ type PetDto = {
   breed?: { name?: string; nameKo?: string } | null;
   birthDate?: string;
   weight?: number;
-  owners?: Array<{ name?: string; realname?: string }>;
+  gender?: string;
+  neutered?: boolean;
+  isNeutered?: boolean;
+  owners?: Array<{ id?: string | number; name?: string; realname?: string; phoneNumber?: string }>;
 };
 
 function mapMember(dto: OwnerDto, source: "owner" | "user"): ExternalMember {
@@ -55,13 +62,18 @@ function mapMember(dto: OwnerDto, source: "owner" | "user"): ExternalMember {
 }
 
 function mapPet(dto: PetDto): ExternalPet {
+  const owner = (dto.owners ?? [])[0];
   return {
     id: String(dto.id),
     name: dto.name || "이름 없음",
     breed: dto.breed?.nameKo ?? dto.breed?.name ?? null,
     birthDate: dto.birthDate ? dto.birthDate.slice(0, 10) : null,
     weight: typeof dto.weight === "number" ? dto.weight : null,
+    gender: dto.gender ? String(dto.gender).toLowerCase() : null,
+    neutered: Boolean(dto.neutered ?? dto.isNeutered ?? false),
     ownerNames: (dto.owners ?? []).map((o) => o.name || o.realname || "").filter(Boolean),
+    ownerId: owner?.id !== undefined && owner?.id !== null ? String(owner.id) : null,
+    ownerPhone: owner?.phoneNumber ?? null,
   };
 }
 
@@ -124,4 +136,25 @@ export const listExternalPets = createServerFn({ method: "GET" })
       search: data.search || undefined,
     });
     return (res.data?.pets ?? []).map(mapPet);
+  });
+
+/** 외부 API 전체 반려견 목록 조회 (검색/페이지) */
+export const listAllExternalPets = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { search?: string; page?: number; limit?: number }) => ({
+    search: typeof input?.search === "string" ? input.search.slice(0, 100) : "",
+    page: Math.min(Math.max(Number(input?.page) || 1, 1), 500),
+    limit: Math.min(Math.max(Number(input?.limit) || 50, 1), 100),
+  }))
+  .handler(async ({ data }): Promise<{ pets: ExternalPet[]; total: number }> => {
+    const { apiGet } = await import("./projectpet.server");
+    const res = await apiGet<{
+      total?: number;
+      pets?: PetDto[];
+      data?: { pets?: PetDto[]; total?: number; totalCount?: number; meta?: { total?: number } };
+    }>("/pets", { page: data.page, limit: data.limit, search: data.search || undefined });
+
+    const rows = res.data?.pets ?? res.pets ?? [];
+    const total = res.data?.total ?? res.data?.totalCount ?? res.data?.meta?.total ?? res.total ?? rows.length;
+    return { pets: rows.map(mapPet), total };
   });

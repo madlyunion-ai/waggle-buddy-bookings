@@ -1,36 +1,24 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Plus, Search } from "lucide-react";
-import { toast } from "sonner";
+import { ChevronLeft, ChevronRight, RefreshCw, Search } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
+import { ReserveDialog } from "@/components/ReserveDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
-import { supabase } from "@/integrations/supabase/client";
+import { listAllExternalPets } from "@/lib/projectpet.functions";
 import { GENDER_LABELS, ageLabel } from "@/lib/kindergarten";
 
 export const Route = createFileRoute("/_authenticated/dogs")({
   head: () => ({
     meta: [
-      { title: "강아지 · 보호자 프로필 | 허그앤멍 예약관리" },
-      { name: "description", content: "견종, 나이, 몸무게, 특이사항과 보호자 연락처를 함께 관리합니다." },
-      { property: "og:title", content: "강아지 · 보호자 프로필 | 허그앤멍 예약관리" },
-      { property: "og:description", content: "강아지 프로필과 보호자 연락처 관리" },
+      { title: "반려견 리스트 | 허그앤멍 예약관리" },
+      { name: "description", content: "외부 회원 시스템의 반려견 목록을 조회하고 바로 예약을 등록합니다." },
+      { property: "og:title", content: "반려견 리스트 | 허그앤멍 예약관리" },
+      { property: "og:description", content: "반려견 목록 조회 및 즉시 예약" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -38,295 +26,121 @@ export const Route = createFileRoute("/_authenticated/dogs")({
   component: DogsPage,
 });
 
-type DogRow = {
-  id: string;
-  name: string;
-  breed: string | null;
-  gender: string;
-  neutered: boolean;
-  birth_date: string | null;
-  weight_kg: number | null;
-  notes: string | null;
-  active: boolean;
-  owners: { id: string; name: string; phone: string; memo: string | null } | null;
-};
+const PAGE_SIZE = 50;
 
 function DogsPage() {
   const [keyword, setKeyword] = useState("");
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
 
-  const dogsQuery = useQuery({
-    queryKey: ["dogs", "list"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("dogs")
-        .select(
-          "id, name, breed, gender, neutered, birth_date, weight_kg, notes, active, owners(id, name, phone, memo)",
-        )
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return (data ?? []) as unknown as DogRow[];
-    },
+  const fetchPets = useServerFn(listAllExternalPets);
+
+  const petsQuery = useQuery({
+    queryKey: ["external-pets", "all", search, page],
+    queryFn: () => fetchPets({ data: { search, page, limit: PAGE_SIZE } }),
   });
 
-  const dogs = (dogsQuery.data ?? []).filter((d) => {
-    const q = keyword.trim();
-    if (!q) return true;
-    return [d.name, d.breed, d.owners?.name, d.owners?.phone].some((v) => v?.includes(q));
-  });
+  const pets = petsQuery.data?.pets ?? [];
+  const total = petsQuery.data?.total ?? pets.length;
+  const maxPage = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  function applySearch() {
+    setPage(1);
+    setSearch(keyword.trim());
+  }
 
   return (
     <AppShell
-      title="강아지 · 보호자"
-      description="등록된 원생과 보호자 정보를 관리합니다."
-      action={<NewDogDialog />}
+      title="반려견 리스트"
+      description="외부 회원 시스템에 등록된 반려견 전체 목록입니다. 항목에서 바로 예약할 수 있습니다."
+      action={
+        <Button variant="outline" onClick={() => petsQuery.refetch()} disabled={petsQuery.isFetching}>
+          <RefreshCw className={`size-4 ${petsQuery.isFetching ? "animate-spin" : ""}`} /> 새로고침
+        </Button>
+      }
     >
-      <div className="mb-5 relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          className="pl-9"
-          placeholder="강아지 이름, 견종, 보호자 검색"
-          value={keyword}
-          onChange={(e) => setKeyword(e.target.value)}
-        />
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <div className="relative max-w-sm flex-1">
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            className="pl-9"
+            placeholder="반려견 이름, 견종, 보호자 검색"
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") applySearch();
+            }}
+          />
+        </div>
+        <Button onClick={applySearch}>검색</Button>
+        <span className="ml-auto text-sm text-muted-foreground">전체 {total.toLocaleString("ko-KR")}마리</span>
       </div>
 
-      {dogsQuery.isLoading ? (
-        <p className="text-sm text-muted-foreground">불러오는 중…</p>
-      ) : dogs.length === 0 ? (
-        <div className="surface-card p-10 text-center">
-          <p className="font-semibold">등록된 강아지가 없습니다.</p>
-          <p className="mt-1 text-sm text-muted-foreground">“원생 등록”으로 첫 원생을 추가해 보세요.</p>
+      <div className="surface-card overflow-hidden p-0">
+        <div className="hidden grid-cols-[1.2fr_1.2fr_0.8fr_0.8fr_0.7fr_1.4fr_auto] gap-3 border-b border-border bg-muted/50 px-4 py-3 text-xs font-bold text-muted-foreground lg:grid">
+          <span>이름</span>
+          <span>견종</span>
+          <span>성별</span>
+          <span>나이</span>
+          <span>몸무게</span>
+          <span>보호자</span>
+          <span className="text-right">예약</span>
         </div>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2">
-          {dogs.map((dog) => (
-            <article key={dog.id} className="surface-card p-5">
-              <div className="flex items-start gap-4">
-                <div className="flex size-12 items-center justify-center rounded-xl bg-secondary font-display text-xl font-extrabold text-primary">
-                  {dog.name.slice(0, 1)}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="text-lg font-bold">{dog.name}</h2>
-                    <Badge variant="secondary">{GENDER_LABELS[dog.gender] ?? "미입력"}</Badge>
-                    {dog.neutered ? <Badge variant="outline">중성화</Badge> : null}
-                    {!dog.active ? <Badge variant="outline">퇴원</Badge> : null}
+
+        {petsQuery.isLoading ? (
+          <p className="p-8 text-center text-sm text-muted-foreground">외부 API에서 불러오는 중…</p>
+        ) : petsQuery.isError ? (
+          <p className="p-8 text-center text-sm font-semibold text-destructive">
+            반려견 목록을 불러오지 못했습니다. 다시 시도해 주세요.
+          </p>
+        ) : pets.length === 0 ? (
+          <p className="p-8 text-center text-sm text-muted-foreground">조회된 반려견이 없습니다.</p>
+        ) : (
+          <ul className="divide-y divide-border">
+            {pets.map((pet) => (
+              <li
+                key={pet.id}
+                className="grid grid-cols-2 items-center gap-3 px-4 py-3 text-sm transition-colors hover:bg-secondary/50 lg:grid-cols-[1.2fr_1.2fr_0.8fr_0.8fr_0.7fr_1.4fr_auto]"
+              >
+                <div className="col-span-2 flex items-center gap-2.5 lg:col-span-1">
+                  <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-secondary font-display text-sm font-extrabold text-primary">
+                    {pet.name.slice(0, 1)}
                   </div>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {dog.breed ?? "견종 미입력"} · {ageLabel(dog.birth_date)}
-                    {dog.weight_kg ? ` · ${dog.weight_kg}kg` : ""}
-                  </p>
+                  <span className="truncate font-bold">{pet.name}</span>
+                  {pet.neutered ? (
+                    <Badge variant="outline" className="text-[10px]">
+                      중성화
+                    </Badge>
+                  ) : null}
                 </div>
-              </div>
+                <span className="truncate text-muted-foreground">{pet.breed ?? "견종 미입력"}</span>
+                <span>{GENDER_LABELS[pet.gender ?? "unknown"] ?? "미입력"}</span>
+                <span className="text-muted-foreground">{ageLabel(pet.birthDate)}</span>
+                <span className="text-muted-foreground">{pet.weight ? `${pet.weight}kg` : "-"}</span>
+                <span className="truncate text-muted-foreground">
+                  {pet.ownerNames[0] ?? "보호자 미확인"}
+                  {pet.ownerPhone ? ` · ${pet.ownerPhone}` : ""}
+                </span>
+                <span className="col-span-2 flex justify-end lg:col-span-1">
+                  <ReserveDialog pet={pet} />
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
 
-              <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <dt className="text-muted-foreground">보호자</dt>
-                  <dd className="font-medium">{dog.owners?.name ?? "-"}</dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">연락처</dt>
-                  <dd className="font-medium">{dog.owners?.phone ?? "-"}</dd>
-                </div>
-              </dl>
-
-              {dog.notes ? (
-                <p className="mt-3 rounded-lg bg-accent/15 p-3 text-sm">특이사항: {dog.notes}</p>
-              ) : null}
-            </article>
-          ))}
-        </div>
-      )}
-    </AppShell>
-  );
-}
-
-function NewDogDialog() {
-  const queryClient = useQueryClient();
-  const [open, setOpen] = useState(false);
-  const [ownerMode, setOwnerMode] = useState<"new" | "existing">("new");
-  const [ownerId, setOwnerId] = useState("");
-  const [ownerName, setOwnerName] = useState("");
-  const [ownerPhone, setOwnerPhone] = useState("");
-  const [name, setName] = useState("");
-  const [breed, setBreed] = useState("");
-  const [gender, setGender] = useState("unknown");
-  const [neutered, setNeutered] = useState(false);
-  const [birthDate, setBirthDate] = useState("");
-  const [weight, setWeight] = useState("");
-  const [notes, setNotes] = useState("");
-
-  const ownersQuery = useQuery({
-    queryKey: ["owners", "options"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("owners").select("id, name, phone").order("name");
-      if (error) throw error;
-      return data ?? [];
-    },
-    enabled: open,
-  });
-
-  const create = useMutation({
-    mutationFn: async () => {
-      let resolvedOwnerId = ownerId;
-      if (ownerMode === "new") {
-        const { data, error } = await supabase
-          .from("owners")
-          .insert({ name: ownerName.trim(), phone: ownerPhone.trim() })
-          .select("id")
-          .single();
-        if (error) throw error;
-        resolvedOwnerId = data.id;
-      }
-      const { error } = await supabase.from("dogs").insert({
-        owner_id: resolvedOwnerId,
-        name: name.trim(),
-        breed: breed.trim() || null,
-        gender,
-        neutered,
-        birth_date: birthDate || null,
-        weight_kg: weight ? Number(weight) : null,
-        notes: notes.trim() || null,
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["dogs"] });
-      queryClient.invalidateQueries({ queryKey: ["owners"] });
-      toast.success("원생을 등록했습니다");
-      setOpen(false);
-      setName("");
-      setBreed("");
-      setNotes("");
-      setOwnerName("");
-      setOwnerPhone("");
-    },
-    onError: (e: Error) => toast.error("등록에 실패했습니다", { description: e.message }),
-  });
-
-  const valid = name.trim() && (ownerMode === "existing" ? ownerId : ownerName.trim() && ownerPhone.trim());
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <Plus className="size-4" /> 원생 등록
+      <div className="mt-4 flex items-center justify-center gap-2">
+        <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+          <ChevronLeft className="size-4" /> 이전
         </Button>
-      </DialogTrigger>
-      <DialogContent className="max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>원생 등록</DialogTitle>
-          <DialogDescription>강아지 정보와 보호자 연락처를 함께 등록합니다.</DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-4">
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant={ownerMode === "new" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setOwnerMode("new")}
-            >
-              새 보호자
-            </Button>
-            <Button
-              type="button"
-              variant={ownerMode === "existing" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setOwnerMode("existing")}
-            >
-              기존 보호자
-            </Button>
-          </div>
-
-          {ownerMode === "new" ? (
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label>보호자 이름</Label>
-                <Input maxLength={50} value={ownerName} onChange={(e) => setOwnerName(e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label>연락처</Label>
-                <Input
-                  maxLength={20}
-                  value={ownerPhone}
-                  onChange={(e) => setOwnerPhone(e.target.value)}
-                  placeholder="010-0000-0000"
-                />
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              <Label>보호자 선택</Label>
-              <Select value={ownerId} onValueChange={setOwnerId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="보호자를 선택하세요" />
-                </SelectTrigger>
-                <SelectContent>
-                  {(ownersQuery.data ?? []).map((o) => (
-                    <SelectItem key={o.id} value={o.id}>
-                      {o.name} · {o.phone}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label>강아지 이름</Label>
-              <Input maxLength={30} value={name} onChange={(e) => setName(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label>견종</Label>
-              <Input maxLength={40} value={breed} onChange={(e) => setBreed(e.target.value)} placeholder="포메라니안" />
-            </div>
-            <div className="space-y-2">
-              <Label>성별</Label>
-              <Select value={gender} onValueChange={setGender}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="male">수컷</SelectItem>
-                  <SelectItem value="female">암컷</SelectItem>
-                  <SelectItem value="unknown">미입력</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>몸무게 (kg)</Label>
-              <Input type="number" step="0.1" min="0" value={weight} onChange={(e) => setWeight(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label>생일</Label>
-              <Input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} />
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between rounded-lg border border-border p-3">
-            <Label htmlFor="neutered">중성화 완료</Label>
-            <Switch id="neutered" checked={neutered} onCheckedChange={setNeutered} />
-          </div>
-
-          <div className="space-y-2">
-            <Label>특이사항</Label>
-            <Textarea
-              maxLength={1000}
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="분리불안, 알레르기, 복용 약 등"
-            />
-          </div>
-        </div>
-
-        <DialogFooter>
-          <Button disabled={!valid || create.isPending} onClick={() => create.mutate()}>
-            등록하기
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        <span className="text-sm font-semibold">
+          {page} / {maxPage}
+        </span>
+        <Button variant="outline" size="sm" disabled={page >= maxPage} onClick={() => setPage((p) => p + 1)}>
+          다음 <ChevronRight className="size-4" />
+        </Button>
+      </div>
+    </AppShell>
   );
 }
