@@ -39,13 +39,16 @@ export function AppShell({
   title,
   description,
   action,
+  sidebarAction,
   children,
 }: {
-  title: string;
+  title?: string;
   description?: string;
   action?: ReactNode;
+  sidebarAction?: ReactNode;
   children: ReactNode;
 }) {
+
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const fetchProfile = useServerFn(getExternalProfile);
@@ -57,7 +60,10 @@ export function AppShell({
   const displayName = profile.data?.name ?? "사용자";
   const initial = displayName.slice(0, 1);
 
-
+  const now = new Date();
+  const todayLabel = `${now.getFullYear()}년 ${now.getMonth() + 1}월 ${now.getDate()}일 (${
+    ["일", "월", "화", "수", "목", "금", "토"][now.getDay()]
+  })`;
 
   async function signOut() {
     await queryClient.cancelQueries();
@@ -73,6 +79,12 @@ export function AppShell({
           <Link to="/dashboard" className="flex items-center gap-2">
             <span className="font-display text-[17px] font-bold tracking-tight">허그앤멍 예약관리시스템</span>
           </Link>
+
+          <span className="hidden items-center gap-1.5 rounded-full bg-secondary px-3 py-1.5 text-xs font-bold text-primary sm:inline-flex">
+            <CalendarDays className="size-3.5" />
+            {todayLabel}
+          </span>
+
 
           <div className="ml-auto flex items-center gap-2">
             <span className="hidden rounded-md border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground md:inline">
@@ -121,6 +133,8 @@ export function AppShell({
             </div>
           </div>
 
+          {sidebarAction ? <div className="mb-4 [&_button]:w-full">{sidebarAction}</div> : null}
+
           {NAV_GROUPS.map((group) => (
             <div key={group.label} className="mb-5">
               <p className="px-3 pb-1.5 text-[11px] font-bold tracking-wide text-muted-foreground">{group.label}</p>
@@ -141,16 +155,19 @@ export function AppShell({
           ))}
         </aside>
 
-        <main className="min-w-0 flex-1 px-4 py-6 lg:px-8">
-          <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <h1 className="text-xl font-bold sm:text-2xl">{title}</h1>
-              {description ? <p className="mt-1 text-sm text-muted-foreground">{description}</p> : null}
+        <main className="min-w-0 flex-1 px-4 py-4 lg:px-8">
+          {title || action ? (
+            <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+              <div>
+                {title ? <h1 className="text-xl font-bold sm:text-2xl">{title}</h1> : null}
+                {description ? <p className="mt-1 text-sm text-muted-foreground">{description}</p> : null}
+              </div>
+              {action}
             </div>
-            {action}
-          </div>
+          ) : null}
           {children}
         </main>
+
       </div>
     </div>
   );
