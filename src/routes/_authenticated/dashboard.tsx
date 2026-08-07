@@ -1,7 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { CalendarCheck, ChevronLeft, ChevronRight, Clock, LogIn, LogOut, Plus, Users } from "lucide-react";
+import {
+  BedDouble,
+  CalendarCheck,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  LogIn,
+  LogOut,
+  Plus,
+  Scissors,
+  Users,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/AppShell";
@@ -146,30 +157,52 @@ function DashboardPage() {
   const cells = monthMatrix(anchor);
   const todayKey = toDateKey(new Date());
 
+  const byType = useMemo(() => {
+    const base: Record<ServiceType, Row[]> = { kindergarten: [], hotel: [], daily_care: [], grooming: [] };
+    for (const r of active) base[r.service_type]?.push(r);
+    return base;
+  }, [active]);
+  const checkInToday = byType.hotel.filter((r) => r.reserved_date === selected).length;
+
   return (
     <AppShell
-      title={formatDateKorean(selected)}
-      description="캘린더에서 날짜를 선택하면 해당 날짜의 예약과 등하원 현황이 표시됩니다."
+      title="오늘의 운영 현황"
+      description={`${formatDateKorean(selected)} · 서비스별 예약과 다가오는 시간을 한곳에서 확인하세요.`}
       action={<NewReservationDialog defaultDate={selected} />}
     >
-      <div className="mb-4 grid gap-3 lg:grid-cols-3">
-        <div className="promo-card p-4">
-          <p className="text-[11px] font-bold text-primary">오늘의 운영 체크</p>
-          <p className="mt-1.5 text-sm font-bold leading-snug">
-            등원 체크인은 <span className="text-primary">아이 도착 즉시</span> 눌러주세요
-          </p>
-          <p className="mt-1 text-xs text-muted-foreground">이용권이 연결된 예약은 등원 시 1회 자동 차감됩니다.</p>
-        </div>
-        <div className="promo-card p-4">
-          <p className="text-[11px] font-bold text-accent-foreground">예약 타입</p>
-          <p className="mt-1.5 text-sm font-bold leading-snug">유치원 · 호텔 · 데일리케어 · 미용</p>
-          <p className="mt-1 text-xs text-muted-foreground">호텔은 여러 날, 미용은 30분 단위로 예약할 수 있어요.</p>
-        </div>
-        <div className="promo-card p-4">
-          <p className="text-[11px] font-bold text-primary">이용권 정산</p>
-          <p className="mt-1.5 text-sm font-bold leading-snug">미결제 건은 이용권 화면에서 바로 처리</p>
-          <p className="mt-1 text-xs text-muted-foreground">결제 완료 합계도 함께 집계됩니다.</p>
-        </div>
+      <div className="mb-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <SummaryCard
+          icon={<CalendarCheck className="size-4" />}
+          tint="bg-primary/12 text-primary"
+          label="오늘 등원 예정"
+          value={byType.kindergarten.length}
+          unit="마리"
+          note="클릭하여 강아지 목록 확인"
+        />
+        <SummaryCard
+          icon={<BedDouble className="size-4" />}
+          tint="bg-accent/25 text-accent-foreground"
+          label="오늘 호텔 이용"
+          value={byType.hotel.length}
+          unit="마리"
+          note={`오늘 입실 ${checkInToday}건`}
+        />
+        <SummaryCard
+          icon={<Clock className="size-4" />}
+          tint="bg-secondary text-primary"
+          label="오늘 데이케어"
+          value={byType.daily_care.length}
+          unit="건"
+          note="시간대별 예약 확인"
+        />
+        <SummaryCard
+          icon={<Scissors className="size-4" />}
+          tint="bg-warning/25 text-warning-foreground"
+          label="오늘 미용"
+          value={byType.grooming.length}
+          unit="건"
+          note="가까운 예약시간 확인"
+        />
       </div>
 
       <div className="mb-5 grid gap-3 sm:grid-cols-3">
@@ -177,6 +210,7 @@ function DashboardPage() {
         <StatCard icon={<Users className="size-4" />} label="현재 등원 중" value={inside.length} highlight />
         <StatCard icon={<Clock className="size-4" />} label="하원 완료" value={done.length} />
       </div>
+
 
       <section className="surface-card mb-6 p-5">
         <div className="mb-4 flex items-center justify-between">
@@ -353,6 +387,41 @@ function DashboardPage() {
         )}
       </section>
     </AppShell>
+  );
+}
+
+function SummaryCard({
+  icon,
+  tint,
+  label,
+  value,
+  unit,
+  note,
+}: {
+  icon: React.ReactNode;
+  tint: string;
+  label: string;
+  value: number;
+  unit: string;
+  note: string;
+}) {
+  return (
+    <div className="surface-card relative overflow-hidden p-5">
+      <div
+        className={`absolute -right-4 -top-4 flex size-20 items-end justify-start rounded-full p-3.5 ${tint}`}
+      >
+        {icon}
+      </div>
+      <p className="text-sm font-bold">{label}</p>
+      <p className="mt-3 text-3xl font-extrabold tracking-tight">
+        {value}
+        <span className="ml-1 text-xs font-semibold text-muted-foreground">{unit}</span>
+      </p>
+      <p className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
+        <span className="size-2 rounded-full bg-primary" />
+        {note}
+      </p>
+    </div>
   );
 }
 
