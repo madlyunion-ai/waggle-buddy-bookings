@@ -60,7 +60,10 @@ export function AppShell({
   const displayName = profile.data?.name ?? "사용자";
   const initial = displayName.slice(0, 1);
 
-
+  const now = new Date();
+  const todayLabel = `${now.getFullYear()}년 ${now.getMonth() + 1}월 ${now.getDate()}일 (${
+    ["일", "월", "화", "수", "목", "금", "토"][now.getDay()]
+  })`;
 
   async function signOut() {
     await queryClient.cancelQueries();
@@ -76,6 +79,12 @@ export function AppShell({
           <Link to="/dashboard" className="flex items-center gap-2">
             <span className="font-display text-[17px] font-bold tracking-tight">허그앤멍 예약관리시스템</span>
           </Link>
+
+          <span className="hidden items-center gap-1.5 rounded-full bg-secondary px-3 py-1.5 text-xs font-bold text-primary sm:inline-flex">
+            <CalendarDays className="size-3.5" />
+            {todayLabel}
+          </span>
+
 
           <div className="ml-auto flex items-center gap-2">
             <span className="hidden rounded-md border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground md:inline">
