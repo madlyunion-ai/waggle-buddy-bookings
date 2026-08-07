@@ -245,6 +245,7 @@ function DashboardPage() {
             const key = toDateKey(d);
             const isMonth = d.getMonth() === anchor.getMonth();
             const isSelected = key === selected;
+            const dow = d.getDay();
             const items = (byDate[key] ?? []).filter((r) => r.status !== "cancelled");
             return (
               <div
@@ -265,10 +266,15 @@ function DashboardPage() {
                   isSelected
                     ? "border-primary bg-primary/8"
                     : isMonth
-                      ? "border-border bg-card hover:bg-secondary/60"
+                      ? dow === 0
+                        ? "border-rose-300/70 bg-card hover:bg-rose-50/60"
+                        : dow === 6
+                          ? "border-sky-300/70 bg-card hover:bg-sky-50/60"
+                          : "border-border bg-card hover:bg-secondary/60"
                       : "border-transparent bg-muted/40"
                 }`}
               >
+
                 <div className="flex shrink-0 items-center justify-between px-0.5">
                   <span
                     className={`text-xs font-bold ${
