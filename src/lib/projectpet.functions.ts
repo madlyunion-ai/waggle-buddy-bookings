@@ -137,3 +137,24 @@ export const listExternalPets = createServerFn({ method: "GET" })
     });
     return (res.data?.pets ?? []).map(mapPet);
   });
+
+/** 외부 API 전체 반려견 목록 조회 (검색/페이지) */
+export const listAllExternalPets = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { search?: string; page?: number; limit?: number }) => ({
+    search: typeof input?.search === "string" ? input.search.slice(0, 100) : "",
+    page: Math.min(Math.max(Number(input?.page) || 1, 1), 500),
+    limit: Math.min(Math.max(Number(input?.limit) || 50, 1), 100),
+  }))
+  .handler(async ({ data }): Promise<{ pets: ExternalPet[]; total: number }> => {
+    const { apiGet } = await import("./projectpet.server");
+    const res = await apiGet<{
+      total?: number;
+      pets?: PetDto[];
+      data?: { pets?: PetDto[]; total?: number; totalCount?: number; meta?: { total?: number } };
+    }>("/pets", { page: data.page, limit: data.limit, search: data.search || undefined });
+
+    const rows = res.data?.pets ?? res.pets ?? [];
+    const total = res.data?.total ?? res.data?.totalCount ?? res.data?.meta?.total ?? res.total ?? rows.length;
+    return { pets: rows.map(mapPet), total };
+  });
