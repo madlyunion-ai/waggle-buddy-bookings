@@ -172,12 +172,9 @@ function DashboardPage() {
   const checkInToday = byType.hotel.filter((r) => r.reserved_date === selected).length;
 
   return (
-    <AppShell
-      title="오늘의 운영 현황"
-      description={`${formatDateKorean(selected)} · 서비스별 예약과 다가오는 시간을 한곳에서 확인하세요.`}
-      action={<NewReservationDialog defaultDate={selected} />}
-    >
-      <div className="grid min-h-[560px] grid-cols-1 gap-4 lg:h-[calc(100vh-190px)] lg:grid-cols-[80%_20%]">
+    <AppShell sidebarAction={<NewReservationDialog defaultDate={selected} />}>
+      <div className="grid min-h-[560px] grid-cols-1 gap-4 lg:h-[calc(100vh-6rem)] lg:grid-cols-[80%_20%]">
+
 
       <section className="surface-card flex h-full min-h-0 flex-col overflow-hidden p-5">
 
