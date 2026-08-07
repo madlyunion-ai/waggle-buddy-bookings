@@ -165,24 +165,19 @@ function StaffPage() {
                 <th className="px-4 py-3">아이디(이메일)</th>
                 <th className="px-4 py-3">핸드폰번호</th>
                 <th className="px-4 py-3">상태</th>
+                <th className="px-4 py-3 text-right">관리</th>
               </tr>
             </thead>
             <tbody>
-              {query.isLoading ? (
+              {localQuery.isLoading && query.isLoading ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-10 text-center text-muted-foreground">
+                  <td colSpan={6} className="px-4 py-10 text-center text-muted-foreground">
                     직원 정보를 불러오는 중…
-                  </td>
-                </tr>
-              ) : query.isError ? (
-                <tr>
-                  <td colSpan={5} className="px-4 py-10 text-center text-destructive">
-                    직원 정보를 불러오지 못했습니다.
                   </td>
                 </tr>
               ) : rows.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-10 text-center text-muted-foreground">
+                  <td colSpan={6} className="px-4 py-10 text-center text-muted-foreground">
                     표시할 직원이 없습니다.
                   </td>
                 </tr>
@@ -198,9 +193,22 @@ function StaffPage() {
                     <td className="px-4 py-3 text-muted-foreground">
                       {row.status ? (STATUS_LABELS[row.status] ?? row.status) : "-"}
                     </td>
+                    <td className="px-4 py-3 text-right">
+                      {row.local ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={deleteMutation.isPending}
+                          onClick={() => deleteMutation.mutate(row.id.replace("local-", ""))}
+                        >
+                          삭제
+                        </Button>
+                      ) : null}
+                    </td>
                   </tr>
                 ))
               )}
+
             </tbody>
           </table>
         </div>
