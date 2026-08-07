@@ -34,16 +34,33 @@ function DogsPage() {
   const [keyword, setKeyword] = useState("");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const queryClient = useQueryClient();
+  const syncedOnce = useRef(false);
 
-  const fetchPets = useServerFn(listAllExternalPets);
+  const fetchPets = useServerFn(listLocalPets);
+  const runSync = useServerFn(syncPetsToDb);
 
   const petsQuery = useQuery({
-    queryKey: ["external-pets", "all", search, page],
+    queryKey: ["local-pets", search, page],
     queryFn: () => fetchPets({ data: { search, page, limit: PAGE_SIZE } }),
   });
 
+  const sync = useMutation({
+    mutationFn: () => runSync({}),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["local-pets"] }),
+  });
+
+  // 페이지 진입 시 외부 시스템과 자동 동기화 (백그라운드)
+  useEffect(() => {
+    if (syncedOnce.current) return;
+    syncedOnce.current = true;
+    sync.mutate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const pets = petsQuery.data?.pets ?? [];
   const total = petsQuery.data?.total ?? pets.length;
+  const lastSyncedAt = petsQuery.data?.lastSyncedAt ?? null;
   const maxPage = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   function applySearch() {
@@ -54,13 +71,15 @@ function DogsPage() {
   return (
     <AppShell
       title="반려견 리스트"
-      description="외부 회원 시스템에 등록된 반려견 전체 목록입니다. 항목에서 바로 예약할 수 있습니다."
+      description="데이터베이스에 저장된 반려견 목록입니다. 페이지 진입 시 외부 회원 시스템과 자동 동기화됩니다."
       action={
-        <Button variant="outline" onClick={() => petsQuery.refetch()} disabled={petsQuery.isFetching}>
-          <RefreshCw className={`size-4 ${petsQuery.isFetching ? "animate-spin" : ""}`} /> 새로고침
+        <Button variant="outline" onClick={() => sync.mutate()} disabled={sync.isPending}>
+          <RefreshCw className={`size-4 ${sync.isPending ? "animate-spin" : ""}`} />
+          {sync.isPending ? "동기화 중…" : "동기화"}
         </Button>
       }
     >
+
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <div className="relative max-w-sm flex-1">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
