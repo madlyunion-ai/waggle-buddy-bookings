@@ -221,7 +221,7 @@ function StaffPage() {
 
 function NewStaffDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const queryClient = useQueryClient();
-  const submit = useServerFn(createExternalStaff);
+  const submit = useServerFn(createStaff);
 
   const [role, setRole] = useState<StaffRole>("STAFF");
   const [name, setName] = useState("");
