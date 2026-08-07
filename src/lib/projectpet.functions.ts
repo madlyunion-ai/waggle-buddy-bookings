@@ -77,17 +77,24 @@ export const listExternalMembers = createServerFn({ method: "GET" })
     const params = { page: 1, limit: data.limit, search: data.search || undefined };
 
     const [owners, users] = await Promise.allSettled([
-      apiGet<{ owners?: OwnerDto[] }>("/owners", params),
-      apiGet<{ data?: { users?: UserDto[] } }>("/users", params),
+      apiGet<{ owners?: OwnerDto[]; data?: { owners?: OwnerDto[] } }>("/owners", params),
+      apiGet<{ users?: UserDto[]; data?: { users?: UserDto[] } }>("/users", params),
     ]);
 
     const list: ExternalMember[] = [];
     if (owners.status === "fulfilled") {
-      list.push(...(owners.value.owners ?? []).map((o) => mapMember(o, "owner")));
+      const rows = owners.value.owners ?? owners.value.data?.owners ?? [];
+      list.push(...rows.map((o) => mapMember(o, "owner")));
+    } else {
+      console.error("ProjectPet owners fetch failed:", owners.reason);
     }
     if (users.status === "fulfilled") {
-      list.push(...(users.value.data?.users ?? []).map((u) => mapMember(u, "user")));
+      const rows = users.value.users ?? users.value.data?.users ?? [];
+      list.push(...rows.map((u) => mapMember(u, "user")));
+    } else {
+      console.error("ProjectPet users fetch failed:", users.reason);
     }
+
     if (!list.length && owners.status === "rejected" && users.status === "rejected") {
       throw new Error("외부 회원 목록을 불러올 수 없습니다.");
     }
