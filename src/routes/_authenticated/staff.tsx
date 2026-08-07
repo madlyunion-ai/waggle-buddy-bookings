@@ -65,17 +65,56 @@ function formatPhone(phone: string | null) {
   return phone;
 }
 
+type StaffRow = ExternalStaff & { local?: boolean };
+
 function StaffPage() {
   const [keyword, setKeyword] = useState("");
   const [open, setOpen] = useState(false);
   const fetchStaff = useServerFn(listExternalStaff);
+  const fetchLocal = useServerFn(listLocalStaff);
+  const removeLocal = useServerFn(deleteLocalStaff);
+  const queryClient = useQueryClient();
 
   const query = useQuery({
     queryKey: ["external-staff"],
     queryFn: () => fetchStaff({ data: { limit: 100 } }),
+    retry: false,
   });
 
-  const rows: ExternalStaff[] = (query.data ?? []).filter((row) => {
+  const localQuery = useQuery({
+    queryKey: ["local-staff"],
+    queryFn: () => fetchLocal({}),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => removeLocal({ data: { id } }),
+    onSuccess: () => {
+      toast.success("직원이 삭제되었습니다.");
+      queryClient.invalidateQueries({ queryKey: ["local-staff"] });
+    },
+    onError: () => toast.error("삭제에 실패했습니다."),
+  });
+
+  const localRows: StaffRow[] = (localQuery.data ?? []).map((r) => ({
+    id: `local-${r.id}`,
+    name: r.name,
+    username: r.email,
+    email: r.email,
+    phone: r.phone,
+    role: r.role,
+    status: r.status,
+    branchName: r.branchName,
+    createdAt: r.createdAt,
+    local: true,
+  }));
+
+  const externalRows: StaffRow[] = query.isError ? [] : (query.data ?? []);
+  const localEmails = new Set(localRows.map((r) => (r.email ?? "").toLowerCase()));
+
+  const rows: StaffRow[] = [
+    ...localRows,
+    ...externalRows.filter((r) => !localEmails.has((r.email ?? "").toLowerCase())),
+  ].filter((row) => {
     const k = keyword.trim().toLowerCase();
     if (!k) return true;
     return [row.name, row.email, row.username, row.phone, roleLabel(row.role)]
@@ -84,6 +123,7 @@ function StaffPage() {
   });
 
   const managers = rows.filter((r) => r.role !== "STAFF").length;
+
 
   return (
     <AppShell
