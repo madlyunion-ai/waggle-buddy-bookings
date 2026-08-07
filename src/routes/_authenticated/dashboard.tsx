@@ -308,20 +308,24 @@ function StatCard({
   highlight?: boolean;
 }) {
   return (
-    <div className={`surface-card flex items-center gap-4 p-5 ${highlight ? "border-primary/40" : ""}`}>
+    <div className={`surface-card flex items-center gap-3 p-4 ${highlight ? "border-primary/35" : ""}`}>
       <div
-        className={`flex size-10 items-center justify-center rounded-xl ${
+        className={`flex size-9 items-center justify-center rounded-lg ${
           highlight ? "bg-primary text-primary-foreground" : "bg-secondary text-primary"
         }`}
       >
         {icon}
       </div>
       <div>
-        <p className="text-sm text-muted-foreground">{label}</p>
-        <p className="text-2xl font-extrabold">{value}</p>
+        <p className="text-xs font-medium text-muted-foreground">{label}</p>
+        <p className="text-xl font-extrabold">
+          {value}
+          <span className="ml-0.5 text-xs font-semibold text-muted-foreground">건</span>
+        </p>
       </div>
     </div>
   );
+
 }
 
 function NewReservationDialog({ defaultDate }: { defaultDate: string }) {
