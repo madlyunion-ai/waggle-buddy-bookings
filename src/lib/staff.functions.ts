@@ -83,8 +83,23 @@ export const createStaff = createServerFn({ method: "POST" })
       email_confirm: true,
       user_metadata: { full_name: data.name, phone: data.phone, staff_role: data.role },
     });
-    if (authError && !/already|registered|exists/i.test(authError.message)) {
-      throw new Error(`로그인 계정 생성에 실패했습니다: ${authError.message}`);
+    if (authError) {
+      if (/already|registered|exists/i.test(authError.message)) {
+        // 이미 존재하는 계정이면 비밀번호를 입력값으로 재설정해 로그인 가능하게 만든다
+        const { data: list } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+        const existing = list?.users?.find(
+          (u) => (u.email ?? "").toLowerCase() === data.email.toLowerCase(),
+        );
+        if (existing) {
+          const { error: updErr } = await supabaseAdmin.auth.admin.updateUserById(existing.id, {
+            password: data.password,
+            email_confirm: true,
+          });
+          if (updErr) throw new Error(`로그인 계정 갱신에 실패했습니다: ${updErr.message}`);
+        }
+      } else {
+        throw new Error(`로그인 계정 생성에 실패했습니다: ${authError.message}`);
+      }
     }
 
     const { data: row, error } = await context.supabase
