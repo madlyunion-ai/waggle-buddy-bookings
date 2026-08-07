@@ -25,9 +25,10 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const login = useServerFn(loginWithUsername);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -44,14 +45,23 @@ function AuthPage() {
   async function signIn(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
-    if (error) {
-      toast.error("로그인에 실패했습니다", { description: error.message });
-      return;
+    try {
+      const { accessToken, refreshToken } = await login({ data: { username, password } });
+      const { error } = await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      });
+      if (error) throw new Error(error.message);
+      navigate({ to: "/dashboard", replace: true });
+    } catch (err) {
+      toast.error("로그인에 실패했습니다", {
+        description: err instanceof Error ? err.message : "아이디 또는 비밀번호를 확인해 주세요.",
+      });
+    } finally {
+      setLoading(false);
     }
-    navigate({ to: "/dashboard", replace: true });
   }
+
 
 
   return (
