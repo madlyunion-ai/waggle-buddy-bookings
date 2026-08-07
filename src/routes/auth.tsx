@@ -79,16 +79,17 @@ function AuthPage() {
         <div className="surface-card p-6">
           <form className="space-y-4" onSubmit={signIn}>
             <div className="space-y-2">
-              <Label htmlFor="email">이메일</Label>
+              <Label htmlFor="username">아이디</Label>
               <Input
-                id="email"
-                type="email"
+                id="username"
+                autoComplete="username"
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="staff@example.com"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="아이디를 입력하세요"
               />
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="password">비밀번호</Label>
               <Input
