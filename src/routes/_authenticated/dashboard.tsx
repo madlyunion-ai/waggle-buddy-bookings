@@ -108,9 +108,12 @@ function DashboardPage() {
 
   const updateStatus = useMutation({
     mutationFn: async ({ row, status }: { row: Row; status: ReservationStatus }) => {
-      const patch: Record<string, unknown> = { status };
-      if (status === "checked_in") patch.checked_in_at = new Date().toISOString();
-      if (status === "checked_out") patch.checked_out_at = new Date().toISOString();
+      const now = new Date().toISOString();
+      const patch = {
+        status,
+        ...(status === "checked_in" ? { checked_in_at: now } : {}),
+        ...(status === "checked_out" ? { checked_out_at: now } : {}),
+      };
       const { error } = await supabase.from("reservations").update(patch).eq("id", row.id);
       if (error) throw error;
 
