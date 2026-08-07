@@ -257,7 +257,7 @@ function DashboardPage() {
             </div>
           ))}
         </div>
-        <div className="grid grid-cols-7 gap-1.5">
+        <div className="grid min-h-0 flex-1 auto-rows-fr grid-cols-7 gap-1.5 overflow-auto">
           {cells.map((d) => {
             const key = toDateKey(d);
             const isMonth = d.getMonth() === anchor.getMonth();
