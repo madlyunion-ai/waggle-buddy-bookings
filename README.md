@@ -1,8 +1,6 @@
 # My Dog's Daycare
 
-반려견 유치원 예약관리시스템을 만들어줘.
-
-This project was built with [Lovable](https://lovable.dev).
+반려견 유치원 예약관리시스템
 
 **Live app**: https://waggle-buddy-bookings.lovable.app
 
