@@ -5,13 +5,14 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * 반려견 유치원 관리 시스템 디자인 시스템
- * 크림 베이지 배경 + 딥 포레스트 그린 + 살구빛 코랄 액센트
+ * 허그앤멍 — 반려견 유치원 관리 시스템 디자인 시스템
+ * 라이트 그레이 배경 + 화이트 카드 + 비비드 블루 / 틸 액센트 (SaaS 어드민 스타일)
  */
 
 @theme inline {
-  --font-sans: "Noto Sans KR", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Gothic A1", "Noto Sans KR", sans-serif;
+  --font-sans: "Pretendard Variable", Pretendard, ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Pretendard Variable", Pretendard, ui-sans-serif, system-ui, sans-serif;
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
