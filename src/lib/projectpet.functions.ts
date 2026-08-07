@@ -167,8 +167,10 @@ export type ExternalProfile = {
   phone: string | null;
   role: string | null;
   branchName: string | null;
+  branchId: string | null;
   avatarUrl: string | null;
 };
+
 
 /** 외부 API 로그인 사용자 정보 조회 (/auth/profile) */
 export const getExternalProfile = createServerFn({ method: "GET" })
