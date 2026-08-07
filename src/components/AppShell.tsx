@@ -16,7 +16,6 @@ const NAV_GROUPS = [
     label: "원생 관리",
     items: [
       { to: "/dogs", label: "반려견 리스트", icon: Dog },
-  { to: "/reservations", label: "예약 정보", icon: CalendarCheck },
       { to: "/reservations", label: "예약 정보", icon: CalendarCheck },
     ],
   },
