@@ -28,6 +28,7 @@ const NAV_GROUPS = [
 const MOBILE_NAV = [
   { to: "/dashboard", label: "오늘 현황", icon: CalendarDays },
   { to: "/dogs", label: "반려견 리스트", icon: Dog },
+  { to: "/reservations", label: "예약 정보", icon: CalendarCheck },
   { to: "/passes", label: "이용권 · 결제", icon: Ticket },
 ] as const;
 
