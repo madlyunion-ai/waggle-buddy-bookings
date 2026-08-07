@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, RefreshCw, Search } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
@@ -10,8 +10,9 @@ import { ReserveDialog } from "@/components/ReserveDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { listAllExternalPets } from "@/lib/projectpet.functions";
+import { listLocalPets, syncPetsToDb } from "@/lib/petsync.functions";
 import { GENDER_LABELS, ageLabel } from "@/lib/kindergarten";
+
 
 export const Route = createFileRoute("/_authenticated/dogs")({
   head: () => ({
