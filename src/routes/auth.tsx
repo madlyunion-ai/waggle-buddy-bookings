@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
+
 
 
 export const Route = createFileRoute("/auth")({
@@ -53,15 +53,6 @@ function AuthPage() {
     navigate({ to: "/dashboard", replace: true });
   }
 
-  async function google() {
-    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
-    if (result.error) {
-      toast.error("Google 로그인에 실패했습니다");
-      return;
-    }
-    if (result.redirected) return;
-    navigate({ to: "/dashboard", replace: true });
-  }
 
   return (
     <div className="paw-grid flex min-h-screen items-center justify-center px-4 py-12">
@@ -99,12 +90,7 @@ function AuthPage() {
             </Button>
           </form>
 
-          <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground">
-            <span className="h-px flex-1 bg-border" /> 또는 <span className="h-px flex-1 bg-border" />
-          </div>
-          <Button variant="outline" className="w-full" onClick={google}>
-            Google 계정으로 계속하기
-          </Button>
+        
         </div>
       </div>
     </div>
