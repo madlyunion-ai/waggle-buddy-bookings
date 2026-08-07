@@ -268,7 +268,6 @@ function DashboardPage() {
                 key={key}
                 onClick={() => setSelected(key)}
                 className={`flex min-h-[92px] flex-col items-stretch gap-1 rounded-xl border p-1.5 text-left transition-colors ${
-
                   isSelected
                     ? "border-primary bg-primary/8"
                     : isMonth
