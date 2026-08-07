@@ -280,9 +280,13 @@ function DashboardPage() {
                     className={`text-xs font-bold ${
                       key === todayKey
                         ? "rounded-full bg-primary px-1.5 py-0.5 text-primary-foreground"
-                        : isMonth
-                          ? ""
-                          : "text-muted-foreground/50"
+                        : !isMonth
+                          ? "text-muted-foreground/50"
+                          : dow === 0
+                            ? "text-rose-500"
+                            : dow === 6
+                              ? "text-sky-600"
+                              : ""
                     }`}
                   >
                     {d.getDate()}
@@ -292,7 +296,8 @@ function DashboardPage() {
                   ) : null}
                 </div>
                 <div className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-hidden">
-                  {items.slice(0, items.length > 3 ? 2 : 3).map((r) => (
+                  {items.slice(0, 3).map((r) => (
+
                     <div
                       key={`${key}-${r.id}`}
                       onClick={(e) => {
