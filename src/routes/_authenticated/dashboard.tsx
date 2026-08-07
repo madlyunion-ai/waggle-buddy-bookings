@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   BedDouble,
   CalendarCheck,
@@ -91,6 +91,9 @@ function DashboardPage() {
   const queryClient = useQueryClient();
   const [anchor, setAnchor] = useState(() => new Date());
   const [selected, setSelected] = useState(() => toDateKey(new Date()));
+  const [createDate, setCreateDate] = useState<string | null>(null);
+  const [dayListDate, setDayListDate] = useState<string | null>(null);
+
 
   const monthStart = toDateKey(new Date(anchor.getFullYear(), anchor.getMonth(), 1));
   const monthEnd = toDateKey(new Date(anchor.getFullYear(), anchor.getMonth() + 1, 0));
@@ -229,10 +232,21 @@ function DashboardPage() {
             const isSelected = key === selected;
             const items = (byDate[key] ?? []).filter((r) => r.status !== "cancelled");
             return (
-              <button
+              <div
                 key={key}
-                onClick={() => setSelected(key)}
-                className={`flex min-h-[124px] flex-col items-stretch gap-1 rounded-xl border p-1.5 text-left align-top transition-colors ${
+                role="button"
+                tabIndex={0}
+                onClick={() => {
+                  setSelected(key);
+                  setCreateDate(key);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    setSelected(key);
+                    setCreateDate(key);
+                  }
+                }}
+                className={`flex min-h-[124px] cursor-pointer flex-col items-stretch gap-1 rounded-xl border p-1.5 text-left align-top transition-colors ${
                   isSelected
                     ? "border-primary bg-primary/8"
                     : isMonth
@@ -258,30 +272,41 @@ function DashboardPage() {
                 </div>
                 <div className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-hidden">
                   {items.slice(0, 3).map((r) => (
-                    <span
+                    <div
                       key={`${key}-${r.id}`}
-                      className={`block shrink-0 rounded-md border px-1.5 py-0.5 text-[10px] font-semibold leading-tight ${SERVICE_STYLES[r.service_type]}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelected(key);
+                      }}
+                      className={`flex shrink-0 items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-semibold leading-tight ${SERVICE_STYLES[r.service_type]}`}
                     >
-                      <span className="block truncate">
-                        {SERVICE_LABELS[r.service_type]} · {r.dogs?.name ?? "-"}
-                      </span>
-                      <span className="block truncate opacity-80">
+                      <span className="min-w-0 flex-1 truncate">{r.dogs?.name ?? "-"}</span>
+                      <span className="shrink-0 opacity-80">
                         {r.service_type === "hotel" && r.end_date
-                          ? `${r.reserved_date.slice(5)} ~ ${r.end_date.slice(5)}`
-                          : `${formatTime(r.drop_off_time)} ~ ${formatTime(r.pick_up_time)}`}
+                          ? `~${r.end_date.slice(5).replace("-", "/")}`
+                          : formatTime(r.drop_off_time)}
                       </span>
-                    </span>
+                    </div>
                   ))}
                   {items.length > 3 ? (
-                    <span className="shrink-0 px-1 text-[10px] font-semibold text-muted-foreground">
-                      +{items.length - 3}건 더
-                    </span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelected(key);
+                        setDayListDate(key);
+                      }}
+                      className="mt-auto flex shrink-0 items-center gap-1 rounded-md px-1 text-[10px] font-bold text-primary hover:bg-primary/10"
+                    >
+                      <Plus className="size-3" /> {items.length - 3}개 더보기
+                    </button>
                   ) : null}
                 </div>
-              </button>
+              </div>
             );
           })}
         </div>
+
 
         {monthQuery.isLoading ? (
           <p className="mt-3 text-center text-xs text-muted-foreground">예약을 불러오는 중…</p>
@@ -402,7 +427,44 @@ function DashboardPage() {
       </div>
       </div>
 
+      <NewReservationDialog
+        defaultDate={createDate ?? selected}
+        open={createDate !== null}
+        onOpenChange={(next) => setCreateDate(next ? (createDate ?? selected) : null)}
+        hideTrigger
+      />
+
+      <Dialog open={dayListDate !== null} onOpenChange={(next) => setDayListDate(next ? dayListDate : null)}>
+        <DialogContent className="max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{dayListDate ? formatDateKorean(dayListDate) : ""} 예약</DialogTitle>
+            <DialogDescription>이 날짜의 모든 예약 목록입니다.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            {(dayListDate ? (byDate[dayListDate] ?? []).filter((r) => r.status !== "cancelled") : []).map((r) => (
+              <div
+                key={r.id}
+                className="flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2"
+              >
+                <Badge variant="outline" className={`text-[10px] ${SERVICE_STYLES[r.service_type]}`}>
+                  {SERVICE_LABELS[r.service_type]}
+                </Badge>
+                <span className="min-w-0 flex-1 truncate text-sm font-bold">{r.dogs?.name ?? "-"}</span>
+                <span className="shrink-0 text-xs font-semibold text-muted-foreground">
+                  {r.service_type === "hotel" && r.end_date
+                    ? `${r.reserved_date.slice(5)} ~ ${r.end_date.slice(5)}`
+                    : `${formatTime(r.drop_off_time)} ~ ${formatTime(r.pick_up_time)}`}
+                </span>
+                <Badge className={`shrink-0 text-[10px] ${STATUS_STYLES[r.status]}`}>
+                  {STATUS_LABELS[r.status]}
+                </Badge>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </AppShell>
+
 
   );
 }
@@ -445,9 +507,25 @@ function SummaryCard({
 
 
 
-function NewReservationDialog({ defaultDate }: { defaultDate: string }) {
+function NewReservationDialog({
+  defaultDate,
+  open: openProp,
+  onOpenChange,
+  hideTrigger,
+}: {
+  defaultDate: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hideTrigger?: boolean;
+}) {
   const queryClient = useQueryClient();
-  const [open, setOpen] = useState(false);
+  const [openState, setOpenState] = useState(false);
+  const open = openProp ?? openState;
+  const setOpen = (next: boolean) => {
+    setOpenState(next);
+    onOpenChange?.(next);
+  };
+
   const [serviceType, setServiceType] = useState<ServiceType>("kindergarten");
   const [memberSearch, setMemberSearch] = useState("");
   const [memberId, setMemberId] = useState("");
@@ -598,22 +676,23 @@ function NewReservationDialog({ defaultDate }: { defaultDate: string }) {
 
   const hotelInvalid = serviceType === "hotel" && nightsBetween(date, endDate) < 1;
 
+  useEffect(() => {
+    if (open) {
+      setDate(defaultDate);
+      setEndDate(addDays(defaultDate, 1));
+    }
+  }, [open, defaultDate]);
+
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(next) => {
-        setOpen(next);
-        if (next) {
-          setDate(defaultDate);
-          setEndDate(addDays(defaultDate, 1));
-        }
-      }}
-    >
-      <DialogTrigger asChild>
-        <Button>
-          <Plus className="size-4" /> 예약 등록
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={setOpen}>
+      {hideTrigger ? null : (
+        <DialogTrigger asChild>
+          <Button>
+            <Plus className="size-4" /> 예약 등록
+          </Button>
+        </DialogTrigger>
+      )}
+
       <DialogContent className="max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>예약 등록</DialogTitle>

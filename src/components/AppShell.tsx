@@ -115,8 +115,9 @@ export function AppShell({
             <div className="min-w-0">
               <p className="truncate text-sm font-bold">{profile.isLoading ? "불러오는 중…" : displayName}</p>
               <p className="truncate text-[11px] text-muted-foreground">
-                {profile.data?.branchName ?? profile.data?.role ?? profile.data?.email ?? "로그인 정보"}
+                {profile.data?.branchId ? `지점 ID: ${profile.data.branchId}` : "지점 ID 없음"}
               </p>
+
             </div>
           </div>
 
