@@ -122,8 +122,7 @@ function DashboardPage() {
 
   const rows = byDate[selected] ?? [];
   const active = rows.filter((r) => r.status !== "cancelled");
-  const inside = rows.filter((r) => r.status === "checked_in");
-  const done = rows.filter((r) => r.status === "checked_out");
+
 
   const updateStatus = useMutation({
     mutationFn: async ({ row, status }: { row: Row; status: ReservationStatus }) => {
@@ -181,7 +180,6 @@ function DashboardPage() {
           label="오늘 등원 예정"
           value={byType.kindergarten.length}
           unit="마리"
-          note="클릭하여 강아지 목록 확인"
         />
         <SummaryCard
           icon={<BedDouble className="size-4" />}
@@ -189,7 +187,6 @@ function DashboardPage() {
           label="오늘 호텔 이용"
           value={byType.hotel.length}
           unit="마리"
-          note={`오늘 입실 ${checkInToday}건`}
         />
         <SummaryCard
           icon={<Clock className="size-4" />}
@@ -197,7 +194,6 @@ function DashboardPage() {
           label="오늘 데이케어"
           value={byType.daily_care.length}
           unit="건"
-          note="시간대별 예약 확인"
         />
         <SummaryCard
           icon={<Scissors className="size-4" />}
@@ -205,18 +201,11 @@ function DashboardPage() {
           label="오늘 미용"
           value={byType.grooming.length}
           unit="건"
-          note="가까운 예약시간 확인"
         />
       </div>
 
-      <div className="mb-5 grid gap-3 sm:grid-cols-3">
-        <StatCard icon={<CalendarCheck className="size-4" />} label="선택일 예약" value={active.length} />
-        <StatCard icon={<Users className="size-4" />} label="현재 등원 중" value={inside.length} highlight />
-        <StatCard icon={<Clock className="size-4" />} label="하원 완료" value={done.length} />
-      </div>
+      <div className="grid h-[calc(100vh-260px)] min-h-[560px] grid-cols-1 gap-4 lg:grid-cols-[80%_20%]">
 
-
-      <div className="grid h-[calc(100vh-320px)] min-h-[520px] grid-cols-1 gap-4 lg:grid-cols-[80%_20%]">
       <section className="surface-card flex h-full min-h-0 flex-col overflow-hidden p-5">
 
         <div className="mb-4 flex items-center justify-between">
@@ -261,7 +250,7 @@ function DashboardPage() {
             </div>
           ))}
         </div>
-        <div className="grid min-h-0 flex-1 auto-rows-fr grid-cols-7 gap-1.5 overflow-auto">
+        <div className="grid min-h-0 flex-1 grid-cols-7 gap-1.5 overflow-y-auto">
           {cells.map((d) => {
             const key = toDateKey(d);
             const isMonth = d.getMonth() === anchor.getMonth();
@@ -271,7 +260,7 @@ function DashboardPage() {
               <button
                 key={key}
                 onClick={() => setSelected(key)}
-                className={`flex min-h-[92px] flex-col items-stretch gap-1 rounded-xl border p-1.5 text-left transition-colors ${
+                className={`flex min-h-[124px] flex-col items-stretch gap-1 rounded-xl border p-1.5 text-left align-top transition-colors ${
                   isSelected
                     ? "border-primary bg-primary/8"
                     : isMonth
@@ -279,7 +268,7 @@ function DashboardPage() {
                       : "border-transparent bg-muted/40"
                 }`}
               >
-                <div className="flex items-center justify-between px-0.5">
+                <div className="flex shrink-0 items-center justify-between px-0.5">
                   <span
                     className={`text-xs font-bold ${
                       key === todayKey
@@ -295,17 +284,24 @@ function DashboardPage() {
                     <span className="text-[10px] font-bold text-muted-foreground">{items.length}건</span>
                   ) : null}
                 </div>
-                <div className="flex flex-col gap-0.5 overflow-hidden">
+                <div className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-hidden">
                   {items.slice(0, 3).map((r) => (
                     <span
                       key={`${key}-${r.id}`}
-                      className={`truncate rounded-md border px-1.5 py-0.5 text-[10px] font-semibold ${SERVICE_STYLES[r.service_type]}`}
+                      className={`block shrink-0 rounded-md border px-1.5 py-0.5 text-[10px] font-semibold leading-tight ${SERVICE_STYLES[r.service_type]}`}
                     >
-                      {SERVICE_LABELS[r.service_type]} · {r.dogs?.name ?? "-"}
+                      <span className="block truncate">
+                        {SERVICE_LABELS[r.service_type]} · {r.dogs?.name ?? "-"}
+                      </span>
+                      <span className="block truncate opacity-80">
+                        {r.service_type === "hotel" && r.end_date
+                          ? `${r.reserved_date.slice(5)} ~ ${r.end_date.slice(5)}`
+                          : `${formatTime(r.drop_off_time)} ~ ${formatTime(r.pick_up_time)}`}
+                      </span>
                     </span>
                   ))}
                   {items.length > 3 ? (
-                    <span className="px-1 text-[10px] font-semibold text-muted-foreground">
+                    <span className="shrink-0 px-1 text-[10px] font-semibold text-muted-foreground">
                       +{items.length - 3}건 더
                     </span>
                   ) : null}
@@ -314,6 +310,7 @@ function DashboardPage() {
             );
           })}
         </div>
+
         {monthQuery.isLoading ? (
           <p className="mt-3 text-center text-xs text-muted-foreground">예약을 불러오는 중…</p>
         ) : null}
@@ -411,14 +408,12 @@ function SummaryCard({
   label,
   value,
   unit,
-  note,
 }: {
   icon: React.ReactNode;
   tint: string;
   label: string;
   value: number;
   unit: string;
-  note: string;
 }) {
   return (
     <div className="surface-card relative overflow-hidden p-5">
@@ -432,44 +427,13 @@ function SummaryCard({
         {value}
         <span className="ml-1 text-xs font-semibold text-muted-foreground">{unit}</span>
       </p>
-      <p className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
-        <span className="size-2 rounded-full bg-primary" />
-        {note}
-      </p>
     </div>
   );
 }
 
-function StatCard({
-  icon,
-  label,
-  value,
-  highlight,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: number;
-  highlight?: boolean;
-}) {
-  return (
-    <div className={`surface-card flex items-center gap-3 p-4 ${highlight ? "border-primary/35" : ""}`}>
-      <div
-        className={`flex size-9 items-center justify-center rounded-lg ${
-          highlight ? "bg-primary text-primary-foreground" : "bg-secondary text-primary"
-        }`}
-      >
-        {icon}
-      </div>
-      <div>
-        <p className="text-xs font-medium text-muted-foreground">{label}</p>
-        <p className="text-xl font-extrabold">
-          {value}
-          <span className="ml-0.5 text-xs font-semibold text-muted-foreground">건</span>
-        </p>
-      </div>
-    </div>
-  );
-}
+
+
+
 
 function NewReservationDialog({ defaultDate }: { defaultDate: string }) {
   const queryClient = useQueryClient();
