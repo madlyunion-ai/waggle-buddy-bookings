@@ -686,6 +686,38 @@ function NewReservationDialog({ defaultDate }: { defaultDate: string }) {
             </Select>
           </div>
 
+          <div className="space-y-2">
+            <Label>이용권 적용</Label>
+            <Select value={passId} onValueChange={setPassId} disabled={!petId}>
+              <SelectTrigger>
+                <SelectValue
+                  placeholder={!petId ? "강아지를 먼저 선택하세요" : "이용권을 선택하세요"}
+                />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">사용 안 함</SelectItem>
+                <SelectItem value="auto">자동 (사용 가능한 이용권)</SelectItem>
+                {availablePasses.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.title} · 잔여 {p.total_count - p.used_count}회
+                    {p.expires_on ? ` · ${p.expires_on}까지` : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              {!petId
+                ? "강아지를 선택하면 보유 이용권을 확인할 수 있습니다."
+                : passesQuery.isLoading
+                  ? "이용권을 불러오는 중…"
+                  : availablePasses.length === 0
+                    ? "사용 가능한(결제완료) 이용권이 없습니다."
+                    : `사용 가능한 이용권 ${availablePasses.length}건 · 등원 처리 시 1회 차감됩니다.`}
+            </p>
+          </div>
+
+
+
 
           {serviceType === "hotel" ? (
             <div className="space-y-3">
