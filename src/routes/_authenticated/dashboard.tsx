@@ -38,6 +38,7 @@ import { listExternalMembers, listExternalPets } from "@/lib/projectpet.function
 import {
 
   GROOMING_SLOTS,
+  SERVICE_ACTION_LABELS,
   SERVICE_LABELS,
   SERVICE_STYLES,
   SERVICE_TYPES,
@@ -368,7 +369,7 @@ function DashboardPage() {
                         className="h-7 flex-1 px-2 text-[11px]"
                         onClick={() => updateStatus.mutate({ row, status: "checked_in" })}
                       >
-                        <LogIn className="size-3.5" /> 등원
+                        <LogIn className="size-3.5" /> {SERVICE_ACTION_LABELS[row.service_type].checkIn}
                       </Button>
                       <Button
                         size="sm"
@@ -387,7 +388,7 @@ function DashboardPage() {
                       className="h-7 flex-1 px-2 text-[11px]"
                       onClick={() => updateStatus.mutate({ row, status: "checked_out" })}
                     >
-                      <LogOut className="size-3.5" /> 하원
+                      <LogOut className="size-3.5" /> {SERVICE_ACTION_LABELS[row.service_type].checkOut}
                     </Button>
                   ) : null}
                 </div>
@@ -448,6 +449,7 @@ function NewReservationDialog({ defaultDate }: { defaultDate: string }) {
   const [pickUp, setPickUp] = useState("18:00");
   const [slot, setSlot] = useState("10:00");
   const [memo, setMemo] = useState("");
+  const [passId, setPassId] = useState("none");
 
   const fetchMembers = useServerFn(listExternalMembers);
   const fetchPets = useServerFn(listExternalPets);
@@ -467,6 +469,27 @@ function NewReservationDialog({ defaultDate }: { defaultDate: string }) {
   });
 
   const pet = (petsQuery.data ?? []).find((p) => p.id === petId) ?? null;
+
+  // 선택한 반려견의 내부 이용권 목록 (동기화된 강아지 기준)
+  const passesQuery = useQuery({
+    queryKey: ["passes", "for-external-pet", petId],
+    queryFn: async () => {
+      const { data: dog } = await supabase.from("dogs").select("id").eq("external_id", petId).maybeSingle();
+      if (!dog) return [];
+      const { data, error } = await supabase
+        .from("passes")
+        .select("id, title, total_count, used_count, payment_status, expires_on")
+        .eq("dog_id", dog.id)
+        .order("purchased_on", { ascending: true });
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: open && !!petId,
+  });
+
+  const availablePasses = (passesQuery.data ?? []).filter(
+    (p) => p.payment_status === "paid" && p.used_count < p.total_count,
+  );
 
   const create = useMutation({
     mutationFn: async () => {
@@ -519,13 +542,21 @@ function NewReservationDialog({ defaultDate }: { defaultDate: string }) {
         dogId = insertedDog.id;
       }
 
-      const { data: pass } = await supabase
-        .from("passes")
-        .select("id, total_count, used_count")
-        .eq("dog_id", dogId)
-        .eq("payment_status", "paid")
-        .order("purchased_on", { ascending: true });
-      const usable = (pass ?? []).find((p) => p.used_count < p.total_count);
+      // 이용권 적용: 사용자가 선택한 이용권이 있으면 그것을 사용, "자동"이면 사용 가능한 이용권을 사용
+      let appliedPassId: string | null = null;
+      if (passId !== "none") {
+        if (passId === "auto") {
+          const { data: pass } = await supabase
+            .from("passes")
+            .select("id, total_count, used_count")
+            .eq("dog_id", dogId)
+            .eq("payment_status", "paid")
+            .order("purchased_on", { ascending: true });
+          appliedPassId = (pass ?? []).find((p) => p.used_count < p.total_count)?.id ?? null;
+        } else {
+          appliedPassId = passId;
+        }
+      }
 
       const times =
         serviceType === "grooming"
@@ -539,17 +570,19 @@ function NewReservationDialog({ defaultDate }: { defaultDate: string }) {
         end_date: serviceType === "hotel" ? endDate : null,
         ...times,
         memo: memo || null,
-        pass_id: serviceType === "kindergarten" ? (usable?.id ?? null) : null,
+        pass_id: appliedPassId,
       });
       if (error) throw error;
     },
 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reservations"] });
+      queryClient.invalidateQueries({ queryKey: ["passes"] });
       toast.success("예약을 등록했습니다");
       setOpen(false);
       setMemo("");
       setPetId("");
+      setPassId("none");
     },
     onError: (e: Error) => toast.error("예약 등록에 실패했습니다", { description: e.message }),
   });
@@ -596,7 +629,7 @@ function NewReservationDialog({ defaultDate }: { defaultDate: string }) {
           </div>
 
           <div className="space-y-2">
-            <Label>회원 검색 (외부 회원 시스템)</Label>
+            <Label>회원 검색</Label>
             <Input
               value={memberSearch}
               placeholder="이름 또는 전화번호로 검색"
@@ -652,6 +685,38 @@ function NewReservationDialog({ defaultDate }: { defaultDate: string }) {
               </SelectContent>
             </Select>
           </div>
+
+          <div className="space-y-2">
+            <Label>이용권 적용</Label>
+            <Select value={passId} onValueChange={setPassId} disabled={!petId}>
+              <SelectTrigger>
+                <SelectValue
+                  placeholder={!petId ? "강아지를 먼저 선택하세요" : "이용권을 선택하세요"}
+                />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">사용 안 함</SelectItem>
+                <SelectItem value="auto">자동 (사용 가능한 이용권)</SelectItem>
+                {availablePasses.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.title} · 잔여 {p.total_count - p.used_count}회
+                    {p.expires_on ? ` · ${p.expires_on}까지` : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              {!petId
+                ? "강아지를 선택하면 보유 이용권을 확인할 수 있습니다."
+                : passesQuery.isLoading
+                  ? "이용권을 불러오는 중…"
+                  : availablePasses.length === 0
+                    ? "사용 가능한(결제완료) 이용권이 없습니다."
+                    : `사용 가능한 이용권 ${availablePasses.length}건 · 등원 처리 시 1회 차감됩니다.`}
+            </p>
+          </div>
+
+
 
 
           {serviceType === "hotel" ? (
