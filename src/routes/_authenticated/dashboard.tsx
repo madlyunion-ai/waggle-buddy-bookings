@@ -427,7 +427,44 @@ function DashboardPage() {
       </div>
       </div>
 
+      <NewReservationDialog
+        defaultDate={createDate ?? selected}
+        open={createDate !== null}
+        onOpenChange={(next) => setCreateDate(next ? (createDate ?? selected) : null)}
+        hideTrigger
+      />
+
+      <Dialog open={dayListDate !== null} onOpenChange={(next) => setDayListDate(next ? dayListDate : null)}>
+        <DialogContent className="max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{dayListDate ? formatDateKorean(dayListDate) : ""} 예약</DialogTitle>
+            <DialogDescription>이 날짜의 모든 예약 목록입니다.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            {(dayListDate ? (byDate[dayListDate] ?? []).filter((r) => r.status !== "cancelled") : []).map((r) => (
+              <div
+                key={r.id}
+                className="flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2"
+              >
+                <Badge variant="outline" className={`text-[10px] ${SERVICE_STYLES[r.service_type]}`}>
+                  {SERVICE_LABELS[r.service_type]}
+                </Badge>
+                <span className="min-w-0 flex-1 truncate text-sm font-bold">{r.dogs?.name ?? "-"}</span>
+                <span className="shrink-0 text-xs font-semibold text-muted-foreground">
+                  {r.service_type === "hotel" && r.end_date
+                    ? `${r.reserved_date.slice(5)} ~ ${r.end_date.slice(5)}`
+                    : `${formatTime(r.drop_off_time)} ~ ${formatTime(r.pick_up_time)}`}
+                </span>
+                <Badge className={`shrink-0 text-[10px] ${STATUS_STYLES[r.status]}`}>
+                  {STATUS_LABELS[r.status]}
+                </Badge>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </AppShell>
+
 
   );
 }
