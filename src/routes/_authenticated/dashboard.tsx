@@ -213,7 +213,14 @@ function DashboardPage() {
                 </span>
               ))}
             </div>
-            <Button variant="outline" size="sm" onClick={() => setSelected(todayKey)}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setAnchor(new Date());
+                setSelected(todayKey);
+              }}
+            >
               오늘
             </Button>
             <Button
@@ -255,6 +262,7 @@ function DashboardPage() {
             const key = toDateKey(d);
             const isMonth = d.getMonth() === anchor.getMonth();
             const isSelected = key === selected;
+            const isToday = key === todayKey;
             const dow = d.getDay();
             const items = (byDate[key] ?? []).filter((r) => r.status !== "cancelled");
             return (
@@ -272,16 +280,18 @@ function DashboardPage() {
                     setCreateDate(key);
                   }
                 }}
-                className={`flex min-h-0 cursor-pointer overflow-hidden flex-col items-stretch gap-1 rounded-xl border p-1.5 text-left align-top transition-colors ${
+                className={`flex min-h-0 cursor-pointer overflow-hidden flex-col items-stretch gap-1 rounded-xl p-1.5 text-left align-top transition-colors ${
+                  isToday ? "border-2 border-primary" : "border"
+                } ${
                   isSelected
-                    ? "border-primary bg-primary/8"
+                    ? "bg-primary/8"
                     : isMonth
                       ? dow === 0
-                        ? "border-rose-300/70 bg-card hover:bg-rose-50/60"
+                        ? `bg-card hover:bg-rose-50/60 ${isToday ? "" : "border-rose-300/70"}`
                         : dow === 6
-                          ? "border-sky-300/70 bg-card hover:bg-sky-50/60"
-                          : "border-border bg-card hover:bg-secondary/60"
-                      : "border-transparent bg-muted/40"
+                          ? `bg-card hover:bg-sky-50/60 ${isToday ? "" : "border-sky-300/70"}`
+                          : `bg-card hover:bg-secondary/60 ${isToday ? "" : "border-border"}`
+                      : `bg-muted/40 ${isToday ? "" : "border-transparent"}`
                 }`}
               >
 
