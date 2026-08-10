@@ -157,12 +157,107 @@ export const createStaff = createServerFn({ method: "POST" })
   });
 
 
-/** 내부 DB 직원 삭제 */
+/** 내부 DB 직원 정보 수정 (이름/아이디/이메일/연락처/구분/상태, 비밀번호는 입력 시에만 변경) */
+export const updateLocalStaff = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (input: {
+      id: string;
+      name: string;
+      username: string;
+      email: string;
+      phone: string;
+      role: StaffRoleInput;
+      status: "ACTIVE" | "INACTIVE";
+      password?: string | undefined;
+    }) => {
+      const id = String(input?.id ?? "").trim();
+      const name = String(input?.name ?? "").trim().slice(0, 100);
+      const username = String(input?.username ?? "").trim().slice(0, 50);
+      const email = String(input?.email ?? "").trim().slice(0, 200);
+      const phone = String(input?.phone ?? "").replace(/[^0-9]/g, "").slice(0, 11);
+      const role: StaffRoleInput = input?.role === "BRANCH_MANAGER" ? "BRANCH_MANAGER" : "STAFF";
+      const status = input?.status === "INACTIVE" ? "INACTIVE" : "ACTIVE";
+      const password = String(input?.password ?? "");
+      if (!id) throw new Error("대상을 확인할 수 없습니다.");
+      if (!name) throw new Error("이름을 입력해 주세요.");
+      if (!/^[A-Za-z0-9._-]{3,50}$/.test(username))
+        throw new Error("아이디는 영문·숫자 3자 이상으로 입력해 주세요.");
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("올바른 이메일을 입력해 주세요.");
+      if (phone.length < 10) throw new Error("휴대폰 번호를 정확히 입력해 주세요.");
+      if (password && password.length < 6) throw new Error("비밀번호는 6자 이상이어야 합니다.");
+      return { id, name, username, email, phone, role, status, password };
+    },
+  )
+  .handler(async ({ data, context }): Promise<{ ok: true }> => {
+    const { data: current, error: curErr } = await context.supabase
+      .from("staff")
+      .select("email")
+      .eq("id", data.id)
+      .single();
+    if (curErr) throw new Error(curErr.message);
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: list, error: listErr } = await supabaseAdmin.auth.admin.listUsers({
+      page: 1,
+      perPage: 1000,
+    });
+    if (listErr) throw new Error(`로그인 계정 조회에 실패했습니다: ${listErr.message}`);
+    const authUser = list?.users?.find(
+      (u) => (u.email ?? "").toLowerCase() === current.email.toLowerCase(),
+    );
+
+    if (authUser) {
+      const updates: { email?: string; password?: string; user_metadata?: Record<string, unknown> } = {
+        user_metadata: { full_name: data.name, phone: data.phone, staff_role: data.role },
+      };
+      if (data.email.toLowerCase() !== current.email.toLowerCase()) updates.email = data.email;
+      if (data.password) updates.password = data.password;
+      const { error: updErr } = await supabaseAdmin.auth.admin.updateUserById(authUser.id, updates);
+      if (updErr) throw new Error(`로그인 계정 갱신에 실패했습니다: ${updErr.message}`);
+    }
+
+    const { error } = await context.supabase
+      .from("staff")
+      .update({
+        name: data.name,
+        username: data.username,
+        email: data.email,
+        phone: data.phone,
+        role: data.role,
+        status: data.status,
+      })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+
+    return { ok: true };
+  });
+
+/** 내부 DB 직원 삭제 (로그인 계정도 함께 삭제) */
 export const deleteLocalStaff = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { id: string }) => ({ id: String(input?.id ?? "") }))
   .handler(async ({ data, context }) => {
+    const { data: current, error: curErr } = await context.supabase
+      .from("staff")
+      .select("email")
+      .eq("id", data.id)
+      .single();
+    if (curErr) throw new Error(curErr.message);
+
     const { error } = await context.supabase.from("staff").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
+
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: list } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+      const authUser = list?.users?.find(
+        (u) => (u.email ?? "").toLowerCase() === current.email.toLowerCase(),
+      );
+      if (authUser) await supabaseAdmin.auth.admin.deleteUser(authUser.id);
+    } catch (e) {
+      console.error("로그인 계정 삭제 실패 (직원 레코드는 삭제됨):", e);
+    }
+
     return { ok: true };
   });
