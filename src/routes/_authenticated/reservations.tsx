@@ -154,7 +154,7 @@ function ReservationsPage() {
         <div className="relative max-w-sm flex-1">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            className="bg-white pl-9"
+            className="bg-white pl-9 placeholder:text-sm"
             placeholder="강아지 이름, 견종, 보호자 검색"
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
@@ -193,12 +193,12 @@ function ReservationsPage() {
 
       <div className="overflow-hidden rounded-lg border border-border bg-card">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-0 text-sm sm:min-w-[820px]">
+          <table className="w-full min-w-0 text-[11px] sm:min-w-[820px] sm:text-sm">
             <thead className="bg-secondary/60 text-left text-xs font-bold text-muted-foreground">
               <tr>
-                <th className="px-4 py-3">강아지</th>
-                <th className="px-4 py-3">보호자</th>
-                <th className="px-4 py-3">예약일</th>
+                <th className="whitespace-nowrap px-4 py-3">강아지</th>
+                <th className="whitespace-nowrap px-4 py-3">보호자</th>
+                <th className="whitespace-nowrap px-4 py-3">예약일</th>
                 <th className="hidden px-4 py-3 sm:table-cell">서비스</th>
                 <th className="hidden px-4 py-3 sm:table-cell">시간 · 기간</th>
                 <th className="hidden px-4 py-3 sm:table-cell">상태</th>
@@ -232,7 +232,7 @@ function ReservationsPage() {
                   >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2.5">
-                        <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-secondary font-display text-sm font-extrabold text-primary">
+                        <div className="flex size-[26px] shrink-0 items-center justify-center rounded-lg bg-secondary font-display text-xs font-extrabold text-primary sm:size-8 sm:text-sm">
                           {(row.dogs?.name ?? "?").slice(0, 1)}
                         </div>
                         <div className="min-w-0">
@@ -257,7 +257,7 @@ function ReservationsPage() {
                         />
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground">
+                    <td className="px-4 py-3 text-[10px] text-muted-foreground sm:text-sm">
                       {formatDateKorean(row.reserved_date)}
                     </td>
                     <td className="hidden px-4 py-3 sm:table-cell">

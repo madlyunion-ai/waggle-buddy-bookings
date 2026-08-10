@@ -95,7 +95,7 @@ function DogsPage() {
         <div className="relative max-w-sm flex-1">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            className="bg-white pl-9"
+            className="bg-white pl-9 placeholder:text-sm"
             placeholder="반려견 이름, 견종, 보호자 검색"
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
@@ -113,7 +113,7 @@ function DogsPage() {
 
       <div className="overflow-hidden rounded-lg border border-border bg-card">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-0 text-sm sm:min-w-[760px]">
+          <table className="w-full min-w-0 text-[11px] sm:min-w-[760px] sm:text-sm">
             <thead className="bg-secondary/60 text-left text-xs font-bold text-muted-foreground">
               <tr>
                 <th className="px-4 py-3">이름</th>
@@ -152,7 +152,7 @@ function DogsPage() {
                   >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2.5">
-                        <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-secondary font-display text-sm font-extrabold text-primary">
+                        <div className="flex size-[26px] shrink-0 items-center justify-center rounded-lg bg-secondary font-display text-xs font-extrabold text-primary sm:size-8 sm:text-sm">
                           {pet.name.slice(0, 1)}
                         </div>
                         <span className="truncate font-bold">{pet.name}</span>

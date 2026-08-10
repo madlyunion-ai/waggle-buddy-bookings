@@ -199,7 +199,7 @@ export function AppShell({
           {title || action ? (
             <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
               <div>
-                {title ? <h1 className="text-xl font-bold sm:text-2xl">{title}</h1> : null}
+                {title ? <h1 className="text-[14px] font-bold sm:text-2xl">{title}</h1> : null}
                 {description ? (
                   <p className="mt-1 text-sm text-muted-foreground">{description}</p>
                 ) : null}

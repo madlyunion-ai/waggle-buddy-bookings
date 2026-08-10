@@ -143,7 +143,7 @@ function StaffPage() {
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
             placeholder="이름, 아이디, 연락처 검색"
-            className="bg-white pl-9"
+            className="bg-white pl-9 placeholder:text-sm"
           />
         </div>
         <Button
@@ -162,14 +162,14 @@ function StaffPage() {
 
       <div className="overflow-hidden rounded-lg border border-border bg-card">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-0 text-sm sm:min-w-[720px]">
+          <table className="w-full min-w-0 table-fixed text-[11px] sm:min-w-[720px] sm:table-auto sm:text-sm">
             <thead className="bg-secondary/60 text-left text-xs font-bold text-muted-foreground">
               <tr>
-                <th className="px-4 py-3">이름</th>
-                <th className="px-4 py-3">구분</th>
-                <th className="px-4 py-3">아이디</th>
+                <th className="w-[26%] px-2 py-3 sm:w-auto sm:px-4">이름</th>
+                <th className="w-[18%] px-2 py-3 sm:w-auto sm:px-4">구분</th>
+                <th className="w-[28%] px-2 py-3 sm:w-auto sm:px-4">아이디</th>
                 <th className="hidden px-4 py-3 sm:table-cell">이메일</th>
-                <th className="px-4 py-3">연락처</th>
+                <th className="w-[28%] px-2 py-3 sm:w-auto sm:px-4">연락처</th>
                 <th className="hidden px-4 py-3 sm:table-cell">상태</th>
                 <th className="hidden px-4 py-3 text-right sm:table-cell">관리</th>
               </tr>
@@ -191,18 +191,25 @@ function StaffPage() {
               ) : (
                 rows.map((row) => (
                   <tr key={row.id} className="border-t border-border">
-                    <td className="px-4 py-3 font-semibold">{row.name}</td>
-                    <td className="px-4 py-3">
-                      <Badge variant={row.role === "STAFF" ? "secondary" : "default"}>
+                    <td className="truncate px-2 py-3 font-semibold sm:px-4">{row.name}</td>
+                    <td className="truncate px-2 py-3 sm:px-4">
+                      <Badge
+                        variant={row.role === "STAFF" ? "secondary" : "default"}
+                        className="max-w-full truncate"
+                      >
                         {roleLabel(row.role)}
                       </Badge>
                     </td>
-                    <td className="px-4 py-3 font-medium">{row.username ?? "-"}</td>
+                    <td className="truncate px-2 py-3 font-medium sm:px-4">
+                      {row.username ?? "-"}
+                    </td>
                     <td className="hidden px-4 py-3 text-muted-foreground sm:table-cell">
                       {row.email ?? "-"}
                     </td>
 
-                    <td className="px-4 py-3 text-muted-foreground">{formatPhone(row.phone)}</td>
+                    <td className="truncate px-2 py-3 text-muted-foreground sm:px-4">
+                      {formatPhone(row.phone)}
+                    </td>
                     <td className="hidden px-4 py-3 text-muted-foreground sm:table-cell">
                       {row.status ? (STATUS_LABELS[row.status] ?? row.status) : "-"}
                     </td>
