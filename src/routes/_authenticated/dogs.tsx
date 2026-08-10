@@ -73,9 +73,19 @@ function DogsPage() {
   return (
     <AppShell
       title="반려견 리스트"
-      description="데이터베이스에 저장된 반려견 목록입니다. 페이지 진입 시 외부 회원 시스템과 자동 동기화됩니다."
+      description={
+        <span className="hidden sm:inline">
+          데이터베이스에 저장된 반려견 목록입니다. 페이지 진입 시 외부 회원 시스템과 자동
+          동기화됩니다.
+        </span>
+      }
       action={
-        <Button variant="outline" onClick={() => sync.mutate()} disabled={sync.isPending}>
+        <Button
+          variant="outline"
+          onClick={() => sync.mutate()}
+          disabled={sync.isPending}
+          className="hidden sm:inline-flex"
+        >
           <RefreshCw className={`size-4 ${sync.isPending ? "animate-spin" : ""}`} />
           {sync.isPending ? "동기화 중…" : "동기화"}
         </Button>
@@ -95,7 +105,7 @@ function DogsPage() {
           />
         </div>
         <Button onClick={applySearch}>검색</Button>
-        <span className="ml-auto text-sm text-muted-foreground">
+        <span className="ml-auto hidden text-sm text-muted-foreground sm:inline">
           전체 {total.toLocaleString("ko-KR")}마리
           {lastSyncedAt ? ` · 최근 동기화 ${new Date(lastSyncedAt).toLocaleString("ko-KR")}` : ""}
         </span>
@@ -103,14 +113,14 @@ function DogsPage() {
 
       <div className="overflow-hidden rounded-lg border border-border bg-card">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[760px] text-sm">
+          <table className="w-full min-w-0 text-sm sm:min-w-[760px]">
             <thead className="bg-secondary/60 text-left text-xs font-bold text-muted-foreground">
               <tr>
                 <th className="px-4 py-3">이름</th>
-                <th className="px-4 py-3">견종</th>
-                <th className="px-4 py-3">성별</th>
-                <th className="px-4 py-3">나이</th>
-                <th className="px-4 py-3">몸무게</th>
+                <th className="hidden px-4 py-3 sm:table-cell">견종</th>
+                <th className="hidden px-4 py-3 sm:table-cell">성별</th>
+                <th className="hidden px-4 py-3 sm:table-cell">나이</th>
+                <th className="hidden px-4 py-3 sm:table-cell">몸무게</th>
                 <th className="px-4 py-3">보호자</th>
                 <th className="px-4 py-3 text-right">예약</th>
               </tr>
@@ -153,14 +163,16 @@ function DogsPage() {
                         ) : null}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground">
+                    <td className="hidden px-4 py-3 text-muted-foreground sm:table-cell">
                       {pet.breed ?? "견종 미입력"}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="hidden px-4 py-3 sm:table-cell">
                       {GENDER_LABELS[pet.gender ?? "unknown"] ?? "미입력"}
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground">{ageLabel(pet.birthDate)}</td>
-                    <td className="px-4 py-3 text-muted-foreground">
+                    <td className="hidden px-4 py-3 text-muted-foreground sm:table-cell">
+                      {ageLabel(pet.birthDate)}
+                    </td>
+                    <td className="hidden px-4 py-3 text-muted-foreground sm:table-cell">
                       {pet.weight ? `${pet.weight}kg` : "-"}
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">

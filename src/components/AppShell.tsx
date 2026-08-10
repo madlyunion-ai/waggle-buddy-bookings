@@ -1,7 +1,16 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { CalendarCheck, CalendarDays, Dog, LogOut, MapPin, Settings, Ticket, Users } from "lucide-react";
+import {
+  CalendarCheck,
+  CalendarDays,
+  Dog,
+  LogOut,
+  MapPin,
+  Settings,
+  Ticket,
+  Users,
+} from "lucide-react";
 import { useState } from "react";
 
 import { NewReservationDialog } from "@/components/NewReservationDialog";
@@ -43,7 +52,6 @@ const MOBILE_NAV = [
   { to: "/passes", label: "이용권 · 결제", icon: Ticket },
 ] as const;
 
-
 export function AppShell({
   title,
   description,
@@ -52,12 +60,11 @@ export function AppShell({
   children,
 }: {
   title?: string;
-  description?: string;
+  description?: ReactNode;
   action?: ReactNode;
   sidebarAction?: ReactNode;
   children: ReactNode;
 }) {
-
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const fetchProfile = useServerFn(getCurrentStaffProfile);
@@ -83,7 +90,6 @@ export function AppShell({
       }
     : null;
 
-
   async function signOut() {
     await queryClient.cancelQueries();
     queryClient.clear();
@@ -96,7 +102,9 @@ export function AppShell({
       <header className="sticky top-0 z-30 border-b border-[#17214c] bg-[#17214c] text-white">
         <div className="flex h-[44px] items-center gap-3 px-4 lg:px-6">
           <Link to="/dashboard" className="flex items-baseline gap-2">
-            <span className="font-display text-[17px] font-semibold tracking-tight text-white">허그앤멍 예약관리시스템</span>
+            <span className="font-display text-[17px] font-semibold tracking-tight text-white">
+              허그앤멍 예약관리시스템
+            </span>
             <span className="hidden text-[11px] font-normal text-white/70 sm:inline">
               허그앤멍 프리미엄 토탈 애견 유치원 서비스
             </span>
@@ -144,7 +152,9 @@ export function AppShell({
               {initial}
             </span>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-bold">{profile.isLoading ? "불러오는 중…" : displayName}</p>
+              <p className="truncate text-sm font-bold">
+                {profile.isLoading ? "불러오는 중…" : displayName}
+              </p>
               <p className="truncate text-[11px] text-muted-foreground">
                 {profile.data?.email ?? "이메일 없음"}
               </p>
@@ -167,7 +177,9 @@ export function AppShell({
 
           {NAV_GROUPS.map((group) => (
             <div key={group.label} className="mb-5">
-              <p className="px-3 pb-1.5 text-[11px] font-bold tracking-wide text-muted-foreground">{group.label}</p>
+              <p className="px-3 pb-1.5 text-[11px] font-bold tracking-wide text-muted-foreground">
+                {group.label}
+              </p>
               <div className="flex flex-col gap-1">
                 {group.items.map((item) => (
                   <Link
@@ -181,7 +193,6 @@ export function AppShell({
                 ))}
               </div>
             </div>
-
           ))}
         </aside>
 
@@ -190,14 +201,15 @@ export function AppShell({
             <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
               <div>
                 {title ? <h1 className="text-xl font-bold sm:text-2xl">{title}</h1> : null}
-                {description ? <p className="mt-1 text-sm text-muted-foreground">{description}</p> : null}
+                {description ? (
+                  <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+                ) : null}
               </div>
               {action}
             </div>
           ) : null}
           {children}
         </main>
-
       </div>
 
       <StaffEditDialog row={editingSelf ? selfRow : null} onOpenChange={(v) => setEditingSelf(v)} />
