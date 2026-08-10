@@ -218,8 +218,8 @@ function DashboardPage() {
               <button
                 type="button"
                 onClick={() => setServiceFilter("all")}
-                className={`rounded-full border border-primary/25 bg-primary/12 px-3 py-1.5 text-sm font-bold text-primary transition-shadow ${
-                  serviceFilter === "all" ? "ring-2 ring-primary ring-offset-1" : ""
+                className={`rounded-full border border-border bg-secondary px-3 py-1.5 text-sm font-bold text-muted-foreground transition-shadow ${
+                  serviceFilter === "all" ? "ring-2 ring-muted-foreground/50 ring-offset-1" : ""
                 }`}
               >
                 전체
@@ -402,7 +402,7 @@ function DashboardPage() {
           />
           <SummaryCard
             icon={<Clock className="size-4" />}
-            tint="bg-secondary text-primary"
+            tint="bg-rose-400/15 text-rose-400"
             label="오늘 데이케어"
             value={byType.daily_care.length}
             unit="건"
