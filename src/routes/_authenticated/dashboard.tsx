@@ -359,34 +359,36 @@ function DashboardPage() {
             { label: "미용", value: monthlyTotals.grooming },
           ]}
         />
-        <SummaryCard
-          icon={<CalendarCheck className="size-4" />}
-          tint="bg-primary/12 text-primary"
-          label="오늘 등원 예정"
-          value={byType.kindergarten.length}
-          unit="마리"
-        />
-        <SummaryCard
-          icon={<BedDouble className="size-4" />}
-          tint="bg-accent/25 text-accent-foreground"
-          label="오늘 호텔 이용"
-          value={byType.hotel.length}
-          unit="마리"
-        />
-        <SummaryCard
-          icon={<Clock className="size-4" />}
-          tint="bg-secondary text-primary"
-          label="오늘 데이케어"
-          value={byType.daily_care.length}
-          unit="건"
-        />
-        <SummaryCard
-          icon={<Scissors className="size-4" />}
-          tint="bg-warning/25 text-warning-foreground"
-          label="오늘 미용"
-          value={byType.grooming.length}
-          unit="건"
-        />
+        <div className="grid grid-cols-2 gap-3">
+          <SummaryCard
+            icon={<CalendarCheck className="size-4" />}
+            tint="bg-primary/12 text-primary"
+            label="오늘 등원 예정"
+            value={byType.kindergarten.length}
+            unit="마리"
+          />
+          <SummaryCard
+            icon={<BedDouble className="size-4" />}
+            tint="bg-accent/25 text-accent-foreground"
+            label="오늘 호텔 이용"
+            value={byType.hotel.length}
+            unit="마리"
+          />
+          <SummaryCard
+            icon={<Clock className="size-4" />}
+            tint="bg-secondary text-primary"
+            label="오늘 데이케어"
+            value={byType.daily_care.length}
+            unit="건"
+          />
+          <SummaryCard
+            icon={<Scissors className="size-4" />}
+            tint="bg-warning/25 text-warning-foreground"
+            label="오늘 미용"
+            value={byType.grooming.length}
+            unit="건"
+          />
+        </div>
 
       <section className="surface-card flex min-h-[220px] flex-1 flex-col p-4">
 
