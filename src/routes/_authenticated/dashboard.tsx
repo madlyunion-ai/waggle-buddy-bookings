@@ -93,6 +93,7 @@ function DashboardPage() {
   const queryClient = useQueryClient();
   const [anchor, setAnchor] = useState(() => new Date());
   const [selected, setSelected] = useState(() => toDateKey(new Date()));
+  const [serviceFilter, setServiceFilter] = useState<ServiceType | "all">("all");
   const [createDate, setCreateDate] = useState<string | null>(null);
   const [dayListDate, setDayListDate] = useState<string | null>(null);
 
@@ -201,18 +202,6 @@ function DashboardPage() {
               <CalendarDays className="size-3.5" />
               {formatDateKorean(todayKey)}
             </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="mr-2 hidden items-center gap-2 md:flex">
-              {SERVICE_TYPES.map((t) => (
-                <span
-                  key={t}
-                  className={`rounded-full border px-2 py-0.5 text-[11px] font-bold ${SERVICE_STYLES[t]}`}
-                >
-                  {SERVICE_LABELS[t]}
-                </span>
-              ))}
-            </div>
             <Button
               variant="outline"
               size="sm"
@@ -223,6 +212,35 @@ function DashboardPage() {
             >
               오늘
             </Button>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="mr-2 hidden items-center gap-2 md:flex">
+              <button
+                type="button"
+                onClick={() => setServiceFilter("all")}
+                className={`rounded-full border px-3 py-1.5 text-sm font-bold transition-colors ${
+                  serviceFilter === "all"
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border bg-transparent text-muted-foreground hover:bg-secondary"
+                }`}
+              >
+                전체
+              </button>
+              {SERVICE_TYPES.map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setServiceFilter(t)}
+                  className={`rounded-full border px-3 py-1.5 text-sm font-bold transition-colors ${
+                    serviceFilter === t
+                      ? SERVICE_STYLES[t]
+                      : "border-border bg-transparent text-muted-foreground hover:bg-secondary"
+                  }`}
+                >
+                  {SERVICE_LABELS[t]}
+                </button>
+              ))}
+            </div>
             <Button
               variant="ghost"
               size="icon"
@@ -264,7 +282,9 @@ function DashboardPage() {
             const isSelected = key === selected;
             const isToday = key === todayKey;
             const dow = d.getDay();
-            const items = (byDate[key] ?? []).filter((r) => r.status !== "cancelled");
+            const items = (byDate[key] ?? []).filter(
+              (r) => r.status !== "cancelled" && (serviceFilter === "all" || r.service_type === serviceFilter),
+            );
             return (
               <div
                 key={key}
