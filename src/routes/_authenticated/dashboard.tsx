@@ -351,12 +351,12 @@ function DashboardPage() {
 
       <div className="flex h-full min-h-0 flex-col gap-3">
         <MonthlyStatsCard
-          title="전체예약현황"
+          title={`${anchor.getMonth() + 1}월 전체 예약현황`}
           items={[
-            { icon: <CalendarCheck className="size-4" />, tint: "bg-primary/12 text-primary", label: "유치원", value: monthlyTotals.kindergarten },
-            { icon: <BedDouble className="size-4" />, tint: "bg-accent/25 text-accent-foreground", label: "호텔", value: monthlyTotals.hotel },
-            { icon: <Clock className="size-4" />, tint: "bg-secondary text-primary", label: "데일리케어", value: monthlyTotals.daily_care },
-            { icon: <Scissors className="size-4" />, tint: "bg-warning/25 text-warning-foreground", label: "미용", value: monthlyTotals.grooming },
+            { label: "유치원", value: monthlyTotals.kindergarten },
+            { label: "호텔", value: monthlyTotals.hotel },
+            { label: "데일리케어", value: monthlyTotals.daily_care },
+            { label: "미용", value: monthlyTotals.grooming },
           ]}
         />
         <SummaryCard
@@ -521,30 +521,41 @@ function MonthlyStatsCard({
   items,
 }: {
   title: string;
-  items: { icon: React.ReactNode; tint: string; label: string; value: number }[];
+  items: { label: string; value: number }[];
 }) {
   return (
     <div className="surface-card shrink-0 px-3 py-2.5">
       <p className="text-[13px] font-bold">{title}</p>
-      <div className="mt-2 grid grid-cols-2 gap-2">
-        {items.map((item) => (
-          <div key={item.label} className="relative overflow-hidden rounded-xl border border-border/70 bg-card/60 px-2.5 py-2">
-            <div
-              className={`absolute -right-3 -top-3 flex size-9 items-end justify-start rounded-full p-2 ${item.tint}`}
-            >
-              {item.icon}
-            </div>
-            <p className="text-[11px] font-semibold text-muted-foreground">{item.label}</p>
-            <p
-              className={`mt-0.5 text-lg font-extrabold leading-tight tracking-tight ${
-                item.value > 0 ? "text-primary" : "text-foreground"
-              }`}
-            >
-              {item.value}
-              <span className="ml-0.5 text-[10px] font-semibold text-muted-foreground">건</span>
-            </p>
-          </div>
-        ))}
+      <div className="mt-2 overflow-hidden rounded-xl border border-border/70">
+        <table className="w-full table-fixed border-collapse text-center">
+          <thead>
+            <tr className="bg-secondary/60">
+              {items.map((item) => (
+                <th
+                  key={item.label}
+                  className="border-b border-border/70 px-1 py-1.5 text-[11px] font-bold text-muted-foreground"
+                >
+                  {item.label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              {items.map((item) => (
+                <td key={item.label} className="px-1 py-2">
+                  <span
+                    className={`text-lg font-extrabold leading-tight tracking-tight ${
+                      item.value > 0 ? "text-primary" : "text-foreground"
+                    }`}
+                  >
+                    {item.value}
+                  </span>
+                </td>
+              ))}
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   );
