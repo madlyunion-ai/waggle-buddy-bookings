@@ -78,7 +78,7 @@ export function AppShell({
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-30 border-b border-primary bg-primary text-white">
-        <div className="flex h-[34px] items-center gap-3 px-4 lg:px-6">
+        <div className="flex h-[44px] items-center gap-3 px-4 lg:px-6">
           <Link to="/dashboard" className="flex items-center gap-2">
             <span className="font-display text-[13px] font-bold tracking-tight text-white">허그앤멍 예약관리시스템</span>
           </Link>
@@ -88,9 +88,9 @@ export function AppShell({
               href={BRANCH_MAP_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden items-center gap-1 rounded-md border border-white/40 px-2.5 py-1 text-[11px] font-medium text-white transition-colors hover:bg-white/10 md:inline-flex"
+              className="hidden items-center gap-1 rounded-md bg-white px-2.5 py-1 text-[11px] font-medium text-primary transition-colors hover:bg-white/90 md:inline-flex"
             >
-              <MapPin className="size-3" />
+              <MapPin className="size-3 text-primary" />
               허그앤멍 왕십리지점
             </a>
             <Button
@@ -119,7 +119,7 @@ export function AppShell({
       </header>
 
       <div className="flex">
-        <aside className="sticky top-[34px] hidden h-[calc(100vh-34px)] w-56 shrink-0 overflow-y-auto border-r border-border bg-sidebar px-3 py-4 lg:block">
+        <aside className="sticky top-[44px] hidden h-[calc(100vh-44px)] w-56 shrink-0 overflow-y-auto border-r border-border bg-sidebar px-3 py-4 lg:block">
           <div className="mb-4 flex items-center gap-2.5 rounded-lg border border-border bg-card px-3 py-2.5">
             <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 font-display text-sm font-extrabold text-primary">
               {initial}
