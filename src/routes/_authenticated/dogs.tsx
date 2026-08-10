@@ -13,12 +13,14 @@ import { Input } from "@/components/ui/input";
 import { listLocalPets, syncPetsToDb } from "@/lib/petsync.functions";
 import { GENDER_LABELS, ageLabel } from "@/lib/kindergarten";
 
-
 export const Route = createFileRoute("/_authenticated/dogs")({
   head: () => ({
     meta: [
       { title: "반려견 리스트 | 허그앤멍 예약관리" },
-      { name: "description", content: "외부 회원 시스템의 반려견 목록을 조회하고 바로 예약을 등록합니다." },
+      {
+        name: "description",
+        content: "외부 회원 시스템의 반려견 목록을 조회하고 바로 예약을 등록합니다.",
+      },
       { property: "og:title", content: "반려견 리스트 | 허그앤멍 예약관리" },
       { property: "og:description", content: "반려견 목록 조회 및 즉시 예약" },
       { property: "og:type", content: "website" },
@@ -79,7 +81,6 @@ function DogsPage() {
         </Button>
       }
     >
-
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <div className="relative max-w-sm flex-1">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -98,75 +99,108 @@ function DogsPage() {
           전체 {total.toLocaleString("ko-KR")}마리
           {lastSyncedAt ? ` · 최근 동기화 ${new Date(lastSyncedAt).toLocaleString("ko-KR")}` : ""}
         </span>
-
       </div>
 
-      <div className="surface-card overflow-hidden p-0">
-        <div className="hidden grid-cols-[1.2fr_1.2fr_0.8fr_0.8fr_0.7fr_1.4fr_auto] gap-3 border-b border-border bg-muted/50 px-4 py-3 text-xs font-bold text-muted-foreground lg:grid">
-          <span>이름</span>
-          <span>견종</span>
-          <span>성별</span>
-          <span>나이</span>
-          <span>몸무게</span>
-          <span>보호자</span>
-          <span className="text-right">예약</span>
+      <div className="overflow-hidden rounded-lg border border-border bg-card">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[760px] text-sm">
+            <thead className="bg-secondary/60 text-left text-xs font-bold text-muted-foreground">
+              <tr>
+                <th className="px-4 py-3">이름</th>
+                <th className="px-4 py-3">견종</th>
+                <th className="px-4 py-3">성별</th>
+                <th className="px-4 py-3">나이</th>
+                <th className="px-4 py-3">몸무게</th>
+                <th className="px-4 py-3">보호자</th>
+                <th className="px-4 py-3 text-right">예약</th>
+              </tr>
+            </thead>
+            <tbody>
+              {petsQuery.isLoading ? (
+                <tr>
+                  <td colSpan={7} className="px-4 py-10 text-center text-muted-foreground">
+                    데이터베이스에서 불러오는 중…
+                  </td>
+                </tr>
+              ) : petsQuery.isError ? (
+                <tr>
+                  <td colSpan={7} className="px-4 py-10 text-center font-semibold text-destructive">
+                    반려견 목록을 불러오지 못했습니다. 다시 시도해 주세요.
+                  </td>
+                </tr>
+              ) : pets.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-4 py-10 text-center text-muted-foreground">
+                    조회된 반려견이 없습니다.
+                  </td>
+                </tr>
+              ) : (
+                pets.map((pet) => (
+                  <tr
+                    key={pet.id}
+                    className="border-t border-border transition-colors hover:bg-secondary/50"
+                  >
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-secondary font-display text-sm font-extrabold text-primary">
+                          {pet.name.slice(0, 1)}
+                        </div>
+                        <span className="truncate font-bold">{pet.name}</span>
+                        {pet.neutered ? (
+                          <Badge variant="outline" className="shrink-0 text-[10px]">
+                            중성화
+                          </Badge>
+                        ) : null}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {pet.breed ?? "견종 미입력"}
+                    </td>
+                    <td className="px-4 py-3">
+                      {GENDER_LABELS[pet.gender ?? "unknown"] ?? "미입력"}
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">{ageLabel(pet.birthDate)}</td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {pet.weight ? `${pet.weight}kg` : "-"}
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      <div className="flex min-w-0 items-center gap-1">
+                        <span className="truncate">
+                          {pet.ownerNames[0] ?? "보호자 미확인"}
+                          {pet.ownerPhone ? ` · ${pet.ownerPhone}` : ""}
+                        </span>
+                        <OwnerInfoDialog pet={pet} />
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <ReserveDialog pet={pet} />
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
-
-        {petsQuery.isLoading ? (
-          <p className="p-8 text-center text-sm text-muted-foreground">데이터베이스에서 불러오는 중…</p>
-
-        ) : petsQuery.isError ? (
-          <p className="p-8 text-center text-sm font-semibold text-destructive">
-            반려견 목록을 불러오지 못했습니다. 다시 시도해 주세요.
-          </p>
-        ) : pets.length === 0 ? (
-          <p className="p-8 text-center text-sm text-muted-foreground">조회된 반려견이 없습니다.</p>
-        ) : (
-          <ul className="divide-y divide-border">
-            {pets.map((pet) => (
-              <li
-                key={pet.id}
-                className="grid grid-cols-2 items-center gap-3 px-4 py-3 text-sm transition-colors hover:bg-secondary/50 lg:grid-cols-[1.2fr_1.2fr_0.8fr_0.8fr_0.7fr_1.4fr_auto]"
-              >
-                <div className="col-span-2 flex items-center gap-2.5 lg:col-span-1">
-                  <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-secondary font-display text-sm font-extrabold text-primary">
-                    {pet.name.slice(0, 1)}
-                  </div>
-                  <span className="truncate font-bold">{pet.name}</span>
-                  {pet.neutered ? (
-                    <Badge variant="outline" className="text-[10px]">
-                      중성화
-                    </Badge>
-                  ) : null}
-                </div>
-                <span className="truncate text-muted-foreground">{pet.breed ?? "견종 미입력"}</span>
-                <span>{GENDER_LABELS[pet.gender ?? "unknown"] ?? "미입력"}</span>
-                <span className="text-muted-foreground">{ageLabel(pet.birthDate)}</span>
-                <span className="text-muted-foreground">{pet.weight ? `${pet.weight}kg` : "-"}</span>
-                <span className="flex min-w-0 items-center gap-1 text-muted-foreground">
-                  <span className="truncate">
-                    {pet.ownerNames[0] ?? "보호자 미확인"}
-                    {pet.ownerPhone ? ` · ${pet.ownerPhone}` : ""}
-                  </span>
-                  <OwnerInfoDialog pet={pet} />
-                </span>
-                <span className="col-span-2 flex justify-end lg:col-span-1">
-                  <ReserveDialog pet={pet} />
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
       </div>
 
       <div className="mt-4 flex items-center justify-center gap-2">
-        <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={page <= 1}
+          onClick={() => setPage((p) => p - 1)}
+        >
           <ChevronLeft className="size-4" /> 이전
         </Button>
         <span className="text-sm font-semibold">
           {page} / {maxPage}
         </span>
-        <Button variant="outline" size="sm" disabled={page >= maxPage} onClick={() => setPage((p) => p + 1)}>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={page >= maxPage}
+          onClick={() => setPage((p) => p + 1)}
+        >
           다음 <ChevronRight className="size-4" />
         </Button>
       </div>

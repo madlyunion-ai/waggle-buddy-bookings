@@ -7,7 +7,13 @@ import { AppShell } from "@/components/AppShell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import {
   SERVICE_LABELS,
@@ -25,7 +31,10 @@ export const Route = createFileRoute("/_authenticated/reservations")({
   head: () => ({
     meta: [
       { title: "예약 정보 | 허그앤멍 예약관리" },
-      { name: "description", content: "등록된 유치원·호텔·데일리케어·미용 예약을 한 눈에 조회합니다." },
+      {
+        name: "description",
+        content: "등록된 유치원·호텔·데일리케어·미용 예약을 한 눈에 조회합니다.",
+      },
       { property: "og:title", content: "예약 정보 | 허그앤멍 예약관리" },
       { property: "og:description", content: "전체 예약 목록 조회 및 상태 확인" },
       { property: "og:type", content: "website" },
@@ -45,7 +54,11 @@ type Row = {
   service_type: ServiceType;
   memo: string | null;
   created_at: string;
-  dogs: { name: string; breed: string | null; owners: { name: string; phone: string | null } | null } | null;
+  dogs: {
+    name: string;
+    breed: string | null;
+    owners: { name: string; phone: string | null } | null;
+  } | null;
 };
 
 function ReservationsPage() {
@@ -124,71 +137,96 @@ function ReservationsPage() {
             ))}
           </SelectContent>
         </Select>
-        <span className="ml-auto text-sm text-muted-foreground">총 {rows.length.toLocaleString("ko-KR")}건</span>
+        <span className="ml-auto text-sm text-muted-foreground">
+          총 {rows.length.toLocaleString("ko-KR")}건
+        </span>
       </div>
 
-      <div className="surface-card overflow-hidden p-0">
-        <div className="hidden grid-cols-[1fr_1fr_1.4fr_1fr_1.2fr_0.7fr_1.2fr] gap-3 border-b border-border bg-muted/50 px-4 py-3 text-xs font-bold text-muted-foreground lg:grid">
-          <span>강아지</span>
-          <span>보호자</span>
-          <span>예약일</span>
-          <span>서비스</span>
-          <span>시간 · 기간</span>
-          <span>상태</span>
-          <span>메모</span>
+      <div className="overflow-hidden rounded-lg border border-border bg-card">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[820px] text-sm">
+            <thead className="bg-secondary/60 text-left text-xs font-bold text-muted-foreground">
+              <tr>
+                <th className="px-4 py-3">강아지</th>
+                <th className="px-4 py-3">보호자</th>
+                <th className="px-4 py-3">예약일</th>
+                <th className="px-4 py-3">서비스</th>
+                <th className="px-4 py-3">시간 · 기간</th>
+                <th className="px-4 py-3">상태</th>
+                <th className="px-4 py-3">메모</th>
+              </tr>
+            </thead>
+            <tbody>
+              {query.isLoading ? (
+                <tr>
+                  <td colSpan={7} className="px-4 py-10 text-center text-muted-foreground">
+                    예약 정보를 불러오는 중…
+                  </td>
+                </tr>
+              ) : query.isError ? (
+                <tr>
+                  <td colSpan={7} className="px-4 py-10 text-center font-semibold text-destructive">
+                    예약 정보를 불러오지 못했습니다. 다시 시도해 주세요.
+                  </td>
+                </tr>
+              ) : rows.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-4 py-10 text-center text-muted-foreground">
+                    조건에 맞는 예약이 없습니다.
+                  </td>
+                </tr>
+              ) : (
+                rows.map((row) => (
+                  <tr
+                    key={row.id}
+                    className="border-t border-border transition-colors hover:bg-secondary/50"
+                  >
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-secondary font-display text-sm font-extrabold text-primary">
+                          {(row.dogs?.name ?? "?").slice(0, 1)}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="truncate font-bold">{row.dogs?.name ?? "삭제된 원생"}</p>
+                          <p className="truncate text-xs text-muted-foreground">
+                            {row.dogs?.breed ?? "견종 미입력"}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <p className="truncate">{row.dogs?.owners?.name ?? "보호자 미확인"}</p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {row.dogs?.owners?.phone ?? "-"}
+                      </p>
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {formatDateKorean(row.reserved_date)}
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge variant="outline" className={SERVICE_STYLES[row.service_type]}>
+                        {SERVICE_LABELS[row.service_type] ?? row.service_type}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {row.service_type === "hotel" && row.end_date
+                        ? `${stayLabel(row.reserved_date, row.end_date)} · ${row.end_date}`
+                        : `${formatTime(row.drop_off_time)} ~ ${formatTime(row.pick_up_time)}`}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`rounded-md px-2 py-1 text-xs font-bold ${STATUS_STYLES[row.status]}`}
+                      >
+                        {STATUS_LABELS[row.status] ?? row.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-xs text-muted-foreground">{row.memo || "-"}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
-
-        {query.isLoading ? (
-          <p className="p-8 text-center text-sm text-muted-foreground">예약 정보를 불러오는 중…</p>
-        ) : query.isError ? (
-          <p className="p-8 text-center text-sm font-semibold text-destructive">
-            예약 정보를 불러오지 못했습니다. 다시 시도해 주세요.
-          </p>
-        ) : rows.length === 0 ? (
-          <p className="p-8 text-center text-sm text-muted-foreground">조건에 맞는 예약이 없습니다.</p>
-        ) : (
-          <ul className="divide-y divide-border">
-            {rows.map((row) => (
-              <li
-                key={row.id}
-                className="grid grid-cols-2 items-center gap-3 px-4 py-3 text-sm transition-colors hover:bg-secondary/50 lg:grid-cols-[1fr_1fr_1.4fr_1fr_1.2fr_0.7fr_1.2fr]"
-              >
-                <div className="col-span-2 flex items-center gap-2.5 lg:col-span-1">
-                  <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-secondary font-display text-sm font-extrabold text-primary">
-                    {(row.dogs?.name ?? "?").slice(0, 1)}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="truncate font-bold">{row.dogs?.name ?? "삭제된 원생"}</p>
-                    <p className="truncate text-xs text-muted-foreground">{row.dogs?.breed ?? "견종 미입력"}</p>
-                  </div>
-                </div>
-                <div className="min-w-0">
-                  <p className="truncate">{row.dogs?.owners?.name ?? "보호자 미확인"}</p>
-                  <p className="truncate text-xs text-muted-foreground">{row.dogs?.owners?.phone ?? "-"}</p>
-                </div>
-                <span className="truncate text-muted-foreground">{formatDateKorean(row.reserved_date)}</span>
-                <span>
-                  <Badge variant="outline" className={SERVICE_STYLES[row.service_type]}>
-                    {SERVICE_LABELS[row.service_type] ?? row.service_type}
-                  </Badge>
-                </span>
-                <span className="text-muted-foreground">
-                  {row.service_type === "hotel" && row.end_date
-                    ? `${stayLabel(row.reserved_date, row.end_date)} · ${row.end_date}`
-                    : `${formatTime(row.drop_off_time)} ~ ${formatTime(row.pick_up_time)}`}
-                </span>
-                <span>
-                  <span className={`rounded-md px-2 py-1 text-xs font-bold ${STATUS_STYLES[row.status]}`}>
-                    {STATUS_LABELS[row.status] ?? row.status}
-                  </span>
-                </span>
-                <span className="col-span-2 truncate text-xs text-muted-foreground lg:col-span-1">
-                  {row.memo || "-"}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
       </div>
     </AppShell>
   );

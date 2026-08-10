@@ -11,16 +11,14 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { loginWithUsername } from "@/lib/auth-login.functions";
 
-
-
-
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "허그앤멍 예약관리시스템 | 반려견 유치원 운영" },
       {
         name: "description",
-        content: "예약 캘린더, 등하원 체크인, 강아지 프로필, 이용권·결제까지 한 곳에서 관리하는 반려견 유치원 관리 시스템.",
+        content:
+          "예약 캘린더, 등하원 체크인, 강아지 프로필, 이용권·결제까지 한 곳에서 관리하는 반려견 유치원 관리 시스템.",
       },
       { property: "og:title", content: "허그앤멍 예약관리시스템 | 반려견 유치원 운영" },
       {
@@ -59,7 +57,6 @@ function Landing() {
   const [loading, setLoading] = useState(false);
   const login = useServerFn(loginWithUsername);
 
-
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) navigate({ to: "/dashboard", replace: true });
@@ -92,67 +89,58 @@ function Landing() {
     }
   }
 
-
-
   return (
     <div className="paw-grid min-h-screen">
-      <header className="mx-auto flex h-16 max-w-6xl items-center px-4">
-        <span className="font-display text-lg font-extrabold tracking-tight">허그앤멍 예약관리시스템</span>
+      {/* 모바일: 타이틀 + 서브타이틀 + 로그인 폼만 스크롤 없이 중앙 표시 */}
+      <div className="flex min-h-screen flex-col items-center justify-center px-4 py-8 sm:hidden">
+        <div className="w-full max-w-md">
+          <div className="mb-6 text-center">
+            <h1 className="text-2xl font-extrabold">허그앤멍 예약관리시스템</h1>
+            <p className="mt-1 text-sm text-muted-foreground">원장·직원 전용 관리 시스템입니다.</p>
+          </div>
+          <div className="surface-card p-6">
+            <form className="space-y-4" onSubmit={signIn}>
+              {renderLoginFields("m")}
+            </form>
+          </div>
+        </div>
+      </div>
+
+      {/* 데스크톱: 헤더 + 히어로 + 로그인 폼 + 기능 소개 카드 */}
+      <header className="mx-auto hidden h-16 max-w-6xl items-center px-4 sm:flex">
+        <span className="font-display text-lg font-extrabold tracking-tight">
+          허그앤멍 예약관리시스템
+        </span>
       </header>
 
-      <section className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-16 lg:grid-cols-[1.1fr_0.9fr]">
+      <section className="mx-auto hidden max-w-6xl items-center gap-10 px-4 py-16 sm:grid lg:grid-cols-[1.1fr_0.9fr]">
         <div>
           <span className="inline-block rounded-full bg-accent/25 px-3 py-1 text-xs font-semibold text-accent-foreground">
             원장·직원 전용 관리 시스템
           </span>
           <h1 className="mt-5 text-4xl font-extrabold leading-tight sm:text-5xl">
             반려견 유치원의 하루를
-            <br />
-            한 화면에서 관리하세요
+            <br />한 화면에서 관리하세요
           </h1>
           <p className="mt-5 max-w-xl text-muted-foreground">
-            예약 등록부터 등하원 체크인, 원생 프로필, 이용권 잔여 횟수와 결제까지 — 수첩과 단체 채팅방 대신 하나의
-            시스템으로 정리합니다.
+            예약 등록부터 등하원 체크인, 원생 프로필, 이용권 잔여 횟수와 결제까지 — 수첩과 단체
+            채팅방 대신 하나의 시스템으로 정리합니다.
           </p>
         </div>
 
         <div className="surface-card w-full p-6">
           <h2 className="text-lg font-bold">직원 로그인</h2>
-          <p className="mt-1 text-sm text-muted-foreground">등록된 직원 계정으로 로그인해 주세요.</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            등록된 직원 계정으로 로그인해 주세요.
+          </p>
 
           <form className="mt-5 space-y-4" onSubmit={signIn}>
-            <div className="space-y-2">
-              <Label htmlFor="username">아이디</Label>
-              <Input
-                id="username"
-                autoComplete="username"
-                required
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="아이디를 입력하세요"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">비밀번호</Label>
-              <Input
-                id="password"
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              로그인
-            </Button>
+            {renderLoginFields("d")}
           </form>
-
-        
         </div>
       </section>
 
-      <section className="mx-auto grid max-w-6xl gap-4 px-4 pb-24 md:grid-cols-3">
+      <section className="mx-auto hidden max-w-6xl gap-4 px-4 pb-24 sm:grid md:grid-cols-3">
         {FEATURES.map((f) => (
           <article key={f.title} className="surface-card p-6">
             <div className="mb-4 flex size-11 items-center justify-center rounded-xl bg-primary text-primary-foreground">
@@ -165,4 +153,36 @@ function Landing() {
       </section>
     </div>
   );
+
+  function renderLoginFields(idPrefix: string) {
+    return (
+      <>
+        <div className="space-y-2">
+          <Label htmlFor={`username-${idPrefix}`}>아이디</Label>
+          <Input
+            id={`username-${idPrefix}`}
+            autoComplete="username"
+            required
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="아이디를 입력하세요"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor={`password-${idPrefix}`}>비밀번호</Label>
+          <Input
+            id={`password-${idPrefix}`}
+            type="password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </div>
+        <Button type="submit" className="w-full" disabled={loading}>
+          로그인
+        </Button>
+      </>
+    );
+  }
 }

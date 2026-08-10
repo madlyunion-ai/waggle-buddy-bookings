@@ -252,7 +252,7 @@ function DashboardPage() {
   return (
     <AppShell sidebarAction={<NewReservationDialog defaultDate={selected} />}>
       <div className="-mt-4 grid grid-cols-1 gap-4 sm:mt-0 lg:h-[calc(100vh-6rem)] lg:min-h-[560px] lg:grid-cols-[80%_20%]">
-        <section className="mx-[-1rem] flex min-h-0 flex-col overflow-hidden border-b border-border bg-white pb-4 pt-1 sm:surface-card sm:mx-0 sm:border-b-0 sm:bg-card sm:p-5 lg:h-full">
+        <section className="mx-[-1rem] flex min-h-0 flex-col overflow-hidden bg-white pt-1 sm:surface-card sm:mx-0 sm:bg-card sm:p-5 lg:h-full">
           <div className="mb-4 flex items-center justify-between px-4 sm:px-0">
             <div className="flex items-center gap-2">
               <h2 className="text-lg font-bold">
@@ -265,6 +265,7 @@ function DashboardPage() {
               <Button
                 variant="outline"
                 size="sm"
+                className="h-6 px-2 text-[11px]"
                 onClick={() => {
                   setAnchor(new Date());
                   setSelected(todayKey);
@@ -331,7 +332,7 @@ function DashboardPage() {
             ))}
           </div>
 
-          <div className="grid min-h-0 flex-1 auto-rows-fr grid-cols-7 gap-0 overflow-hidden sm:gap-1.5">
+          <div className="grid min-h-0 flex-1 auto-rows-fr grid-cols-7 gap-0 overflow-hidden border-b border-border pb-3 sm:gap-1.5 sm:border-b-0 sm:pb-0">
             {cells.map((d) => {
               const key = toDateKey(d);
               const isMonth = d.getMonth() === anchor.getMonth();
