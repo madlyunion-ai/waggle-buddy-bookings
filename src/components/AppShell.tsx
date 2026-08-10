@@ -1,9 +1,11 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { CalendarCheck, CalendarDays, Dog, LogOut, MapPin, Ticket, Users } from "lucide-react";
+import { CalendarCheck, CalendarDays, Dog, LogOut, MapPin, Settings, Ticket, Users } from "lucide-react";
+import { useState } from "react";
 
 import { NewReservationDialog } from "@/components/NewReservationDialog";
+import { StaffEditDialog, type EditableStaffRow } from "@/components/StaffEditDialog";
 import { toDateKey } from "@/lib/kindergarten";
 import type { ReactNode } from "react";
 
@@ -66,6 +68,20 @@ export function AppShell({
   });
   const displayName = profile.data?.name ?? "사용자";
   const initial = displayName.slice(0, 1);
+  const [editingSelf, setEditingSelf] = useState(false);
+
+  const selfRow: EditableStaffRow | null = profile.data
+    ? {
+        id: `local-${profile.data.id}`,
+        rawId: profile.data.id,
+        name: profile.data.name,
+        username: profile.data.username,
+        email: profile.data.email,
+        phone: profile.data.phone,
+        role: profile.data.role,
+        status: profile.data.status,
+      }
+    : null;
 
 
   async function signOut() {
@@ -123,16 +139,26 @@ export function AppShell({
 
       <div className="flex">
         <aside className="sticky top-[44px] hidden h-[calc(100vh-44px)] w-56 shrink-0 overflow-y-auto border-r border-border bg-sidebar px-3 py-4 lg:block">
-          <div className="mb-4 flex items-center gap-2.5 rounded-lg border border-border bg-card px-3 py-2.5">
+          <div className="relative mb-4 flex items-center gap-2.5 rounded-lg border border-border bg-card px-3 py-2.5">
             <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 font-display text-sm font-extrabold text-primary">
               {initial}
             </span>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-bold">{profile.isLoading ? "불러오는 중…" : displayName}</p>
               <p className="truncate text-[11px] text-muted-foreground">
                 {profile.data?.email ?? "이메일 없음"}
               </p>
             </div>
+            {selfRow ? (
+              <button
+                type="button"
+                onClick={() => setEditingSelf(true)}
+                aria-label="내 정보 수정"
+                className="absolute right-2 top-2 flex size-6 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+              >
+                <Settings className="size-3.5" />
+              </button>
+            ) : null}
           </div>
 
           <div className="mb-4 [&_button]:w-full">
@@ -173,6 +199,8 @@ export function AppShell({
         </main>
 
       </div>
+
+      <StaffEditDialog row={editingSelf ? selfRow : null} onOpenChange={(v) => setEditingSelf(v)} />
     </div>
   );
 }
