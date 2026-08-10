@@ -526,7 +526,7 @@ function MonthlyStatsCard({
   return (
     <div className="surface-card shrink-0 px-3 py-2.5">
       <p className="text-[13px] font-bold">{title}</p>
-      <div className="mt-2 overflow-hidden rounded-2xl border-2 border-primary/30">
+      <div className="mt-2 overflow-hidden rounded-[8px] border-2 border-primary/30">
         <table className="w-full table-fixed border-collapse text-center">
           <thead>
             <tr>
@@ -571,13 +571,11 @@ function SummaryCard({
   unit: string;
 }) {
   return (
-    <div className="surface-card relative shrink-0 overflow-hidden px-3 py-2.5">
-      <div
-        className={`absolute -right-4 -top-4 flex size-12 items-end justify-start rounded-full p-2.5 ${tint}`}
-      >
-        {icon}
+    <div className="shrink-0 rounded-[8px] border border-border bg-card px-3 py-2.5 shadow-sm">
+      <div className="flex items-center justify-between">
+        <p className="text-[13px] font-bold">{label}</p>
+        <span className={`flex size-7 shrink-0 items-center justify-center rounded-full ${tint}`}>{icon}</span>
       </div>
-      <p className="text-[13px] font-bold">{label}</p>
       <p
         className={`mt-1 text-2xl font-extrabold leading-tight tracking-tight ${
           value > 0 ? "text-primary" : "text-foreground"
@@ -586,8 +584,6 @@ function SummaryCard({
         {value}
         <span className="ml-1 text-xs font-semibold text-muted-foreground">{unit}</span>
       </p>
-
     </div>
   );
-
 }

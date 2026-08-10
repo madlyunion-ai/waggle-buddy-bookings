@@ -77,10 +77,10 @@ export function AppShell({
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-30 border-b border-primary bg-primary text-white">
+      <header className="sticky top-0 z-30 border-b border-[#17214c] bg-[#17214c] text-white">
         <div className="flex h-[44px] items-center gap-3 px-4 lg:px-6">
           <Link to="/dashboard" className="flex items-center gap-2">
-            <span className="font-display text-[13px] font-bold tracking-tight text-white">허그앤멍 예약관리시스템</span>
+            <span className="font-display text-[17px] font-bold tracking-tight text-white">허그앤멍 예약관리시스템</span>
           </Link>
 
           <div className="ml-auto flex items-center gap-2">
@@ -88,9 +88,9 @@ export function AppShell({
               href={BRANCH_MAP_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden items-center gap-1 rounded-md bg-white px-2.5 py-1 text-[11px] font-medium text-primary transition-colors hover:bg-white/90 md:inline-flex"
+              className="hidden items-center gap-1 rounded-md bg-white px-2.5 py-1 text-[11px] font-medium text-[#17214c] transition-colors hover:bg-white/90 md:inline-flex"
             >
-              <MapPin className="size-3 text-primary" />
+              <MapPin className="size-3 text-[#17214c]" />
               허그앤멍 왕십리지점
             </a>
             <Button
