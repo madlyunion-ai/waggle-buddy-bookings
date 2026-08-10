@@ -42,12 +42,18 @@ type PetDto = {
   name?: string;
   breed?: { name?: string; nameKo?: string } | null;
   birthDate?: string;
-  weight?: number;
+  weight?: number | string;
   gender?: string;
-  neutered?: boolean;
-  isNeutered?: boolean;
+  neutered?: boolean | "YES" | "NO" | string;
+  isNeutered?: boolean | "YES" | "NO" | string;
   owners?: Array<{ id?: string | number; name?: string; realname?: string; phoneNumber?: string }>;
 };
+
+function parseNeutered(value: boolean | string | undefined): boolean {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "string") return value.trim().toUpperCase() === "YES";
+  return false;
+}
 
 function mapMember(dto: OwnerDto, source: "owner" | "user"): ExternalMember {
   return {
@@ -68,9 +74,9 @@ function mapPet(dto: PetDto): ExternalPet {
     name: dto.name || "이름 없음",
     breed: dto.breed?.nameKo ?? dto.breed?.name ?? null,
     birthDate: dto.birthDate ? dto.birthDate.slice(0, 10) : null,
-    weight: typeof dto.weight === "number" ? dto.weight : null,
+    weight: dto.weight !== undefined && dto.weight !== null && !Number.isNaN(Number(dto.weight)) ? Number(dto.weight) : null,
     gender: dto.gender ? String(dto.gender).toLowerCase() : null,
-    neutered: Boolean(dto.neutered ?? dto.isNeutered ?? false),
+    neutered: parseNeutered(dto.neutered ?? dto.isNeutered),
     ownerNames: (dto.owners ?? []).map((o) => o.name || o.realname || "").filter(Boolean),
     ownerId: owner?.id !== undefined && owner?.id !== null ? String(owner.id) : null,
     ownerPhone: owner?.phoneNumber ?? null,
