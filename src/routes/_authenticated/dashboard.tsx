@@ -219,11 +219,11 @@ function DashboardPage() {
       <div className="grid grid-cols-1 gap-4 lg:h-[calc(100vh-6rem)] lg:min-h-[560px] lg:grid-cols-[80%_20%]">
 
 
-      <section className="surface-card flex min-h-0 flex-col overflow-hidden p-5 lg:h-full">
+      <section className="surface-card flex min-h-0 flex-col overflow-hidden px-0 py-5 sm:p-5 lg:h-full">
 
 
 
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex items-center justify-between px-4 sm:px-0">
           <div className="flex items-center gap-2">
             <h2 className="text-lg font-bold">
               {anchor.getFullYear()}년 {anchor.getMonth() + 1}월
@@ -284,7 +284,7 @@ function DashboardPage() {
           </div>
         </div>
 
-        <div className="mb-1 grid grid-cols-7 gap-0 border-b border-border pb-1.5 text-center text-xs font-bold sm:mb-1.5 sm:gap-1.5 sm:border-b-0 sm:pb-0">
+        <div className="mb-1 grid grid-cols-7 gap-0 border-b border-border px-4 pb-1.5 text-center text-xs font-bold sm:mb-1.5 sm:gap-1.5 sm:border-b-0 sm:px-0 sm:pb-0">
           {["일", "월", "화", "수", "목", "금", "토"].map((d, i) => (
             <div
               key={d}
@@ -566,6 +566,16 @@ function DashboardPage() {
         onOpenChange={(next) => setCreateDate(next ? (createDate ?? selected) : null)}
         hideTrigger
       />
+
+      {/* 모바일 전용 FAB: 예약하기 */}
+      <button
+        type="button"
+        onClick={() => setCreateDate(selected)}
+        className="fixed bottom-5 right-5 z-40 flex items-center gap-1.5 rounded-full bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-lg transition-transform active:scale-95 lg:hidden"
+      >
+        <Plus className="size-4" />
+        예약하기
+      </button>
 
       <Dialog open={dayListDate !== null} onOpenChange={(next) => setDayListDate(next ? dayListDate : null)}>
         <DialogContent className="max-h-[80vh] overflow-y-auto">
