@@ -152,7 +152,7 @@ function DogsPage() {
                   >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2.5">
-                        <div className="hidden size-8 shrink-0 items-center justify-center rounded-lg bg-secondary font-display text-sm font-extrabold text-primary sm:flex">
+                        <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-secondary font-display text-sm font-extrabold text-primary">
                           {pet.name.slice(0, 1)}
                         </div>
                         <span className="truncate font-bold">{pet.name}</span>

@@ -15,7 +15,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import type { ExternalPet } from "@/lib/projectpet.functions";
@@ -227,18 +233,20 @@ export function ReserveDialog({ pet }: { pet: ExternalPet }) {
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-3 gap-3">
+            <div className="space-y-3">
               <div className="space-y-2">
                 <Label>날짜{serviceType === "daily_care" ? " (하루)" : ""}</Label>
                 <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
               </div>
-              <div className="space-y-2">
-                <Label>등원</Label>
-                <Input type="time" value={dropOff} onChange={(e) => setDropOff(e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label>하원</Label>
-                <Input type="time" value={pickUp} onChange={(e) => setPickUp(e.target.value)} />
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>등원</Label>
+                  <Input type="time" value={dropOff} onChange={(e) => setDropOff(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label>하원</Label>
+                  <Input type="time" value={pickUp} onChange={(e) => setPickUp(e.target.value)} />
+                </div>
               </div>
             </div>
           )}

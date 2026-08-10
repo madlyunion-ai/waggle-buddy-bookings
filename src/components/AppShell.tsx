@@ -99,7 +99,7 @@ export function AppShell({
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-30 border-b border-[#17214c] bg-[#17214c] text-white">
+      <header className="sticky top-0 z-30 border-b border-[#cccccc] bg-[#17214c] text-white">
         <div className="flex h-[44px] items-center gap-3 px-4 lg:px-6">
           <Link to="/dashboard" className="flex items-baseline gap-2">
             <span className="font-display text-[17px] font-semibold tracking-tight text-white">
@@ -131,7 +131,7 @@ export function AppShell({
             </Button>
           </div>
         </div>
-        <nav className="flex items-center gap-4 overflow-x-auto bg-white px-4 lg:hidden">
+        <nav className="flex items-center gap-4 overflow-x-auto bg-white px-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:hidden">
           {MOBILE_NAV.map((item) => (
             <Link
               key={item.label}
