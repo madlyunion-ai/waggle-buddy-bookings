@@ -131,14 +131,13 @@ export function AppShell({
             </Button>
           </div>
         </div>
-        <nav className="flex gap-1 overflow-x-auto border-t border-white/20 px-4 py-2 lg:hidden">
+        <nav className="flex items-center gap-4 overflow-x-auto bg-white px-4 lg:hidden">
           {MOBILE_NAV.map((item) => (
             <Link
               key={item.label}
               to={item.to}
-              className="flex items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1.5 text-sm text-white/80 data-[status=active]:bg-white/15 data-[status=active]:font-semibold data-[status=active]:text-white"
+              className="whitespace-nowrap border-b-2 border-transparent py-2.5 text-sm font-medium text-muted-foreground data-[status=active]:border-primary data-[status=active]:font-bold data-[status=active]:text-foreground"
             >
-              <item.icon className="size-4" />
               {item.label}
             </Link>
           ))}

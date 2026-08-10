@@ -253,7 +253,7 @@ function DashboardPage() {
     <AppShell sidebarAction={<NewReservationDialog defaultDate={selected} />}>
       <div className="-mt-4 grid grid-cols-1 gap-4 sm:mt-0 lg:h-[calc(100vh-6rem)] lg:min-h-[560px] lg:grid-cols-[80%_20%]">
         <section className="mx-[-1rem] flex min-h-0 flex-col overflow-hidden bg-white pt-1 sm:surface-card sm:mx-0 sm:bg-card sm:p-5 lg:h-full">
-          <div className="mb-4 flex items-center justify-between px-4 sm:px-0">
+          <div className="mb-0 flex items-center justify-between px-4 sm:mb-4 sm:px-0">
             <div className="flex items-center gap-2">
               <h2 className="text-lg font-bold">
                 {anchor.getFullYear()}년 {anchor.getMonth() + 1}월

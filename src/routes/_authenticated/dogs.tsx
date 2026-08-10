@@ -152,12 +152,15 @@ function DogsPage() {
                   >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2.5">
-                        <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-secondary font-display text-sm font-extrabold text-primary">
+                        <div className="hidden size-8 shrink-0 items-center justify-center rounded-lg bg-secondary font-display text-sm font-extrabold text-primary sm:flex">
                           {pet.name.slice(0, 1)}
                         </div>
                         <span className="truncate font-bold">{pet.name}</span>
                         {pet.neutered ? (
-                          <Badge variant="outline" className="shrink-0 text-[10px]">
+                          <Badge
+                            variant="outline"
+                            className="hidden shrink-0 text-[10px] sm:inline-flex"
+                          >
                             중성화
                           </Badge>
                         ) : null}
@@ -177,7 +180,7 @@ function DogsPage() {
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">
                       <div className="flex min-w-0 items-center gap-1">
-                        <span className="truncate">
+                        <span className="hidden truncate sm:inline">
                           {pet.ownerNames[0] ?? "보호자 미확인"}
                           {pet.ownerPhone ? ` · ${pet.ownerPhone}` : ""}
                         </span>

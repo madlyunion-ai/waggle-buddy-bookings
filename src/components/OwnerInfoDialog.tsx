@@ -39,7 +39,10 @@ export function OwnerInfoDialog({ pet }: Props) {
     { label: "연락처", value: member?.phone || pet.ownerPhone || "미입력" },
     { label: "이메일", value: member?.email || "미입력" },
     { label: "소속 지점", value: member?.branchName || "미입력" },
-    { label: "회원 구분", value: member ? (member.source === "owner" ? "견주 회원" : "일반 사용자") : "미확인" },
+    {
+      label: "회원 구분",
+      value: member ? (member.source === "owner" ? "견주 회원" : "일반 사용자") : "미확인",
+    },
     { label: "회원 ID", value: member?.id || pet.ownerId || "미확인" },
   ];
 
@@ -59,9 +62,7 @@ export function OwnerInfoDialog({ pet }: Props) {
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>보호자 정보</DialogTitle>
-          <DialogDescription>
-            {pet.name} 보호자의 회원 정보입니다.
-          </DialogDescription>
+          <DialogDescription>{pet.name} 보호자의 회원 정보입니다.</DialogDescription>
         </DialogHeader>
 
         {memberQuery.isLoading ? (
@@ -70,9 +71,9 @@ export function OwnerInfoDialog({ pet }: Props) {
           <div className="space-y-3">
             <dl className="divide-y divide-border rounded-xl border border-border">
               {rows.map((row) => (
-                <div key={row.label} className="flex items-center justify-between gap-3 px-4 py-2.5 text-sm">
-                  <dt className="font-semibold text-muted-foreground">{row.label}</dt>
-                  <dd className="truncate text-right font-bold">{row.value}</dd>
+                <div key={row.label} className="px-4 py-2.5 text-sm">
+                  <dt className="text-xs font-semibold text-muted-foreground">{row.label}</dt>
+                  <dd className="mt-0.5 truncate font-bold">{row.value}</dd>
                 </div>
               ))}
             </dl>

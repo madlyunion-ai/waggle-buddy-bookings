@@ -16,7 +16,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { listExternalMembers, listExternalPets } from "@/lib/projectpet.functions";
@@ -75,7 +81,10 @@ export function NewReservationDialog({
 
   const petsQuery = useQuery({
     queryKey: ["external-pets", memberId, member?.source ?? "owner"],
-    queryFn: () => fetchPets({ data: { memberId, source: member?.source ?? "owner", search: member?.name ?? "" } }),
+    queryFn: () =>
+      fetchPets({
+        data: { memberId, source: member?.source ?? "owner", search: member?.name ?? "" },
+      }),
     enabled: open && !!memberId,
   });
 
@@ -85,7 +94,11 @@ export function NewReservationDialog({
   const passesQuery = useQuery({
     queryKey: ["passes", "for-external-pet", petId],
     queryFn: async () => {
-      const { data: dog } = await supabase.from("dogs").select("id").eq("external_id", petId).maybeSingle();
+      const { data: dog } = await supabase
+        .from("dogs")
+        .select("id")
+        .eq("external_id", petId)
+        .maybeSingle();
       if (!dog) return [];
       const { data, error } = await supabase
         .from("passes")
@@ -220,7 +233,9 @@ export function NewReservationDialog({
       <DialogContent className="max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>예약 등록</DialogTitle>
-          <DialogDescription>예약 타입에 따라 날짜와 시간 입력 방식이 달라집니다.</DialogDescription>
+          <DialogDescription>
+            예약 타입에 따라 날짜와 시간 입력 방식이 달라집니다.
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2">
@@ -273,7 +288,9 @@ export function NewReservationDialog({
               </SelectContent>
             </Select>
             {membersQuery.isError ? (
-              <p className="text-xs font-semibold text-destructive">외부 회원 목록을 불러오지 못했습니다.</p>
+              <p className="text-xs font-semibold text-destructive">
+                외부 회원 목록을 불러오지 못했습니다.
+              </p>
             ) : null}
           </div>
 
@@ -283,7 +300,11 @@ export function NewReservationDialog({
               <SelectTrigger>
                 <SelectValue
                   placeholder={
-                    !memberId ? "회원을 먼저 선택하세요" : petsQuery.isLoading ? "불러오는 중…" : "강아지를 선택하세요"
+                    !memberId
+                      ? "회원을 먼저 선택하세요"
+                      : petsQuery.isLoading
+                        ? "불러오는 중…"
+                        : "강아지를 선택하세요"
                   }
                 />
               </SelectTrigger>
@@ -328,9 +349,6 @@ export function NewReservationDialog({
             </p>
           </div>
 
-
-
-
           {serviceType === "hotel" ? (
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
@@ -347,7 +365,12 @@ export function NewReservationDialog({
                 </div>
                 <div className="space-y-2">
                   <Label>퇴실일</Label>
-                  <Input type="date" min={addDays(date, 1)} value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+                  <Input
+                    type="date"
+                    min={addDays(date, 1)}
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                  />
                 </div>
               </div>
               <p className="rounded-lg bg-secondary px-3 py-2 text-sm font-semibold">
@@ -387,18 +410,20 @@ export function NewReservationDialog({
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-3 gap-3">
+            <div className="space-y-3">
               <div className="space-y-2">
                 <Label>날짜{serviceType === "daily_care" ? " (하루)" : ""}</Label>
                 <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
               </div>
-              <div className="space-y-2">
-                <Label>등원</Label>
-                <Input type="time" value={dropOff} onChange={(e) => setDropOff(e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label>하원</Label>
-                <Input type="time" value={pickUp} onChange={(e) => setPickUp(e.target.value)} />
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>등원</Label>
+                  <Input type="time" value={dropOff} onChange={(e) => setDropOff(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label>하원</Label>
+                  <Input type="time" value={pickUp} onChange={(e) => setPickUp(e.target.value)} />
+                </div>
               </div>
             </div>
           )}
@@ -414,7 +439,10 @@ export function NewReservationDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button disabled={!petId || hotelInvalid || create.isPending} onClick={() => create.mutate()}>
+          <Button
+            disabled={!petId || hotelInvalid || create.isPending}
+            onClick={() => create.mutate()}
+          >
             등록하기
           </Button>
         </DialogFooter>
@@ -422,4 +450,3 @@ export function NewReservationDialog({
     </Dialog>
   );
 }
-
