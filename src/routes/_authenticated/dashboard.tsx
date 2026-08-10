@@ -89,13 +89,22 @@ type Row = {
 const SELECT_COLUMNS =
   "id, reserved_date, end_date, drop_off_time, pick_up_time, status, service_type, memo, pass_id, dogs(id, name, breed, owners(name, phone))";
 
-/** 모바일 캘린더 점 표시용 단색(솔리드) 배경 */
-const SERVICE_DOT_COLORS: Record<ServiceType, string> = {
-  kindergarten: "bg-primary",
-  hotel: "bg-accent",
-  daily_care: "bg-rose-400",
-  grooming: "bg-warning",
+/** 모바일 캘린더 라인 목록용 솔리드 텍스트 색상 */
+const SERVICE_TEXT_SOLID: Record<ServiceType, string> = {
+  kindergarten: "text-primary",
+  hotel: "text-accent-foreground",
+  daily_care: "text-rose-500",
+  grooming: "text-warning-foreground",
 };
+
+/** 클래스 문자열 전체를 sm: 반응형 접두사로 감싸는 헬퍼 (데스크톱 전용 스타일 재사용) */
+function sm(classes: string): string {
+  return classes
+    .split(" ")
+    .filter(Boolean)
+    .map((c) => `sm:${c}`)
+    .join(" ");
+}
 
 function DashboardPage() {
   const queryClient = useQueryClient();
@@ -192,8 +201,21 @@ function DashboardPage() {
     return totals;
   }, [monthQuery.data, monthStart, monthEnd]);
 
+  const monthlyStatsItems = [
+    { label: "유치원", value: monthlyTotals.kindergarten },
+    { label: "호텔", value: monthlyTotals.hotel },
+    { label: "데일리케어", value: monthlyTotals.daily_care },
+    { label: "미용", value: monthlyTotals.grooming },
+  ];
+  const monthlyStatsTitle = `${anchor.getMonth() + 1}월 전체 예약현황`;
+
   return (
     <AppShell sidebarAction={<NewReservationDialog defaultDate={selected} />}>
+      {/* 모바일: 전체예약현황 카드를 캘린더보다 위에 표시 */}
+      <div className="mb-4 lg:hidden">
+        <MonthlyStatsCard title={monthlyStatsTitle} items={monthlyStatsItems} />
+      </div>
+
       <div className="grid grid-cols-1 gap-4 lg:h-[calc(100vh-6rem)] lg:min-h-[560px] lg:grid-cols-[80%_20%]">
 
 
@@ -262,16 +284,16 @@ function DashboardPage() {
           </div>
         </div>
 
-        <div className="mb-1.5 grid grid-cols-7 gap-1.5 text-center text-xs font-bold">
+        <div className="mb-1 grid grid-cols-7 gap-0 border-b border-border pb-1.5 text-center text-xs font-bold sm:mb-1.5 sm:gap-1.5 sm:border-b-0 sm:pb-0">
           {["일", "월", "화", "수", "목", "금", "토"].map((d, i) => (
             <div
               key={d}
-              className={`rounded-xl border py-1.5 ${
+              className={`py-1 sm:rounded-xl sm:border sm:py-1.5 ${
                 i === 0
-                  ? "border-rose-300/70 bg-rose-50 text-rose-500"
+                  ? `text-rose-500 ${sm("border-rose-300/70 bg-rose-50")}`
                   : i === 6
-                    ? "border-sky-300/70 bg-sky-50 text-sky-600"
-                    : "border-border bg-secondary/60 text-muted-foreground"
+                    ? `text-sky-600 ${sm("border-sky-300/70 bg-sky-50")}`
+                    : `text-muted-foreground ${sm("border-border bg-secondary/60")}`
               }`}
             >
               {d}
@@ -279,7 +301,7 @@ function DashboardPage() {
           ))}
         </div>
 
-        <div className="grid min-h-0 flex-1 auto-rows-fr grid-cols-7 gap-1.5 overflow-hidden">
+        <div className="grid min-h-0 flex-1 auto-rows-fr grid-cols-7 gap-0 overflow-hidden sm:gap-1.5">
           {cells.map((d) => {
             const key = toDateKey(d);
             const isMonth = d.getMonth() === anchor.getMonth();
@@ -304,18 +326,18 @@ function DashboardPage() {
                     setCreateDate(key);
                   }
                 }}
-                className={`flex min-h-[56px] cursor-pointer overflow-hidden flex-col items-stretch gap-1 rounded-xl p-1.5 text-left align-top transition-colors sm:min-h-0 ${
-                  isToday ? "border-2 border-primary" : "border"
-                } ${
+                className={`flex min-h-[44px] cursor-pointer flex-col items-stretch gap-0.5 border-b border-border/60 p-1 text-left align-top transition-colors sm:min-h-0 sm:gap-1 sm:overflow-hidden sm:rounded-xl sm:border sm:p-1.5 ${
+                  isSelected ? "bg-primary/5" : ""
+                } ${isToday ? `${sm("border-2 border-primary")}` : sm("border")} ${
                   isSelected
-                    ? "bg-primary/8"
+                    ? sm("bg-primary/8")
                     : isMonth
                       ? dow === 0
-                        ? `bg-card hover:bg-rose-50/60 ${isToday ? "" : "border-rose-300/70"}`
+                        ? sm(`bg-card hover:bg-rose-50/60 ${isToday ? "" : "border-rose-300/70"}`)
                         : dow === 6
-                          ? `bg-card hover:bg-sky-50/60 ${isToday ? "" : "border-sky-300/70"}`
-                          : `bg-card hover:bg-secondary/60 ${isToday ? "" : "border-border"}`
-                      : `bg-muted/40 ${isToday ? "" : "border-transparent"}`
+                          ? sm(`bg-card hover:bg-sky-50/60 ${isToday ? "" : "border-sky-300/70"}`)
+                          : sm(`bg-card hover:bg-secondary/60 ${isToday ? "" : "border-border"}`)
+                      : sm(`bg-muted/40 ${isToday ? "" : "border-transparent"}`)
                 }`}
               >
 
@@ -336,7 +358,9 @@ function DashboardPage() {
                     {d.getDate()}
                   </span>
                   {items.length > 0 ? (
-                    <span className="text-[10px] font-bold text-muted-foreground">{items.length}건</span>
+                    <span className="hidden text-[10px] font-bold text-muted-foreground sm:inline">
+                      {items.length}건
+                    </span>
                   ) : null}
                 </div>
                 {/* 데스크톱: 이름+시간이 보이는 전체 칩 목록 */}
@@ -373,19 +397,34 @@ function DashboardPage() {
                   ) : null}
                 </div>
 
-                {/* 모바일(360~390px): 구글 캘린더 스타일 점 표시로 요약 */}
+                {/* 모바일(360~390px): 여백 카드 없이 라인(리스트) 형태로 요약 */}
                 {items.length > 0 ? (
-                  <div className="flex flex-wrap items-center gap-0.5 sm:hidden">
-                    {items.slice(0, 4).map((r) => (
-                      <span
-                        key={`${key}-dot-${r.id}`}
-                        className={`size-1.5 shrink-0 rounded-full ${SERVICE_DOT_COLORS[r.service_type]}`}
-                      />
+                  <div className="flex flex-col gap-px sm:hidden">
+                    {items.slice(0, 3).map((r) => (
+                      <button
+                        key={`${key}-line-${r.id}`}
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelected(key);
+                        }}
+                        className={`truncate text-left text-[9px] font-semibold leading-tight ${SERVICE_TEXT_SOLID[r.service_type]}`}
+                      >
+                        · {r.dogs?.name ?? "-"}
+                      </button>
                     ))}
-                    {items.length > 4 ? (
-                      <span className="text-[9px] font-bold leading-none text-muted-foreground">
-                        +{items.length - 4}
-                      </span>
+                    {items.length > 3 ? (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelected(key);
+                          setDayListDate(key);
+                        }}
+                        className="truncate text-left text-[9px] font-bold leading-tight text-muted-foreground"
+                      >
+                        +{items.length - 3}건 더
+                      </button>
                     ) : null}
                   </div>
                 ) : null}
@@ -401,15 +440,9 @@ function DashboardPage() {
       </section>
 
       <div className="flex h-full min-h-0 flex-col gap-3">
-        <MonthlyStatsCard
-          title={`${anchor.getMonth() + 1}월 전체 예약현황`}
-          items={[
-            { label: "유치원", value: monthlyTotals.kindergarten },
-            { label: "호텔", value: monthlyTotals.hotel },
-            { label: "데일리케어", value: monthlyTotals.daily_care },
-            { label: "미용", value: monthlyTotals.grooming },
-          ]}
-        />
+        <div className="hidden lg:block">
+          <MonthlyStatsCard title={monthlyStatsTitle} items={monthlyStatsItems} />
+        </div>
         <div className="grid grid-cols-2 gap-3">
           <SummaryCard
             icon={<CalendarCheck className="size-4" />}
