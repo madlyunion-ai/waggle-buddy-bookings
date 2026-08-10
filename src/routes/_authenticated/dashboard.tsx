@@ -173,6 +173,16 @@ function DashboardPage() {
   }, [active]);
   const checkInToday = byType.hotel.filter((r) => r.reserved_date === selected).length;
 
+  const monthlyTotals = useMemo(() => {
+    const totals: Record<ServiceType, number> = { kindergarten: 0, hotel: 0, daily_care: 0, grooming: 0 };
+    for (const r of monthQuery.data ?? []) {
+      if (r.status === "cancelled") continue;
+      if (r.reserved_date < monthStart || r.reserved_date > monthEnd) continue;
+      totals[r.service_type] += 1;
+    }
+    return totals;
+  }, [monthQuery.data, monthStart, monthEnd]);
+
   return (
     <AppShell sidebarAction={<NewReservationDialog defaultDate={selected} />}>
       <div className="grid min-h-[560px] grid-cols-1 gap-4 lg:h-[calc(100vh-6rem)] lg:grid-cols-[80%_20%]">
@@ -340,6 +350,15 @@ function DashboardPage() {
       </section>
 
       <div className="flex h-full min-h-0 flex-col gap-3">
+        <MonthlyStatsCard
+          title="전체예약현황"
+          items={[
+            { icon: <CalendarCheck className="size-4" />, tint: "bg-primary/12 text-primary", label: "유치원", value: monthlyTotals.kindergarten },
+            { icon: <BedDouble className="size-4" />, tint: "bg-accent/25 text-accent-foreground", label: "호텔", value: monthlyTotals.hotel },
+            { icon: <Clock className="size-4" />, tint: "bg-secondary text-primary", label: "데일리케어", value: monthlyTotals.daily_care },
+            { icon: <Scissors className="size-4" />, tint: "bg-warning/25 text-warning-foreground", label: "미용", value: monthlyTotals.grooming },
+          ]}
+        />
         <SummaryCard
           icon={<CalendarCheck className="size-4" />}
           tint="bg-primary/12 text-primary"
@@ -494,6 +513,40 @@ function DashboardPage() {
     </AppShell>
 
 
+  );
+}
+
+function MonthlyStatsCard({
+  title,
+  items,
+}: {
+  title: string;
+  items: { icon: React.ReactNode; tint: string; label: string; value: number }[];
+}) {
+  return (
+    <div className="surface-card shrink-0 px-3 py-2.5">
+      <p className="text-[13px] font-bold">{title}</p>
+      <div className="mt-2 grid grid-cols-2 gap-2">
+        {items.map((item) => (
+          <div key={item.label} className="relative overflow-hidden rounded-xl border border-border/70 bg-card/60 px-2.5 py-2">
+            <div
+              className={`absolute -right-3 -top-3 flex size-9 items-end justify-start rounded-full p-2 ${item.tint}`}
+            >
+              {item.icon}
+            </div>
+            <p className="text-[11px] font-semibold text-muted-foreground">{item.label}</p>
+            <p
+              className={`mt-0.5 text-lg font-extrabold leading-tight tracking-tight ${
+                item.value > 0 ? "text-primary" : "text-foreground"
+              }`}
+            >
+              {item.value}
+              <span className="ml-0.5 text-[10px] font-semibold text-muted-foreground">건</span>
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
