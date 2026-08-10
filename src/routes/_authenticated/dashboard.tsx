@@ -89,6 +89,14 @@ type Row = {
 const SELECT_COLUMNS =
   "id, reserved_date, end_date, drop_off_time, pick_up_time, status, service_type, memo, pass_id, dogs(id, name, breed, owners(name, phone))";
 
+/** 모바일 캘린더 점 표시용 단색(솔리드) 배경 */
+const SERVICE_DOT_COLORS: Record<ServiceType, string> = {
+  kindergarten: "bg-primary",
+  hotel: "bg-accent",
+  daily_care: "bg-rose-400",
+  grooming: "bg-warning",
+};
+
 function DashboardPage() {
   const queryClient = useQueryClient();
   const [anchor, setAnchor] = useState(() => new Date());
@@ -186,10 +194,10 @@ function DashboardPage() {
 
   return (
     <AppShell sidebarAction={<NewReservationDialog defaultDate={selected} />}>
-      <div className="grid min-h-[560px] grid-cols-1 gap-4 lg:h-[calc(100vh-6rem)] lg:grid-cols-[80%_20%]">
+      <div className="grid grid-cols-1 gap-4 lg:h-[calc(100vh-6rem)] lg:min-h-[560px] lg:grid-cols-[80%_20%]">
 
 
-      <section className="surface-card flex h-full min-h-0 flex-col overflow-hidden p-5">
+      <section className="surface-card flex min-h-0 flex-col overflow-hidden p-5 lg:h-full">
 
 
 
@@ -296,7 +304,7 @@ function DashboardPage() {
                     setCreateDate(key);
                   }
                 }}
-                className={`flex min-h-0 cursor-pointer overflow-hidden flex-col items-stretch gap-1 rounded-xl p-1.5 text-left align-top transition-colors ${
+                className={`flex min-h-[56px] cursor-pointer overflow-hidden flex-col items-stretch gap-1 rounded-xl p-1.5 text-left align-top transition-colors sm:min-h-0 ${
                   isToday ? "border-2 border-primary" : "border"
                 } ${
                   isSelected
@@ -331,9 +339,9 @@ function DashboardPage() {
                     <span className="text-[10px] font-bold text-muted-foreground">{items.length}건</span>
                   ) : null}
                 </div>
-                <div className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-hidden">
+                {/* 데스크톱: 이름+시간이 보이는 전체 칩 목록 */}
+                <div className="hidden min-h-0 flex-1 flex-col gap-0.5 overflow-hidden sm:flex">
                   {items.slice(0, 3).map((r) => (
-
                     <div
                       key={`${key}-${r.id}`}
                       onClick={(e) => {
@@ -364,6 +372,23 @@ function DashboardPage() {
                     </button>
                   ) : null}
                 </div>
+
+                {/* 모바일(360~390px): 구글 캘린더 스타일 점 표시로 요약 */}
+                {items.length > 0 ? (
+                  <div className="flex flex-wrap items-center gap-0.5 sm:hidden">
+                    {items.slice(0, 4).map((r) => (
+                      <span
+                        key={`${key}-dot-${r.id}`}
+                        className={`size-1.5 shrink-0 rounded-full ${SERVICE_DOT_COLORS[r.service_type]}`}
+                      />
+                    ))}
+                    {items.length > 4 ? (
+                      <span className="text-[9px] font-bold leading-none text-muted-foreground">
+                        +{items.length - 4}
+                      </span>
+                    ) : null}
+                  </div>
+                ) : null}
               </div>
             );
           })}
