@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { CalendarCheck, CalendarDays, Dog, LogOut, Ticket, Users } from "lucide-react";
+import { CalendarCheck, CalendarDays, Dog, LogOut, MapPin, Ticket, Users } from "lucide-react";
 
 import { NewReservationDialog } from "@/components/NewReservationDialog";
 import { toDateKey } from "@/lib/kindergarten";
@@ -9,7 +9,9 @@ import type { ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { getExternalProfile } from "@/lib/projectpet.functions";
+import { getCurrentStaffProfile } from "@/lib/staff.functions";
+
+const BRANCH_MAP_URL = "https://naver.me/Fz8h7uu5";
 
 const NAV_GROUPS = [
   {
@@ -56,9 +58,9 @@ export function AppShell({
 
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const fetchProfile = useServerFn(getExternalProfile);
+  const fetchProfile = useServerFn(getCurrentStaffProfile);
   const profile = useQuery({
-    queryKey: ["external-profile"],
+    queryKey: ["current-staff-profile"],
     queryFn: () => fetchProfile(),
     staleTime: 5 * 60 * 1000,
   });
@@ -75,29 +77,39 @@ export function AppShell({
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-30 border-b border-border bg-card">
-        <div className="flex h-14 items-center gap-3 px-4 lg:px-6">
+      <header className="sticky top-0 z-30 border-b border-primary bg-primary text-white">
+        <div className="flex h-[34px] items-center gap-3 px-4 lg:px-6">
           <Link to="/dashboard" className="flex items-center gap-2">
-            <span className="font-display text-[17px] font-bold tracking-tight">허그앤멍 예약관리시스템</span>
+            <span className="font-display text-[13px] font-bold tracking-tight text-white">허그앤멍 예약관리시스템</span>
           </Link>
 
-
           <div className="ml-auto flex items-center gap-2">
-            <span className="hidden rounded-md border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground md:inline">
+            <a
+              href={BRANCH_MAP_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden items-center gap-1 rounded-md border border-white/40 px-2.5 py-1 text-[11px] font-medium text-white transition-colors hover:bg-white/10 md:inline-flex"
+            >
+              <MapPin className="size-3" />
               허그앤멍 왕십리지점
-            </span>
-            <Button variant="ghost" size="sm" onClick={signOut}>
-              <LogOut className="size-4" />
+            </a>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={signOut}
+              className="h-6 px-2 text-xs text-white hover:bg-white/10 hover:text-white"
+            >
+              <LogOut className="size-3.5" />
               로그아웃
             </Button>
           </div>
         </div>
-        <nav className="flex gap-1 overflow-x-auto border-t border-border px-4 py-2 lg:hidden">
+        <nav className="flex gap-1 overflow-x-auto border-t border-white/20 px-4 py-2 lg:hidden">
           {MOBILE_NAV.map((item) => (
             <Link
               key={item.label}
               to={item.to}
-              className="flex items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1.5 text-sm text-muted-foreground data-[status=active]:bg-sidebar-accent data-[status=active]:font-semibold data-[status=active]:text-sidebar-accent-foreground"
+              className="flex items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1.5 text-sm text-white/80 data-[status=active]:bg-white/15 data-[status=active]:font-semibold data-[status=active]:text-white"
             >
               <item.icon className="size-4" />
               {item.label}
@@ -107,25 +119,16 @@ export function AppShell({
       </header>
 
       <div className="flex">
-        <aside className="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-56 shrink-0 overflow-y-auto border-r border-border bg-sidebar px-3 py-4 lg:block">
+        <aside className="sticky top-[34px] hidden h-[calc(100vh-34px)] w-56 shrink-0 overflow-y-auto border-r border-border bg-sidebar px-3 py-4 lg:block">
           <div className="mb-4 flex items-center gap-2.5 rounded-lg border border-border bg-card px-3 py-2.5">
-            {profile.data?.avatarUrl ? (
-              <img
-                src={profile.data.avatarUrl}
-                alt={`${displayName} 프로필 사진`}
-                className="size-9 shrink-0 rounded-full object-cover"
-              />
-            ) : (
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 font-display text-sm font-extrabold text-primary">
-                {initial}
-              </span>
-            )}
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 font-display text-sm font-extrabold text-primary">
+              {initial}
+            </span>
             <div className="min-w-0">
               <p className="truncate text-sm font-bold">{profile.isLoading ? "불러오는 중…" : displayName}</p>
               <p className="truncate text-[11px] text-muted-foreground">
-{profile.data?.email ?? "이메일 없음"}
+                {profile.data?.email ?? "이메일 없음"}
               </p>
-
             </div>
           </div>
 

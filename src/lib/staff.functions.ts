@@ -15,6 +15,33 @@ export type LocalStaff = {
 
 export type StaffRoleInput = "BRANCH_MANAGER" | "STAFF";
 
+export type CurrentStaffProfile = {
+  name: string;
+  email: string;
+  role: string | null;
+  branchName: string | null;
+};
+
+/** 현재 로그인한 계정의 직원 정보 (Supabase 인증 이메일 기준으로 staff 테이블 조회) */
+export const getCurrentStaffProfile = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<CurrentStaffProfile | null> => {
+    const email = typeof context.claims["email"] === "string" ? (context.claims["email"] as string) : null;
+    if (!email) return null;
+
+    const { data, error } = await context.supabase
+      .from("staff")
+      .select("name, email, role, branch_name")
+      .ilike("email", email)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+
+    if (!data) {
+      return { name: email.split("@")[0] ?? email, email, role: null, branchName: null };
+    }
+    return { name: data.name, email: data.email, role: data.role, branchName: data.branch_name };
+  });
+
 /** 내부 DB 직원 목록 */
 export const listLocalStaff = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
