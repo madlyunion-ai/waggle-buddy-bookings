@@ -251,8 +251,8 @@ function DashboardPage() {
 
   return (
     <AppShell sidebarAction={<NewReservationDialog defaultDate={selected} />}>
-      <div className="grid grid-cols-1 gap-4 lg:h-[calc(100vh-6rem)] lg:min-h-[560px] lg:grid-cols-[80%_20%]">
-        <section className="mx-[-1rem] flex min-h-0 flex-col overflow-hidden py-5 sm:surface-card sm:mx-0 sm:p-5 lg:h-full">
+      <div className="-mt-4 grid grid-cols-1 gap-4 sm:mt-0 lg:h-[calc(100vh-6rem)] lg:min-h-[560px] lg:grid-cols-[80%_20%]">
+        <section className="mx-[-1rem] flex min-h-0 flex-col overflow-hidden border-b border-border bg-white pb-4 pt-1 sm:surface-card sm:mx-0 sm:border-b-0 sm:bg-card sm:p-5 lg:h-full">
           <div className="mb-4 flex items-center justify-between px-4 sm:px-0">
             <div className="flex items-center gap-2">
               <h2 className="text-lg font-bold">
