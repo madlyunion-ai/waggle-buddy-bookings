@@ -86,7 +86,7 @@ export const SERVICE_LABELS: Record<ServiceType, string> = {
 export const SERVICE_STYLES: Record<ServiceType, string> = {
   kindergarten: "bg-primary/12 text-primary border-primary/25",
   hotel: "bg-accent/20 text-accent-foreground border-accent/35",
-  daily_care: "bg-secondary text-secondary-foreground border-border",
+  daily_care: "bg-rose-500/15 text-rose-600 border-rose-500/30",
   grooming: "bg-warning/20 text-warning-foreground border-warning/35",
 };
 

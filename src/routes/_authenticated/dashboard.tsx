@@ -218,10 +218,8 @@ function DashboardPage() {
               <button
                 type="button"
                 onClick={() => setServiceFilter("all")}
-                className={`rounded-full border px-3 py-1.5 text-sm font-bold transition-colors ${
-                  serviceFilter === "all"
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border bg-transparent text-muted-foreground hover:bg-secondary"
+                className={`rounded-full border border-primary/25 bg-primary/12 px-3 py-1.5 text-sm font-bold text-primary transition-shadow ${
+                  serviceFilter === "all" ? "ring-2 ring-primary ring-offset-1" : ""
                 }`}
               >
                 전체
@@ -231,10 +229,8 @@ function DashboardPage() {
                   key={t}
                   type="button"
                   onClick={() => setServiceFilter(t)}
-                  className={`rounded-full border px-3 py-1.5 text-sm font-bold transition-colors ${
-                    serviceFilter === t
-                      ? SERVICE_STYLES[t]
-                      : "border-border bg-transparent text-muted-foreground hover:bg-secondary"
+                  className={`rounded-full border px-3 py-1.5 text-sm font-bold transition-shadow ${SERVICE_STYLES[t]} ${
+                    serviceFilter === t ? "ring-2 ring-current ring-offset-1" : ""
                   }`}
                 >
                   {SERVICE_LABELS[t]}
