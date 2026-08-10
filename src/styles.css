@@ -160,18 +160,6 @@
     font-family: var(--font-display);
     letter-spacing: -0.02em;
   }
-
-  /* 날짜/시간 input의 브라우저 기본 picker 아이콘 위치를 우측 8px로 통일 */
-  input[type="date"],
-  input[type="time"] {
-    padding-right: 8px;
-  }
-
-  input[type="date"]::-webkit-calendar-picker-indicator,
-  input[type="time"]::-webkit-calendar-picker-indicator {
-    margin: 0;
-    padding: 0;
-  }
 }
 
 @utility surface-card {

@@ -19,10 +19,19 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { listExternalStaff, type ExternalStaff } from "@/lib/projectpet.functions";
-import { createStaff, listLocalStaff, type StaffRoleInput as StaffRole } from "@/lib/staff.functions";
-
+import {
+  createStaff,
+  listLocalStaff,
+  type StaffRoleInput as StaffRole,
+} from "@/lib/staff.functions";
 
 export const Route = createFileRoute("/_authenticated/staff")({
   head: () => ({
@@ -96,7 +105,6 @@ function StaffPage() {
     local: true,
   }));
 
-
   const externalRows: StaffRow[] = query.isError ? [] : (query.data ?? []);
   const localEmails = new Set(localRows.map((r) => (r.email ?? "").toLowerCase()));
 
@@ -113,11 +121,14 @@ function StaffPage() {
 
   const managers = rows.filter((r) => r.role !== "STAFF").length;
 
-
   return (
     <AppShell
       title="직원 관리"
-      description="원장·선생님 계정을 조회하고 신규 직원을 등록합니다."
+      description={
+        <span className="hidden sm:inline">
+          원장·선생님 계정을 조회하고 신규 직원을 등록합니다.
+        </span>
+      }
       action={
         <Button onClick={() => setOpen(true)}>
           <Plus className="size-4" />
@@ -135,27 +146,32 @@ function StaffPage() {
             className="bg-white pl-9"
           />
         </div>
-        <Button variant="outline" onClick={() => query.refetch()} disabled={query.isFetching}>
+        <Button
+          variant="outline"
+          onClick={() => query.refetch()}
+          disabled={query.isFetching}
+          className="hidden sm:inline-flex"
+        >
           <RefreshCw className={`size-4 ${query.isFetching ? "animate-spin" : ""}`} />
           새로고침
         </Button>
-        <span className="text-sm text-muted-foreground">
+        <span className="hidden text-sm text-muted-foreground sm:inline">
           총 {rows.length}명 · 원장 {managers}명
         </span>
       </div>
 
       <div className="overflow-hidden rounded-lg border border-border bg-card">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[720px] text-sm">
+          <table className="w-full min-w-0 text-sm sm:min-w-[720px]">
             <thead className="bg-secondary/60 text-left text-xs font-bold text-muted-foreground">
               <tr>
                 <th className="px-4 py-3">이름</th>
                 <th className="px-4 py-3">구분</th>
                 <th className="px-4 py-3">아이디</th>
-                <th className="px-4 py-3">이메일</th>
-                <th className="px-4 py-3">핸드폰번호</th>
-                <th className="px-4 py-3">상태</th>
-                <th className="px-4 py-3 text-right">관리</th>
+                <th className="hidden px-4 py-3 sm:table-cell">이메일</th>
+                <th className="px-4 py-3">연락처</th>
+                <th className="hidden px-4 py-3 sm:table-cell">상태</th>
+                <th className="hidden px-4 py-3 text-right sm:table-cell">관리</th>
               </tr>
             </thead>
 
@@ -177,16 +193,20 @@ function StaffPage() {
                   <tr key={row.id} className="border-t border-border">
                     <td className="px-4 py-3 font-semibold">{row.name}</td>
                     <td className="px-4 py-3">
-                      <Badge variant={row.role === "STAFF" ? "secondary" : "default"}>{roleLabel(row.role)}</Badge>
+                      <Badge variant={row.role === "STAFF" ? "secondary" : "default"}>
+                        {roleLabel(row.role)}
+                      </Badge>
                     </td>
                     <td className="px-4 py-3 font-medium">{row.username ?? "-"}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{row.email ?? "-"}</td>
+                    <td className="hidden px-4 py-3 text-muted-foreground sm:table-cell">
+                      {row.email ?? "-"}
+                    </td>
 
                     <td className="px-4 py-3 text-muted-foreground">{formatPhone(row.phone)}</td>
-                    <td className="px-4 py-3 text-muted-foreground">
+                    <td className="hidden px-4 py-3 text-muted-foreground sm:table-cell">
                       {row.status ? (STATUS_LABELS[row.status] ?? row.status) : "-"}
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="hidden px-4 py-3 text-right sm:table-cell">
                       {row.local ? (
                         <Button
                           variant="ghost"
@@ -202,7 +222,6 @@ function StaffPage() {
                   </tr>
                 ))
               )}
-
             </tbody>
           </table>
         </div>
@@ -217,7 +236,13 @@ function StaffPage() {
   );
 }
 
-function NewStaffDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
+function NewStaffDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+}) {
   const queryClient = useQueryClient();
   const submit = useServerFn(createStaff);
 
@@ -243,7 +268,6 @@ function NewStaffDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (
     mutationFn: () => submit({ data: { name, username, email, password, phone, role } }),
     onSuccess: () => {
       toast.success("직원이 등록되었습니다. 등록한 아이디·비밀번호로 로그인할 수 있습니다.");
-
 
       queryClient.invalidateQueries({ queryKey: ["local-staff"] });
       queryClient.invalidateQueries({ queryKey: ["external-staff"] });
@@ -312,7 +336,9 @@ function NewStaffDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (
               placeholder="teacher01"
               maxLength={50}
             />
-            <p className="text-xs text-muted-foreground">영문·숫자 3자 이상. 이 아이디로 로그인합니다.</p>
+            <p className="text-xs text-muted-foreground">
+              영문·숫자 3자 이상. 이 아이디로 로그인합니다.
+            </p>
           </div>
 
           <div className="grid gap-1.5">
@@ -326,7 +352,6 @@ function NewStaffDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (
               maxLength={200}
             />
           </div>
-
 
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="grid gap-1.5">
@@ -375,4 +400,3 @@ function NewStaffDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (
     </Dialog>
   );
 }
-

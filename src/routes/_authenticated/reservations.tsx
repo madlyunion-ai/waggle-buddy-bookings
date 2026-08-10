@@ -6,6 +6,13 @@ import { RefreshCw, Search } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -61,6 +68,39 @@ type Row = {
   } | null;
 };
 
+function OwnerQuickInfoDialog({ name, phone }: { name: string; phone: string }) {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="size-7 shrink-0 text-muted-foreground hover:text-primary"
+          aria-label={`${name} 보호자 정보 보기`}
+        >
+          <Search className="size-3.5" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>보호자 정보</DialogTitle>
+        </DialogHeader>
+        <dl className="divide-y divide-border rounded-xl border border-border">
+          <div className="px-4 py-2.5 text-sm">
+            <dt className="text-xs font-semibold text-muted-foreground">보호자명</dt>
+            <dd className="mt-0.5 truncate font-bold">{name}</dd>
+          </div>
+          <div className="px-4 py-2.5 text-sm">
+            <dt className="text-xs font-semibold text-muted-foreground">연락처</dt>
+            <dd className="mt-0.5 truncate font-bold">{phone}</dd>
+          </div>
+        </dl>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function ReservationsPage() {
   const [keyword, setKeyword] = useState("");
   const [service, setService] = useState<string>("all");
@@ -94,9 +134,18 @@ function ReservationsPage() {
   return (
     <AppShell
       title="예약 정보"
-      description="등록된 전체 예약 목록입니다. 서비스 종류와 상태로 필터링할 수 있습니다."
+      description={
+        <span className="hidden sm:inline">
+          등록된 전체 예약 목록입니다. 서비스 종류와 상태로 필터링할 수 있습니다.
+        </span>
+      }
       action={
-        <Button variant="outline" onClick={() => query.refetch()} disabled={query.isFetching}>
+        <Button
+          variant="outline"
+          onClick={() => query.refetch()}
+          disabled={query.isFetching}
+          className="hidden sm:inline-flex"
+        >
           <RefreshCw className={`size-4 ${query.isFetching ? "animate-spin" : ""}`} /> 새로고침
         </Button>
       }
@@ -144,16 +193,16 @@ function ReservationsPage() {
 
       <div className="overflow-hidden rounded-lg border border-border bg-card">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[820px] text-sm">
+          <table className="w-full min-w-0 text-sm sm:min-w-[820px]">
             <thead className="bg-secondary/60 text-left text-xs font-bold text-muted-foreground">
               <tr>
                 <th className="px-4 py-3">강아지</th>
                 <th className="px-4 py-3">보호자</th>
                 <th className="px-4 py-3">예약일</th>
-                <th className="px-4 py-3">서비스</th>
-                <th className="px-4 py-3">시간 · 기간</th>
-                <th className="px-4 py-3">상태</th>
-                <th className="px-4 py-3">메모</th>
+                <th className="hidden px-4 py-3 sm:table-cell">서비스</th>
+                <th className="hidden px-4 py-3 sm:table-cell">시간 · 기간</th>
+                <th className="hidden px-4 py-3 sm:table-cell">상태</th>
+                <th className="hidden px-4 py-3 sm:table-cell">메모</th>
               </tr>
             </thead>
             <tbody>
@@ -195,32 +244,42 @@ function ReservationsPage() {
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <p className="truncate">{row.dogs?.owners?.name ?? "보호자 미확인"}</p>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {row.dogs?.owners?.phone ?? "-"}
-                      </p>
+                      <div className="flex min-w-0 items-center gap-1">
+                        <div className="hidden min-w-0 sm:block">
+                          <p className="truncate">{row.dogs?.owners?.name ?? "보호자 미확인"}</p>
+                          <p className="truncate text-xs text-muted-foreground">
+                            {row.dogs?.owners?.phone ?? "-"}
+                          </p>
+                        </div>
+                        <OwnerQuickInfoDialog
+                          name={row.dogs?.owners?.name ?? "보호자 미확인"}
+                          phone={row.dogs?.owners?.phone ?? "미입력"}
+                        />
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">
                       {formatDateKorean(row.reserved_date)}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="hidden px-4 py-3 sm:table-cell">
                       <Badge variant="outline" className={SERVICE_STYLES[row.service_type]}>
                         {SERVICE_LABELS[row.service_type] ?? row.service_type}
                       </Badge>
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground">
+                    <td className="hidden px-4 py-3 text-muted-foreground sm:table-cell">
                       {row.service_type === "hotel" && row.end_date
                         ? `${stayLabel(row.reserved_date, row.end_date)} · ${row.end_date}`
                         : `${formatTime(row.drop_off_time)} ~ ${formatTime(row.pick_up_time)}`}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="hidden px-4 py-3 sm:table-cell">
                       <span
                         className={`rounded-md px-2 py-1 text-xs font-bold ${STATUS_STYLES[row.status]}`}
                       >
                         {STATUS_LABELS[row.status] ?? row.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground">{row.memo || "-"}</td>
+                    <td className="hidden px-4 py-3 text-xs text-muted-foreground sm:table-cell">
+                      {row.memo || "-"}
+                    </td>
                   </tr>
                 ))
               )}

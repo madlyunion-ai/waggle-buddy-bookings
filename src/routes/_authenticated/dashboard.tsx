@@ -369,7 +369,7 @@ function DashboardPage() {
                     }
                   }}
                   className={`flex min-h-[44px] max-h-[92px] cursor-pointer flex-col items-stretch gap-0.5 overflow-hidden border-b border-border/60 p-1 text-left align-top transition-colors sm:min-h-0 sm:max-h-none sm:gap-1 sm:rounded-xl sm:border sm:p-1.5 ${
-                    isSelected ? "bg-primary/5" : !isMonth ? "bg-gray-100" : ""
+                    isSelected ? "bg-primary/5" : !isMonth ? "bg-[#eeeeee]" : ""
                   } ${isToday ? `${sm("border-2 border-primary")}` : sm("border")} ${
                     isSelected
                       ? sm("bg-primary/8")
