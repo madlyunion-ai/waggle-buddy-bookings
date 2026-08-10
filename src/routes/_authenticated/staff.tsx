@@ -147,7 +147,7 @@ function StaffPage() {
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
             placeholder="이름, 아이디, 연락처 검색"
-            className="pl-9"
+            className="bg-white pl-9"
           />
         </div>
         <Button variant="outline" onClick={() => query.refetch()} disabled={query.isFetching}>

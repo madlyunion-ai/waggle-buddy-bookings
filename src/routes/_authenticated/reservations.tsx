@@ -92,14 +92,14 @@ function ReservationsPage() {
         <div className="relative max-w-sm flex-1">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            className="pl-9"
+            className="bg-white pl-9"
             placeholder="강아지 이름, 견종, 보호자 검색"
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
           />
         </div>
         <Select value={service} onValueChange={setService}>
-          <SelectTrigger className="w-[150px]">
+          <SelectTrigger className="w-[150px] bg-white">
             <SelectValue placeholder="서비스" />
           </SelectTrigger>
           <SelectContent>
@@ -112,7 +112,7 @@ function ReservationsPage() {
           </SelectContent>
         </Select>
         <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className="w-[130px]">
+          <SelectTrigger className="w-[130px] bg-white">
             <SelectValue placeholder="상태" />
           </SelectTrigger>
           <SelectContent>

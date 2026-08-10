@@ -79,8 +79,11 @@ export function AppShell({
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-30 border-b border-[#17214c] bg-[#17214c] text-white">
         <div className="flex h-[44px] items-center gap-3 px-4 lg:px-6">
-          <Link to="/dashboard" className="flex items-center gap-2">
-            <span className="font-display text-[17px] font-bold tracking-tight text-white">허그앤멍 예약관리시스템</span>
+          <Link to="/dashboard" className="flex items-baseline gap-2">
+            <span className="font-display text-[17px] font-semibold tracking-tight text-white">허그앤멍 예약관리시스템</span>
+            <span className="hidden text-[11px] font-normal text-white/70 sm:inline">
+              허그앤멍 프리미엄 토탈 애견 유치원 서비스
+            </span>
           </Link>
 
           <div className="ml-auto flex items-center gap-2">

@@ -84,7 +84,7 @@ function DogsPage() {
         <div className="relative max-w-sm flex-1">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            className="pl-9"
+            className="bg-white pl-9"
             placeholder="반려견 이름, 견종, 보호자 검색"
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
