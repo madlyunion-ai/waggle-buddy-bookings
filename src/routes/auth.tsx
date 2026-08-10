@@ -1,9 +1,17 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
 
-import { toast } from "sonner";
-
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -34,6 +42,7 @@ function AuthPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [errorOpen, setErrorOpen] = useState(false);
   const [rememberMe, setRememberMeState] = useState(false);
   const login = useServerFn(loginWithUsername);
 
@@ -65,10 +74,8 @@ function AuthPage() {
       });
       if (error) throw new Error(error.message);
       navigate({ to: "/dashboard", replace: true });
-    } catch (err) {
-      toast.error("로그인에 실패했습니다", {
-        description: err instanceof Error ? err.message : "아이디 또는 비밀번호를 확인해 주세요.",
-      });
+    } catch {
+      setErrorOpen(true);
     } finally {
       setLoading(false);
     }
@@ -121,13 +128,34 @@ function AuthPage() {
             </div>
 
             <Button type="submit" className="w-full" disabled={loading}>
-              로그인
+              {loading ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  로그인 중…
+                </>
+              ) : (
+                "로그인"
+              )}
             </Button>
           </form>
 
-        
+
         </div>
       </div>
+
+      <AlertDialog open={errorOpen} onOpenChange={setErrorOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-center">로그인 실패</AlertDialogTitle>
+            <AlertDialogDescription className="text-center">
+              아이디 또는 비밀번호를 확인해주세요.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="sm:justify-center">
+            <AlertDialogAction onClick={() => setErrorOpen(false)}>확인</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
