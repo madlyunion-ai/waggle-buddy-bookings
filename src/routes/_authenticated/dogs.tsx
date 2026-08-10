@@ -114,7 +114,7 @@ function DogsPage() {
       <div className="overflow-hidden rounded-lg border border-border bg-card">
         <div className="overflow-x-auto">
           <table className="w-full min-w-0 text-[11px] sm:min-w-[760px] sm:text-sm">
-            <thead className="bg-secondary/60 text-left text-xs font-bold text-muted-foreground">
+            <thead className="bg-secondary/60 text-center text-xs font-bold text-muted-foreground">
               <tr>
                 <th className="px-4 py-3">이름</th>
                 <th className="hidden px-4 py-3 sm:table-cell">견종</th>

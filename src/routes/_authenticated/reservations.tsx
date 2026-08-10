@@ -194,7 +194,7 @@ function ReservationsPage() {
       <div className="overflow-hidden rounded-lg border border-border bg-card">
         <div className="overflow-x-auto">
           <table className="w-full min-w-0 text-[11px] sm:min-w-[820px] sm:text-sm">
-            <thead className="bg-secondary/60 text-left text-xs font-bold text-muted-foreground">
+            <thead className="bg-secondary/60 text-center text-xs font-bold text-muted-foreground">
               <tr>
                 <th className="whitespace-nowrap px-4 py-3">강아지</th>
                 <th className="whitespace-nowrap px-4 py-3">보호자</th>

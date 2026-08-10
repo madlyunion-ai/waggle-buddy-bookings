@@ -304,7 +304,9 @@ export function NewReservationDialog({
                       ? "회원을 먼저 선택하세요"
                       : petsQuery.isLoading
                         ? "불러오는 중…"
-                        : "강아지를 선택하세요"
+                        : (petsQuery.data ?? []).length === 0
+                          ? "등록된 강아지가 없습니다."
+                          : "강아지를 선택하세요"
                   }
                 />
               </SelectTrigger>

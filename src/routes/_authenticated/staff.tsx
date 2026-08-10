@@ -163,7 +163,7 @@ function StaffPage() {
       <div className="overflow-hidden rounded-lg border border-border bg-card">
         <div className="overflow-x-auto">
           <table className="w-full min-w-0 table-fixed text-[11px] sm:min-w-[720px] sm:table-auto sm:text-sm">
-            <thead className="bg-secondary/60 text-left text-xs font-bold text-muted-foreground">
+            <thead className="bg-secondary/60 text-center text-xs font-bold text-muted-foreground">
               <tr>
                 <th className="w-[26%] px-2 py-3 sm:w-auto sm:px-4">이름</th>
                 <th className="w-[18%] px-2 py-3 sm:w-auto sm:px-4">구분</th>
