@@ -197,9 +197,9 @@ export function AppShell({
 
         <main className="min-w-0 flex-1 px-4 py-4 lg:px-6">
           {title || action ? (
-            <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+            <div className="mb-2.5 flex flex-wrap items-end justify-between gap-3 sm:mb-5">
               <div>
-                {title ? <h1 className="text-[14px] font-bold sm:text-2xl">{title}</h1> : null}
+                {title ? <h1 className="text-[16px] font-bold sm:text-2xl">{title}</h1> : null}
                 {description ? (
                   <p className="mt-1 text-sm text-muted-foreground">{description}</p>
                 ) : null}

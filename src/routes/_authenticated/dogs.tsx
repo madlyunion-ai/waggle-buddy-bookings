@@ -155,7 +155,7 @@ function DogsPage() {
                         <div className="flex size-[26px] shrink-0 items-center justify-center rounded-lg bg-secondary font-display text-xs font-extrabold text-primary sm:size-8 sm:text-sm">
                           {pet.name.slice(0, 1)}
                         </div>
-                        <span className="truncate font-bold">{pet.name}</span>
+                        <span className="truncate text-xs font-bold sm:text-sm">{pet.name}</span>
                         {pet.neutered ? (
                           <Badge
                             variant="outline"
