@@ -183,12 +183,12 @@ function CommaNumberInput({
 export const Route = createFileRoute("/_authenticated/passes")({
   head: () => ({
     meta: [
-      { title: "이용권 관리 | 허그앤멍 예약관리" },
+      { title: "이용권 설정 | 허그앤멍 예약관리" },
       {
         name: "description",
         content: "이용권 상품을 등록하고 횟수·금액·유효기간·사용상태를 관리합니다.",
       },
-      { property: "og:title", content: "이용권 관리 | 허그앤멍 예약관리" },
+      { property: "og:title", content: "이용권 설정 | 허그앤멍 예약관리" },
       { property: "og:description", content: "이용권 상품 등록 및 관리" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -265,7 +265,7 @@ function PassesPage() {
 
   return (
     <AppShell
-      title="이용권 관리"
+      title="이용권 설정"
       description="이용권 상품을 등록하고 관리합니다."
       action={<NewPassDialog />}
     >

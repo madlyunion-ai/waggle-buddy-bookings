@@ -42,8 +42,8 @@ const NAV_GROUPS = [
   {
     label: "이용권 · 정산",
     items: [
-      { to: "/passes", label: "이용권 관리", icon: Ticket },
       { to: "/passes-usage", label: "이용권 사용현황", icon: Ticket },
+      { to: "/passes", label: "이용권 설정", icon: Ticket },
     ],
   },
 ] as const;
@@ -53,7 +53,8 @@ const MOBILE_NAV = [
   { to: "/dogs", label: "반려견 리스트", icon: Dog },
   { to: "/reservations", label: "예약 정보", icon: CalendarCheck },
   { to: "/staff", label: "직원 관리", icon: Users },
-  { to: "/passes", label: "이용권 관리", icon: Ticket },
+  { to: "/passes-usage", label: "이용권 사용현황", icon: Ticket },
+  { to: "/passes", label: "이용권 설정", icon: Ticket },
 ] as const;
 
 export function AppShell({
