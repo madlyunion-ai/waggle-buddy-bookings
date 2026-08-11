@@ -4,15 +4,9 @@ import { useState } from "react";
 import { RefreshCw, Search } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
+import { OwnerInfoDialog } from "@/components/OwnerInfoDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -64,42 +58,9 @@ type Row = {
   dogs: {
     name: string;
     breed: string | null;
-    owners: { name: string; phone: string | null } | null;
+    owners: { name: string; phone: string | null; external_id: string | null } | null;
   } | null;
 };
-
-function OwnerQuickInfoDialog({ name, phone }: { name: string; phone: string }) {
-  return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="size-7 shrink-0 text-muted-foreground hover:text-primary"
-          aria-label={`${name} 보호자 정보 보기`}
-        >
-          <Search className="size-3.5" />
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>보호자 정보</DialogTitle>
-        </DialogHeader>
-        <dl className="divide-y divide-border rounded-xl border border-border">
-          <div className="px-4 py-2.5 text-sm">
-            <dt className="text-xs font-semibold text-muted-foreground">보호자명</dt>
-            <dd className="mt-0.5 truncate font-bold">{name}</dd>
-          </div>
-          <div className="px-4 py-2.5 text-sm">
-            <dt className="text-xs font-semibold text-muted-foreground">연락처</dt>
-            <dd className="mt-0.5 truncate font-bold">{phone}</dd>
-          </div>
-        </dl>
-      </DialogContent>
-    </Dialog>
-  );
-}
 
 function ReservationsPage() {
   const [keyword, setKeyword] = useState("");
@@ -112,7 +73,7 @@ function ReservationsPage() {
       const { data, error } = await supabase
         .from("reservations")
         .select(
-          "id, reserved_date, end_date, drop_off_time, pick_up_time, status, service_type, memo, created_at, dogs(name, breed, owners(name, phone))",
+          "id, reserved_date, end_date, drop_off_time, pick_up_time, status, service_type, memo, created_at, dogs(name, breed, owners(name, phone, external_id))",
         )
         .order("reserved_date", { ascending: false })
         .limit(500);
@@ -243,19 +204,25 @@ function ReservationsPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-center">
+                    <td className="px-4 py-3 text-center text-muted-foreground">
                       <div className="flex min-w-0 items-center justify-center gap-1">
-                        <div className="hidden min-w-0 text-center sm:block">
-                          <p className="truncate">{row.dogs?.owners?.name ?? "보호자 미확인"}</p>
-                          {row.dogs?.owners?.phone ? (
-                            <p className="truncate text-xs text-muted-foreground">
-                              {row.dogs.owners.phone}
-                            </p>
-                          ) : null}
-                        </div>
-                        <OwnerQuickInfoDialog
-                          name={row.dogs?.owners?.name ?? "보호자 미확인"}
-                          phone={row.dogs?.owners?.phone ?? "미입력"}
+                        <span className="hidden truncate sm:inline">
+                          {row.dogs?.owners?.name ?? "보호자 미확인"}
+                          {row.dogs?.owners?.phone ? ` · ${row.dogs.owners.phone}` : ""}
+                        </span>
+                        <OwnerInfoDialog
+                          pet={{
+                            id: row.dogs?.owners?.external_id ?? row.id,
+                            name: row.dogs?.name ?? "삭제된 원생",
+                            breed: row.dogs?.breed ?? null,
+                            birthDate: null,
+                            weight: null,
+                            gender: null,
+                            neutered: false,
+                            ownerNames: row.dogs?.owners?.name ? [row.dogs.owners.name] : [],
+                            ownerId: row.dogs?.owners?.external_id ?? null,
+                            ownerPhone: row.dogs?.owners?.phone ?? null,
+                          }}
                         />
                       </div>
                     </td>
