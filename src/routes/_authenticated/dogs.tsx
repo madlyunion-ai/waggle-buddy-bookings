@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, RefreshCw, Search } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
+import { DogPassDialog } from "@/components/DogPassDialog";
 import { OwnerInfoDialog } from "@/components/OwnerInfoDialog";
 import { ReserveDialog } from "@/components/ReserveDialog";
 import { Badge } from "@/components/ui/badge";
@@ -122,7 +123,7 @@ function DogsPage() {
                 <th className="hidden px-4 py-3 sm:table-cell">나이</th>
                 <th className="hidden px-4 py-3 sm:table-cell">몸무게</th>
                 <th className="px-4 py-3">보호자</th>
-                <th className="px-4 py-3">예약</th>
+                <th className="px-4 py-3">기능</th>
               </tr>
             </thead>
             <tbody>
@@ -188,7 +189,10 @@ function DogsPage() {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <ReserveDialog pet={pet} />
+                      <div className="flex items-center justify-center gap-2">
+                        <ReserveDialog pet={pet} />
+                        <DogPassDialog pet={pet} />
+                      </div>
                     </td>
                   </tr>
                 ))
