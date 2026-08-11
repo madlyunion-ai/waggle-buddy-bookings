@@ -738,7 +738,10 @@ function DashboardPage() {
 
                     <div className="mt-2 flex items-center gap-2 border-t border-border pt-2">
                       <p className="min-w-0 flex-1 truncate text-[11px] text-muted-foreground">
-                        {row.dogs?.owners?.name ?? "-"} · {row.dogs?.owners?.phone ?? "-"}
+                        {row.dogs?.owners?.name ?? "-"}
+                        {row.dogs?.owners?.phone && row.dogs.owners.phone !== "-"
+                          ? ` · ${row.dogs.owners.phone}`
+                          : ""}
                       </p>
                       <p className="shrink-0 text-[11px] font-bold text-foreground">
                         {row.service_type === "hotel" && row.end_date
@@ -896,7 +899,10 @@ function DashboardPage() {
                 <div className="flex items-center justify-between gap-3 px-4 py-2.5 text-sm">
                   <dt className="shrink-0 text-xs font-semibold text-muted-foreground">보호자</dt>
                   <dd className="truncate text-right font-semibold">
-                    {detailRow.dogs?.owners?.name ?? "-"} · {detailRow.dogs?.owners?.phone ?? "-"}
+                    {detailRow.dogs?.owners?.name ?? "-"}
+                    {detailRow.dogs?.owners?.phone && detailRow.dogs.owners.phone !== "-"
+                      ? ` · ${detailRow.dogs.owners.phone}`
+                      : ""}
                   </dd>
                 </div>
                 <div className="flex items-center justify-between gap-3 px-4 py-2.5 text-sm">
@@ -946,7 +952,7 @@ function DashboardPage() {
                 {detailRow.memo ? (
                   <div className="px-4 py-2.5 text-sm">
                     <dt className="text-xs font-semibold text-muted-foreground">메모</dt>
-                    <dd className="mt-0.5 font-semibold">{detailRow.memo}</dd>
+                    <dd className="mt-0.5 text-right font-semibold">{detailRow.memo}</dd>
                   </div>
                 ) : null}
               </dl>

@@ -208,7 +208,9 @@ function ReservationsPage() {
                       <div className="flex min-w-0 items-center justify-center gap-1">
                         <span className="hidden truncate sm:inline">
                           {row.dogs?.owners?.name ?? "보호자 미확인"}
-                          {row.dogs?.owners?.phone ? ` · ${row.dogs.owners.phone}` : ""}
+                          {row.dogs?.owners?.phone && row.dogs.owners.phone !== "-"
+                            ? ` · ${row.dogs.owners.phone}`
+                            : ""}
                         </span>
                         <OwnerInfoDialog
                           pet={{
