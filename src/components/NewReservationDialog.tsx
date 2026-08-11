@@ -137,10 +137,6 @@ export function NewReservationDialog({
     (p) =>
       p.pass_type === serviceType && p.payment_status === "paid" && p.used_count < p.total_count,
   );
-  const availableKindergartenPasses = ownedPasses.filter(
-    (p) =>
-      p.pass_type === "kindergarten" && p.payment_status === "paid" && p.used_count < p.total_count,
-  );
   const availablePickupPasses = ownedPasses.filter(
     (p) =>
       p.pass_type === "pickup_dropoff" &&
@@ -148,7 +144,7 @@ export function NewReservationDialog({
       p.used_count < p.total_count,
   );
 
-  const selectedKindergartenPass = availableKindergartenPasses.find((p) => p.id === passId);
+  const selectedPass = availablePasses.find((p) => p.id === passId);
   const selectedPickupPass = availablePickupPasses.find((p) => p.id === pickupPassId);
 
   const create = useMutation({
@@ -210,27 +206,22 @@ export function NewReservationDialog({
       }
 
       // 이용권 적용: 반려견이 실제로 보유한 이용권 중에서만 선택 가능
-      // (유치원: 직접 선택 / 그 외: "자동"이면 사용 가능한 이용권을 자동 적용)
+      // ("자동"이면 사용 가능한 이용권을 자동 적용)
       let appliedPassId: string | null = null;
-      let appliedPickupPassId: string | null = null;
-      if (serviceType === "kindergarten") {
-        appliedPassId = passId !== "none" ? passId : null;
-        appliedPickupPassId =
-          pickupUsageMode !== "none" && pickupPassId !== "none" ? pickupPassId : null;
+      if (passId === "auto") {
+        const { data: pass } = await supabase
+          .from("passes")
+          .select("id, total_count, used_count")
+          .eq("dog_id", dogId)
+          .eq("pass_type", serviceType)
+          .eq("payment_status", "paid")
+          .order("purchased_on", { ascending: true });
+        appliedPassId = (pass ?? []).find((p) => p.used_count < p.total_count)?.id ?? null;
       } else if (passId !== "none") {
-        if (passId === "auto") {
-          const { data: pass } = await supabase
-            .from("passes")
-            .select("id, total_count, used_count")
-            .eq("dog_id", dogId)
-            .eq("pass_type", serviceType)
-            .eq("payment_status", "paid")
-            .order("purchased_on", { ascending: true });
-          appliedPassId = (pass ?? []).find((p) => p.used_count < p.total_count)?.id ?? null;
-        } else {
-          appliedPassId = passId;
-        }
+        appliedPassId = passId;
       }
+      const appliedPickupPassId =
+        pickupUsageMode !== "none" && pickupPassId !== "none" ? pickupPassId : null;
 
       const times =
         serviceType === "grooming"
@@ -250,11 +241,9 @@ export function NewReservationDialog({
         pass_id: appliedPassId,
         pickup_pass_id: appliedPickupPassId,
         pickup_requested:
-          serviceType === "kindergarten" &&
           appliedPickupPassId !== null &&
           (pickupUsageMode === "pickup" || pickupUsageMode === "round_trip"),
         dropoff_requested:
-          serviceType === "kindergarten" &&
           appliedPickupPassId !== null &&
           (pickupUsageMode === "dropoff" || pickupUsageMode === "round_trip"),
       });
@@ -421,44 +410,94 @@ export function NewReservationDialog({
             </>
           )}
 
-          {serviceType !== "kindergarten" ? (
-            <div className="space-y-2">
-              <Label>이용권 적용</Label>
-              <Select value={passId} onValueChange={setPassId} disabled={!petId}>
+          <div className="space-y-2">
+            <Label>이용권 적용</Label>
+            <Select value={passId} onValueChange={setPassId} disabled={!petId}>
+              <SelectTrigger>
+                <SelectValue
+                  placeholder={
+                    !petId
+                      ? "강아지를 먼저 선택하세요"
+                      : availablePasses.length === 0
+                        ? "적용 가능한 이용권이 없습니다"
+                        : "이용권을 선택하세요"
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">사용 안 함</SelectItem>
+                {availablePasses.length > 0 ? (
+                  <SelectItem value="auto">자동 (사용 가능한 이용권)</SelectItem>
+                ) : null}
+                {availablePasses.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.title} · 잔여 {p.total_count - p.used_count}회
+                    {p.expires_on ? ` · ${p.expires_on}까지` : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              {!petId
+                ? "강아지를 선택하면 보유 이용권을 확인할 수 있습니다."
+                : passesQuery.isLoading
+                  ? "이용권을 불러오는 중…"
+                  : availablePasses.length === 0
+                    ? "사용 가능한(결제완료) 이용권이 없습니다."
+                    : `사용 가능한 이용권 ${availablePasses.length}건 · 등록 시 1회 차감됩니다.`}
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label>픽드랍 설정</Label>
+            <Select
+              value={pickupUsageMode}
+              onValueChange={(v) => {
+                const mode = v as (typeof PICKUP_USAGE_MODES)[number]["value"];
+                setPickupUsageMode(mode);
+                if (mode === "none") setPickupPassId("none");
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PICKUP_USAGE_MODES.map((m) => (
+                  <SelectItem key={m.value} value={m.value}>
+                    {m.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {pickupUsageMode !== "none" ? (
+              <Select value={pickupPassId} onValueChange={setPickupPassId} disabled={!petId}>
                 <SelectTrigger>
                   <SelectValue
                     placeholder={
                       !petId
                         ? "강아지를 먼저 선택하세요"
-                        : availablePasses.length === 0
+                        : availablePickupPasses.length === 0
                           ? "적용 가능한 이용권이 없습니다"
-                          : "이용권을 선택하세요"
+                          : "픽드랍 이용권을 선택하세요"
                     }
                   />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">사용 안 함</SelectItem>
-                  {availablePasses.length > 0 ? (
-                    <SelectItem value="auto">자동 (사용 가능한 이용권)</SelectItem>
-                  ) : null}
-                  {availablePasses.map((p) => (
+                  {availablePickupPasses.map((p) => (
                     <SelectItem key={p.id} value={p.id}>
                       {p.title} · 잔여 {p.total_count - p.used_count}회
-                      {p.expires_on ? ` · ${p.expires_on}까지` : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">
-                {!petId
-                  ? "강아지를 선택하면 보유 이용권을 확인할 수 있습니다."
-                  : passesQuery.isLoading
-                    ? "이용권을 불러오는 중…"
-                    : availablePasses.length === 0
-                      ? "사용 가능한(결제완료) 이용권이 없습니다."
-                      : `사용 가능한 이용권 ${availablePasses.length}건 · 등원 처리 시 1회 차감됩니다.`}
-              </p>
-            </div>
+            ) : null}
+          </div>
+
+          {selectedPass || selectedPickupPass ? (
+            <p className="text-xs text-muted-foreground">
+              적용된 이용권은 등록 시 잔여 횟수가 1회 차감됩니다.
+            </p>
           ) : null}
 
           {serviceType === "hotel" ? (
@@ -555,83 +594,6 @@ export function NewReservationDialog({
                   <Input type="time" value={pickUp} onChange={(e) => setPickUp(e.target.value)} />
                 </div>
               </div>
-
-              <div className="space-y-2">
-                <Label>이용권 적용</Label>
-                <Select value={passId} onValueChange={setPassId} disabled={!petId}>
-                  <SelectTrigger>
-                    <SelectValue
-                      placeholder={
-                        !petId
-                          ? "강아지를 먼저 선택하세요"
-                          : availableKindergartenPasses.length === 0
-                            ? "적용 가능한 이용권이 없습니다"
-                            : "이용권을 선택하세요"
-                      }
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">사용 안 함</SelectItem>
-                    {availableKindergartenPasses.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.title} · 잔여 {p.total_count - p.used_count}회
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>픽드랍 설정</Label>
-                <Select
-                  value={pickupUsageMode}
-                  onValueChange={(v) => {
-                    const mode = v as (typeof PICKUP_USAGE_MODES)[number]["value"];
-                    setPickupUsageMode(mode);
-                    if (mode === "none") setPickupPassId("none");
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PICKUP_USAGE_MODES.map((m) => (
-                      <SelectItem key={m.value} value={m.value}>
-                        {m.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {pickupUsageMode !== "none" ? (
-                  <Select value={pickupPassId} onValueChange={setPickupPassId} disabled={!petId}>
-                    <SelectTrigger>
-                      <SelectValue
-                        placeholder={
-                          !petId
-                            ? "강아지를 먼저 선택하세요"
-                            : availablePickupPasses.length === 0
-                              ? "적용 가능한 이용권이 없습니다"
-                              : "픽드랍 이용권을 선택하세요"
-                        }
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">사용 안 함</SelectItem>
-                      {availablePickupPasses.map((p) => (
-                        <SelectItem key={p.id} value={p.id}>
-                          {p.title} · 잔여 {p.total_count - p.used_count}회
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                ) : null}
-              </div>
-
-              {selectedKindergartenPass || selectedPickupPass ? (
-                <p className="text-xs text-muted-foreground">
-                  적용된 이용권은 등록 시 잔여 횟수가 1회 차감됩니다.
-                </p>
-              ) : null}
             </div>
           ) : (
             <div className="space-y-3">
