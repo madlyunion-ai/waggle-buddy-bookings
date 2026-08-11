@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, type ComponentProps } from "react";
 import {
   BedDouble,
   CalendarCheck,
@@ -129,6 +129,35 @@ function formatDuration(totalMinutes: number) {
   return `${minutes}분`;
 }
 
+function formatCount(value: number) {
+  return value.toLocaleString("ko-KR");
+}
+
+function toCommaDisplay(raw: string) {
+  const digits = raw.replace(/[^0-9]/g, "");
+  if (!digits) return "";
+  return Number(digits).toLocaleString("ko-KR");
+}
+
+function CommaNumberInput({
+  value,
+  onChange,
+  ...props
+}: {
+  value: string;
+  onChange: (v: string) => void;
+} & Omit<ComponentProps<typeof Input>, "value" | "onChange" | "type">) {
+  return (
+    <Input
+      type="text"
+      inputMode="numeric"
+      value={toCommaDisplay(value)}
+      onChange={(e) => onChange(e.target.value.replace(/[^0-9]/g, ""))}
+      {...props}
+    />
+  );
+}
+
 export const Route = createFileRoute("/_authenticated/passes")({
   head: () => ({
     meta: [
@@ -223,7 +252,7 @@ function PassesPage() {
           </div>
           <div>
             <p className="text-sm text-muted-foreground">전체 이용권</p>
-            <p className="text-2xl font-extrabold">{passes.length}</p>
+            <p className="text-2xl font-extrabold">{formatCount(passes.length)}</p>
           </div>
         </div>
         <div className="surface-card flex items-center gap-4 p-5">
@@ -232,7 +261,7 @@ function PassesPage() {
           </div>
           <div>
             <p className="text-sm text-muted-foreground">활성화된 이용권</p>
-            <p className="text-2xl font-extrabold">{activeCount}</p>
+            <p className="text-2xl font-extrabold">{formatCount(activeCount)}</p>
           </div>
         </div>
       </div>
@@ -257,7 +286,7 @@ function PassesPage() {
                 : "border-border hover:bg-secondary/70"
             }`}
           >
-            전체 {passes.length}
+            전체 {formatCount(passes.length)}
           </button>
           {PASS_TYPES.map((t) => (
             <button
@@ -270,7 +299,7 @@ function PassesPage() {
                   : "border opacity-70 hover:opacity-100"
               }`}
             >
-              {PASS_TYPE_LABELS[t]} {typeCounts[t] ?? 0}
+              {PASS_TYPE_LABELS[t]} {formatCount(typeCounts[t] ?? 0)}
             </button>
           ))}
         </div>
@@ -343,11 +372,13 @@ function PassesPage() {
                           formatDuration(pass.total_count)
                         ) : pass.dogs ? (
                           <>
-                            {pass.used_count}/{pass.total_count}회
-                            <span className="ml-1 text-[10px]">(잔여 {remaining})</span>
+                            {formatCount(pass.used_count)}/{formatCount(pass.total_count)}회
+                            <span className="ml-1 text-[10px]">
+                              (잔여 {formatCount(remaining)})
+                            </span>
                           </>
                         ) : (
-                          `${pass.total_count}회`
+                          `${formatCount(pass.total_count)}회`
                         )}
                         {pass.pass_type === "hotel" && pass.available_days ? (
                           <span className="block text-[10px]">
@@ -436,6 +467,8 @@ function PassFormFields({
   setValidityValue,
   validityUnit,
   setValidityUnit,
+  unlimited,
+  setUnlimited,
   memo,
   setMemo,
   active,
@@ -463,6 +496,8 @@ function PassFormFields({
   setValidityValue: (v: string) => void;
   validityUnit: "month" | "day";
   setValidityUnit: (v: "month" | "day") => void;
+  unlimited: boolean;
+  setUnlimited: (v: boolean) => void;
   memo: string;
   setMemo: (v: string) => void;
   active: boolean;
@@ -485,8 +520,9 @@ function PassFormFields({
                 type="button"
                 onClick={() => {
                   setPassType(t);
-                  if (t === "daily_care" && billingHourPreset !== "custom") {
-                    setTotalCount(billingHourPreset);
+                  if (t === "daily_care") {
+                    if (billingHourPreset !== "custom") setTotalCount(billingHourPreset);
+                    setPrice("6000");
                   }
                 }}
                 className={`flex flex-col items-center gap-1 rounded-xl border px-1 py-2.5 text-[11px] font-bold shadow-none transition-all ${
@@ -556,7 +592,7 @@ function PassFormFields({
       {passType === "pickup_dropoff" ? (
         <div className="space-y-2">
           <Label>이용권 금액 (원)</Label>
-          <Input type="number" min="0" value={price} onChange={(e) => setPrice(e.target.value)} />
+          <CommaNumberInput value={price} onChange={setPrice} />
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3">
@@ -602,20 +638,16 @@ function PassFormFields({
                 ) : null}
               </div>
             ) : (
-              <Input
-                type="number"
-                min="1"
-                value={totalCount}
-                onChange={(e) => setTotalCount(e.target.value)}
-              />
+              <CommaNumberInput value={totalCount} onChange={setTotalCount} />
             )}
           </div>
           <div className="space-y-2">
             <Label>{passType === "daily_care" ? "시간당 이용료 (원)" : "이용권 금액 (원)"}</Label>
-            <Input type="number" min="0" value={price} onChange={(e) => setPrice(e.target.value)} />
+            <CommaNumberInput value={price} onChange={setPrice} />
             {passType === "daily_care" ? (
-              <div className="rounded-lg border border-border bg-secondary/50 px-3 py-2 text-sm font-bold">
-                합계 {formatWon((Number(totalCount || 0) / 60) * Number(price || 0))}
+              <div className="flex items-center justify-between rounded-lg border border-border bg-secondary/50 px-3 py-2 text-sm font-bold">
+                <span>합계</span>
+                <span>{formatWon((Number(totalCount || 0) / 60) * Number(price || 0))}</span>
               </div>
             ) : null}
           </div>
@@ -646,15 +678,19 @@ function PassFormFields({
 
       <div className="space-y-2">
         <Label>유효기간 (발급일로부터)</Label>
-        <div className="grid grid-cols-2 gap-3">
-          <Input
-            type="number"
-            min="0"
+        <div className="flex items-center gap-2">
+          <CommaNumberInput
             value={validityValue}
-            onChange={(e) => setValidityValue(e.target.value)}
+            onChange={setValidityValue}
+            disabled={unlimited}
+            className="flex-1"
           />
-          <Select value={validityUnit} onValueChange={(v) => setValidityUnit(v as "month" | "day")}>
-            <SelectTrigger>
+          <Select
+            value={validityUnit}
+            onValueChange={(v) => setValidityUnit(v as "month" | "day")}
+            disabled={unlimited}
+          >
+            <SelectTrigger className="w-24">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -665,10 +701,16 @@ function PassFormFields({
               ))}
             </SelectContent>
           </Select>
+          <label className="flex items-center gap-1.5 whitespace-nowrap text-sm font-bold">
+            <input
+              type="checkbox"
+              className="size-4 accent-primary"
+              checked={unlimited}
+              onChange={(e) => setUnlimited(e.target.checked)}
+            />
+            무제한
+          </label>
         </div>
-        <p className="text-xs text-muted-foreground">
-          0으로 두면 만료일 없이 무제한으로 등록됩니다.
-        </p>
       </div>
 
       <div className="space-y-2">
@@ -708,6 +750,7 @@ function NewPassDialog() {
   const [price, setPrice] = useState("300000");
   const [validityValue, setValidityValue] = useState("3");
   const [validityUnit, setValidityUnit] = useState<"month" | "day">("month");
+  const [unlimited, setUnlimited] = useState(false);
   const [memo, setMemo] = useState("");
   const [active, setActive] = useState(true);
 
@@ -723,6 +766,7 @@ function NewPassDialog() {
     setPrice("300000");
     setValidityValue("3");
     setValidityUnit("month");
+    setUnlimited(false);
     setMemo("");
     setActive(true);
   }
@@ -731,7 +775,7 @@ function NewPassDialog() {
     mutationFn: async () => {
       const isPickupDropoff = passType === "pickup_dropoff";
       const isDailyCare = passType === "daily_care";
-      const expiresOn = computeExpiresOn(Number(validityValue), validityUnit);
+      const expiresOn = unlimited ? null : computeExpiresOn(Number(validityValue), validityUnit);
       const finalPrice = isDailyCare
         ? Math.round((Number(totalCount || 0) / 60) * Number(price || 0))
         : Number(price);
@@ -802,6 +846,8 @@ function NewPassDialog() {
           setValidityValue={setValidityValue}
           validityUnit={validityUnit}
           setValidityUnit={setValidityUnit}
+          unlimited={unlimited}
+          setUnlimited={setUnlimited}
           memo={memo}
           setMemo={setMemo}
           active={active}
@@ -836,6 +882,7 @@ function EditPassDialog({
   const [price, setPrice] = useState("0");
   const [validityValue, setValidityValue] = useState("0");
   const [validityUnit, setValidityUnit] = useState<"month" | "day">("month");
+  const [unlimited, setUnlimited] = useState(false);
   const [memo, setMemo] = useState("");
   const [active, setActive] = useState(true);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
@@ -864,6 +911,7 @@ function EditPassDialog({
     );
     setValidityValue("0");
     setValidityUnit("month");
+    setUnlimited(!row.expires_on);
     setMemo(row.memo ?? "");
     setActive(row.active);
   }
@@ -872,7 +920,7 @@ function EditPassDialog({
     mutationFn: async () => {
       const isPickupDropoff = passType === "pickup_dropoff";
       const isDailyCare = passType === "daily_care";
-      const newExpiresOn = computeExpiresOn(Number(validityValue), validityUnit);
+      const newExpiresOn = unlimited ? null : computeExpiresOn(Number(validityValue), validityUnit);
       const finalPrice = isDailyCare
         ? Math.round((Number(totalCount || 0) / 60) * Number(price || 0))
         : Number(price);
@@ -891,7 +939,7 @@ function EditPassDialog({
           price: finalPrice,
           memo: memo.trim() || null,
           active,
-          ...(newExpiresOn ? { expires_on: newExpiresOn } : {}),
+          ...(unlimited || newExpiresOn ? { expires_on: newExpiresOn } : {}),
         })
         .eq("id", row!.id);
       if (error) throw error;
@@ -925,7 +973,8 @@ function EditPassDialog({
           <DialogHeader>
             <DialogTitle>이용권 수정</DialogTitle>
             <DialogDescription>
-              유효기간은 오늘 날짜 기준으로 다시 계산됩니다. 변경하지 않으려면 0으로 두세요.
+              유효기간은 오늘 날짜 기준으로 다시 계산됩니다. 값을 변경하지 않으려면 0으로 두고,
+              무제한으로 바꾸려면 체크박스를 선택하세요.
             </DialogDescription>
           </DialogHeader>
           <PassFormFields
@@ -951,6 +1000,8 @@ function EditPassDialog({
             setValidityValue={setValidityValue}
             validityUnit={validityUnit}
             setValidityUnit={setValidityUnit}
+            unlimited={unlimited}
+            setUnlimited={setUnlimited}
             memo={memo}
             setMemo={setMemo}
             active={active}
