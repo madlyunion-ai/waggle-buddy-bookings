@@ -32,6 +32,7 @@ import {
   SERVICE_TYPES,
   addDays,
   addMinutes,
+  formatWon,
   nightsBetween,
   stayLabel,
   type ServiceType,
@@ -67,6 +68,9 @@ export function NewReservationDialog({
   const [slot, setSlot] = useState("10:00");
   const [memo, setMemo] = useState("");
   const [passId, setPassId] = useState("none");
+  const [pickupChecked, setPickupChecked] = useState(false);
+  const [dropoffChecked, setDropoffChecked] = useState(false);
+  const [pickupPassId, setPickupPassId] = useState("none");
 
   const fetchMembers = useServerFn(listExternalMembers);
   const fetchPets = useServerFn(listExternalPets);
@@ -114,6 +118,46 @@ export function NewReservationDialog({
   const availablePasses = (passesQuery.data ?? []).filter(
     (p) => p.payment_status === "paid" && p.used_count < p.total_count,
   );
+
+  // 유치원: 이용권 관리에서 등록한 유치원 타입 이용권 카탈로그
+  const kindergartenPassesQuery = useQuery({
+    queryKey: ["passes", "catalog", "kindergarten"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("passes")
+        .select("id, title, price")
+        .eq("pass_type", "kindergarten")
+        .eq("active", true)
+        .order("title", { ascending: true });
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: open && serviceType === "kindergarten",
+  });
+
+  // 유치원: 픽드랍 신청 시 선택할 픽드랍 이용권 카탈로그
+  const pickupPassesQuery = useQuery({
+    queryKey: ["passes", "catalog", "pickup_dropoff"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("passes")
+        .select("id, title, price")
+        .eq("pass_type", "pickup_dropoff")
+        .eq("active", true)
+        .order("title", { ascending: true });
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: open && serviceType === "kindergarten" && (pickupChecked || dropoffChecked),
+  });
+
+  const selectedKindergartenPass = (kindergartenPassesQuery.data ?? []).find(
+    (p) => p.id === passId,
+  );
+  const selectedPickupPass = (pickupPassesQuery.data ?? []).find((p) => p.id === pickupPassId);
+  const finalAmount =
+    (selectedKindergartenPass?.price ?? 0) +
+    ((pickupChecked || dropoffChecked) && selectedPickupPass ? selectedPickupPass.price : 0);
 
   const create = useMutation({
     mutationFn: async () => {
@@ -166,9 +210,15 @@ export function NewReservationDialog({
         dogId = insertedDog.id;
       }
 
-      // 이용권 적용: 사용자가 선택한 이용권이 있으면 그것을 사용, "자동"이면 사용 가능한 이용권을 사용
+      // 이용권 적용: 유치원은 이용권 관리 카탈로그에서 직접 선택, 그 외 타입은 반려견이
+      // 보유한 개인 이용권을 선택("자동"이면 사용 가능한 이용권을 자동 적용)
       let appliedPassId: string | null = null;
-      if (passId !== "none") {
+      let appliedPickupPassId: string | null = null;
+      if (serviceType === "kindergarten") {
+        appliedPassId = passId !== "none" ? passId : null;
+        appliedPickupPassId =
+          (pickupChecked || dropoffChecked) && pickupPassId !== "none" ? pickupPassId : null;
+      } else if (passId !== "none") {
         if (passId === "auto") {
           const { data: pass } = await supabase
             .from("passes")
@@ -191,10 +241,16 @@ export function NewReservationDialog({
         dog_id: dogId,
         service_type: serviceType,
         reserved_date: date,
-        end_date: serviceType === "hotel" ? endDate : null,
+        end_date:
+          serviceType === "hotel" || (serviceType === "kindergarten" && endDate > date)
+            ? endDate
+            : null,
         ...times,
         memo: memo || null,
         pass_id: appliedPassId,
+        pickup_pass_id: appliedPickupPassId,
+        pickup_requested: serviceType === "kindergarten" ? pickupChecked : false,
+        dropoff_requested: serviceType === "kindergarten" ? dropoffChecked : false,
       });
       if (error) throw error;
     },
@@ -207,6 +263,9 @@ export function NewReservationDialog({
       setMemo("");
       setPetId("");
       setPassId("none");
+      setPickupChecked(false);
+      setDropoffChecked(false);
+      setPickupPassId("none");
     },
     onError: (e: Error) => toast.error("예약 등록에 실패했습니다", { description: e.message }),
   });
@@ -321,35 +380,37 @@ export function NewReservationDialog({
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <Label>이용권 적용</Label>
-            <Select value={passId} onValueChange={setPassId} disabled={!petId}>
-              <SelectTrigger>
-                <SelectValue
-                  placeholder={!petId ? "강아지를 먼저 선택하세요" : "이용권을 선택하세요"}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">사용 안 함</SelectItem>
-                <SelectItem value="auto">자동 (사용 가능한 이용권)</SelectItem>
-                {availablePasses.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.title} · 잔여 {p.total_count - p.used_count}회
-                    {p.expires_on ? ` · ${p.expires_on}까지` : ""}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground">
-              {!petId
-                ? "강아지를 선택하면 보유 이용권을 확인할 수 있습니다."
-                : passesQuery.isLoading
-                  ? "이용권을 불러오는 중…"
-                  : availablePasses.length === 0
-                    ? "사용 가능한(결제완료) 이용권이 없습니다."
-                    : `사용 가능한 이용권 ${availablePasses.length}건 · 등원 처리 시 1회 차감됩니다.`}
-            </p>
-          </div>
+          {serviceType !== "kindergarten" ? (
+            <div className="space-y-2">
+              <Label>이용권 적용</Label>
+              <Select value={passId} onValueChange={setPassId} disabled={!petId}>
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder={!petId ? "강아지를 먼저 선택하세요" : "이용권을 선택하세요"}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">사용 안 함</SelectItem>
+                  <SelectItem value="auto">자동 (사용 가능한 이용권)</SelectItem>
+                  {availablePasses.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.title} · 잔여 {p.total_count - p.used_count}회
+                      {p.expires_on ? ` · ${p.expires_on}까지` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                {!petId
+                  ? "강아지를 선택하면 보유 이용권을 확인할 수 있습니다."
+                  : passesQuery.isLoading
+                    ? "이용권을 불러오는 중…"
+                    : availablePasses.length === 0
+                      ? "사용 가능한(결제완료) 이용권이 없습니다."
+                      : `사용 가능한 이용권 ${availablePasses.length}건 · 등원 처리 시 1회 차감됩니다.`}
+              </p>
+            </div>
+          ) : null}
 
           {serviceType === "hotel" ? (
             <div className="space-y-3">
@@ -411,10 +472,106 @@ export function NewReservationDialog({
                 </Select>
               </div>
             </div>
+          ) : serviceType === "kindergarten" ? (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>시작일</Label>
+                  <Input
+                    type="date"
+                    value={date}
+                    onChange={(e) => {
+                      setDate(e.target.value);
+                      if (e.target.value > endDate) setEndDate(e.target.value);
+                    }}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>종료일</Label>
+                  <Input
+                    type="date"
+                    min={date}
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>등원</Label>
+                  <Input type="time" value={dropOff} onChange={(e) => setDropOff(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label>하원</Label>
+                  <Input type="time" value={pickUp} onChange={(e) => setPickUp(e.target.value)} />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>이용권 적용</Label>
+                <Select value={passId} onValueChange={setPassId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="이용권을 선택하세요" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">사용 안 함</SelectItem>
+                    {(kindergartenPassesQuery.data ?? []).map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.title} · {formatWon(p.price)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>픽드랍 설정</Label>
+                <div className="flex items-center gap-4">
+                  <label className="flex items-center gap-1.5 text-sm font-bold">
+                    <input
+                      type="checkbox"
+                      className="size-4 accent-primary"
+                      checked={pickupChecked}
+                      onChange={(e) => setPickupChecked(e.target.checked)}
+                    />
+                    픽업
+                  </label>
+                  <label className="flex items-center gap-1.5 text-sm font-bold">
+                    <input
+                      type="checkbox"
+                      className="size-4 accent-primary"
+                      checked={dropoffChecked}
+                      onChange={(e) => setDropoffChecked(e.target.checked)}
+                    />
+                    드랍
+                  </label>
+                </div>
+                {pickupChecked || dropoffChecked ? (
+                  <Select value={pickupPassId} onValueChange={setPickupPassId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="픽드랍 이용권을 선택하세요" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">사용 안 함</SelectItem>
+                      {(pickupPassesQuery.data ?? []).map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.title} · {formatWon(p.price)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : null}
+              </div>
+
+              <div className="flex items-center justify-between rounded-lg bg-secondary px-3 py-2.5 text-sm font-bold">
+                <span>최종 금액</span>
+                <span className="text-primary">{formatWon(finalAmount)}</span>
+              </div>
+            </div>
           ) : (
             <div className="space-y-3">
               <div className="space-y-2">
-                <Label>날짜{serviceType === "daily_care" ? " (하루)" : ""}</Label>
+                <Label>날짜 (하루)</Label>
                 <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
               </div>
               <div className="grid grid-cols-2 gap-3">

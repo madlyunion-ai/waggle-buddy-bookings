@@ -223,6 +223,9 @@ export type Database = {
           memo: string | null;
           pass_id: string | null;
           pick_up_time: string;
+          pickup_pass_id: string | null;
+          pickup_requested: boolean;
+          dropoff_requested: boolean;
           reserved_date: string;
           service_type: string;
           status: string;
@@ -240,6 +243,9 @@ export type Database = {
           memo?: string | null;
           pass_id?: string | null;
           pick_up_time?: string;
+          pickup_pass_id?: string | null;
+          pickup_requested?: boolean;
+          dropoff_requested?: boolean;
           reserved_date: string;
           service_type?: string;
           status?: string;
@@ -257,6 +263,9 @@ export type Database = {
           memo?: string | null;
           pass_id?: string | null;
           pick_up_time?: string;
+          pickup_pass_id?: string | null;
+          pickup_requested?: boolean;
+          dropoff_requested?: boolean;
           reserved_date?: string;
           service_type?: string;
           status?: string;
