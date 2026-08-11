@@ -1,11 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { CreditCard, Plus, Ticket } from "lucide-react";
+import { Pencil, Plus, Ticket } from "lucide-react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/AppShell";
-import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -29,13 +38,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  PAYMENT_LABELS,
-  SERVICE_LABELS,
-  SERVICE_TYPES,
-  formatWon,
-  type ServiceType,
-} from "@/lib/kindergarten";
+import { SERVICE_LABELS, SERVICE_TYPES, formatWon, type ServiceType } from "@/lib/kindergarten";
 
 export const Route = createFileRoute("/_authenticated/passes")({
   head: () => ({
@@ -61,7 +64,6 @@ type PassRow = {
   total_count: number;
   used_count: number;
   price: number;
-  payment_status: string;
   purchased_on: string;
   expires_on: string | null;
   memo: string | null;
@@ -75,6 +77,7 @@ function passTypeLabel(type: string) {
 
 function PassesPage() {
   const queryClient = useQueryClient();
+  const [editing, setEditing] = useState<PassRow | null>(null);
 
   const passesQuery = useQuery({
     queryKey: ["passes", "list"],
@@ -82,7 +85,7 @@ function PassesPage() {
       const { data, error } = await supabase
         .from("passes")
         .select(
-          "id, title, pass_type, total_count, used_count, price, payment_status, purchased_on, expires_on, memo, active, dogs(id, name, owners(name, phone))",
+          "id, title, pass_type, total_count, used_count, price, purchased_on, expires_on, memo, active, dogs(id, name, owners(name, phone))",
         )
         .order("purchased_on", { ascending: false });
       if (error) throw error;
@@ -92,24 +95,6 @@ function PassesPage() {
 
   const passes = passesQuery.data ?? [];
   const activeCount = passes.filter((p) => p.active).length;
-  const revenue = passes
-    .filter((p) => p.payment_status === "paid")
-    .reduce((sum, p) => sum + p.price, 0);
-
-  const markPaid = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("passes")
-        .update({ payment_status: "paid", paid_at: new Date().toISOString() })
-        .eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["passes"] });
-      toast.success("결제 완료로 변경했습니다");
-    },
-    onError: (e: Error) => toast.error("변경에 실패했습니다", { description: e.message }),
-  });
 
   const toggleActive = useMutation({
     mutationFn: async ({ id, active }: { id: string; active: boolean }) => {
@@ -128,7 +113,7 @@ function PassesPage() {
       description="이용권 상품을 등록하고 관리합니다."
       action={<NewPassDialog />}
     >
-      <div className="mb-6 grid gap-4 sm:grid-cols-3">
+      <div className="mb-6 grid gap-4 sm:grid-cols-2">
         <div className="surface-card flex items-center gap-4 p-5">
           <div className="flex size-10 items-center justify-center rounded-xl bg-secondary text-primary">
             <Ticket className="size-5" />
@@ -147,20 +132,11 @@ function PassesPage() {
             <p className="text-2xl font-extrabold">{activeCount}</p>
           </div>
         </div>
-        <div className="surface-card flex items-center gap-4 border-accent/40 p-5">
-          <div className="flex size-10 items-center justify-center rounded-xl bg-accent/25 text-accent-foreground">
-            <CreditCard className="size-5" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">결제 완료 합계</p>
-            <p className="text-2xl font-extrabold">{formatWon(revenue)}</p>
-          </div>
-        </div>
       </div>
 
       <div className="overflow-hidden rounded-lg border border-border bg-card">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-0 text-[11px] sm:min-w-[900px] sm:text-sm">
+          <table className="w-full min-w-0 text-[11px] sm:min-w-[820px] sm:text-sm">
             <thead className="bg-secondary/60 text-center text-xs font-bold text-muted-foreground">
               <tr>
                 <th className="px-4 py-3">이용권</th>
@@ -169,8 +145,8 @@ function PassesPage() {
                 <th className="px-4 py-3">금액</th>
                 <th className="px-4 py-3">유효기간</th>
                 <th className="hidden px-4 py-3 sm:table-cell">비고</th>
-                <th className="px-4 py-3">결제</th>
                 <th className="px-4 py-3">사용상태</th>
+                <th className="px-4 py-3 text-right">관리</th>
               </tr>
             </thead>
             <tbody>
@@ -218,29 +194,6 @@ function PassesPage() {
                       <td className="hidden max-w-[200px] truncate px-4 py-3 text-muted-foreground sm:table-cell">
                         {pass.memo || "-"}
                       </td>
-                      <td className="px-4 py-3 text-center">
-                        {pass.payment_status === "unpaid" && pass.dogs ? (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => markPaid.mutate(pass.id)}
-                          >
-                            결제 완료 처리
-                          </Button>
-                        ) : (
-                          <Badge
-                            className={
-                              pass.payment_status === "paid"
-                                ? "bg-primary text-primary-foreground"
-                                : pass.payment_status === "refunded"
-                                  ? "bg-muted text-muted-foreground"
-                                  : "bg-accent/30 text-accent-foreground"
-                            }
-                          >
-                            {PAYMENT_LABELS[pass.payment_status] ?? pass.payment_status}
-                          </Badge>
-                        )}
-                      </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-center gap-2">
                           <Switch
@@ -252,6 +205,17 @@ function PassesPage() {
                           </span>
                         </div>
                       </td>
+                      <td className="px-4 py-3 text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setEditing(pass)}
+                          aria-label="이용권 수정"
+                        >
+                          <Pencil className="size-4" />
+                          수정
+                        </Button>
+                      </td>
                     </tr>
                   );
                 })
@@ -260,6 +224,8 @@ function PassesPage() {
           </table>
         </div>
       </div>
+
+      <EditPassDialog row={editing} onOpenChange={(v) => !v && setEditing(null)} />
     </AppShell>
   );
 }
@@ -275,6 +241,132 @@ function computeExpiresOn(value: number, unit: "month" | "day"): string | null {
   if (unit === "month") d.setMonth(d.getMonth() + value);
   else d.setDate(d.getDate() + value);
   return d.toISOString().slice(0, 10);
+}
+
+function PassFormFields({
+  passType,
+  setPassType,
+  title,
+  setTitle,
+  totalCount,
+  setTotalCount,
+  price,
+  setPrice,
+  validityValue,
+  setValidityValue,
+  validityUnit,
+  setValidityUnit,
+  memo,
+  setMemo,
+  active,
+  setActive,
+}: {
+  passType: ServiceType;
+  setPassType: (v: ServiceType) => void;
+  title: string;
+  setTitle: (v: string) => void;
+  totalCount: string;
+  setTotalCount: (v: string) => void;
+  price: string;
+  setPrice: (v: string) => void;
+  validityValue: string;
+  setValidityValue: (v: string) => void;
+  validityUnit: "month" | "day";
+  setValidityUnit: (v: "month" | "day") => void;
+  memo: string;
+  setMemo: (v: string) => void;
+  active: boolean;
+  setActive: (v: boolean) => void;
+}) {
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label>이용권 타입</Label>
+        <Tabs value={passType} onValueChange={(v) => setPassType(v as ServiceType)}>
+          <TabsList className="grid w-full grid-cols-4">
+            {SERVICE_TYPES.map((t) => (
+              <TabsTrigger key={t} value={t}>
+                {SERVICE_LABELS[t]}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+      </div>
+
+      <div className="space-y-2">
+        <Label>이용권 이름</Label>
+        <Input
+          maxLength={40}
+          placeholder="예: 유치원 10회권"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-2">
+          <Label>이용권 횟수</Label>
+          <Input
+            type="number"
+            min="1"
+            value={totalCount}
+            onChange={(e) => setTotalCount(e.target.value)}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>이용권 금액 (원)</Label>
+          <Input type="number" min="0" value={price} onChange={(e) => setPrice(e.target.value)} />
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label>유효기간 (발급일로부터)</Label>
+        <div className="grid grid-cols-2 gap-3">
+          <Input
+            type="number"
+            min="0"
+            value={validityValue}
+            onChange={(e) => setValidityValue(e.target.value)}
+          />
+          <Select value={validityUnit} onValueChange={(v) => setValidityUnit(v as "month" | "day")}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {VALIDITY_UNITS.map((u) => (
+                <SelectItem key={u.value} value={u.value}>
+                  {u.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          0으로 두면 만료일 없이 무제한으로 등록됩니다.
+        </p>
+      </div>
+
+      <div className="space-y-2">
+        <Label>비고</Label>
+        <Textarea
+          rows={3}
+          placeholder="메모를 입력하세요 (선택)"
+          value={memo}
+          onChange={(e) => setMemo(e.target.value)}
+        />
+      </div>
+
+      <div className="flex items-center justify-between rounded-lg border border-border px-3 py-2.5">
+        <Label htmlFor="pass-active" className="cursor-pointer">
+          사용상태
+        </Label>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">{active ? "활성화" : "비활성화"}</span>
+          <Switch id="pass-active" checked={active} onCheckedChange={setActive} />
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function NewPassDialog() {
@@ -341,103 +433,24 @@ function NewPassDialog() {
           <DialogTitle>이용권 등록</DialogTitle>
           <DialogDescription>새로운 이용권 상품을 등록합니다.</DialogDescription>
         </DialogHeader>
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label>이용권 타입</Label>
-            <Tabs value={passType} onValueChange={(v) => setPassType(v as ServiceType)}>
-              <TabsList className="grid w-full grid-cols-4">
-                {SERVICE_TYPES.map((t) => (
-                  <TabsTrigger key={t} value={t}>
-                    {SERVICE_LABELS[t]}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
-          </div>
-
-          <div className="space-y-2">
-            <Label>이용권 이름</Label>
-            <Input
-              maxLength={40}
-              placeholder="예: 유치원 10회권"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label>이용권 횟수</Label>
-              <Input
-                type="number"
-                min="1"
-                value={totalCount}
-                onChange={(e) => setTotalCount(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>이용권 금액 (원)</Label>
-              <Input
-                type="number"
-                min="0"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label>유효기간 (발급일로부터)</Label>
-            <div className="grid grid-cols-2 gap-3">
-              <Input
-                type="number"
-                min="0"
-                value={validityValue}
-                onChange={(e) => setValidityValue(e.target.value)}
-              />
-              <Select
-                value={validityUnit}
-                onValueChange={(v) => setValidityUnit(v as "month" | "day")}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {VALIDITY_UNITS.map((u) => (
-                    <SelectItem key={u.value} value={u.value}>
-                      {u.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              0으로 두면 만료일 없이 무제한으로 등록됩니다.
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label>비고</Label>
-            <Textarea
-              rows={3}
-              placeholder="메모를 입력하세요 (선택)"
-              value={memo}
-              onChange={(e) => setMemo(e.target.value)}
-            />
-          </div>
-
-          <div className="flex items-center justify-between rounded-lg border border-border px-3 py-2.5">
-            <Label htmlFor="pass-active" className="cursor-pointer">
-              사용상태
-            </Label>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">
-                {active ? "활성화" : "비활성화"}
-              </span>
-              <Switch id="pass-active" checked={active} onCheckedChange={setActive} />
-            </div>
-          </div>
-        </div>
+        <PassFormFields
+          passType={passType}
+          setPassType={setPassType}
+          title={title}
+          setTitle={setTitle}
+          totalCount={totalCount}
+          setTotalCount={setTotalCount}
+          price={price}
+          setPrice={setPrice}
+          validityValue={validityValue}
+          setValidityValue={setValidityValue}
+          validityUnit={validityUnit}
+          setValidityUnit={setValidityUnit}
+          memo={memo}
+          setMemo={setMemo}
+          active={active}
+          setActive={setActive}
+        />
         <DialogFooter>
           <Button disabled={!title.trim() || create.isPending} onClick={() => create.mutate()}>
             등록하기
@@ -445,5 +458,152 @@ function NewPassDialog() {
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function EditPassDialog({
+  row,
+  onOpenChange,
+}: {
+  row: PassRow | null;
+  onOpenChange: (v: boolean) => void;
+}) {
+  const queryClient = useQueryClient();
+  const [passType, setPassType] = useState<ServiceType>("kindergarten");
+  const [title, setTitle] = useState("");
+  const [totalCount, setTotalCount] = useState("10");
+  const [price, setPrice] = useState("0");
+  const [validityValue, setValidityValue] = useState("0");
+  const [validityUnit, setValidityUnit] = useState<"month" | "day">("month");
+  const [memo, setMemo] = useState("");
+  const [active, setActive] = useState(true);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+
+  const open = row !== null;
+
+  const [loadedFor, setLoadedFor] = useState<string | null>(null);
+  if (row && loadedFor !== row.id) {
+    setLoadedFor(row.id);
+    setPassType((row.pass_type as ServiceType) ?? "kindergarten");
+    setTitle(row.title);
+    setTotalCount(String(row.total_count));
+    setPrice(String(row.price));
+    setValidityValue("0");
+    setValidityUnit("month");
+    setMemo(row.memo ?? "");
+    setActive(row.active);
+  }
+
+  const update = useMutation({
+    mutationFn: async () => {
+      const newExpiresOn = computeExpiresOn(Number(validityValue), validityUnit);
+      const { error } = await supabase
+        .from("passes")
+        .update({
+          pass_type: passType,
+          title: title.trim(),
+          total_count: Number(totalCount),
+          price: Number(price),
+          memo: memo.trim() || null,
+          active,
+          ...(newExpiresOn ? { expires_on: newExpiresOn } : {}),
+        })
+        .eq("id", row!.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["passes"] });
+      toast.success("이용권 정보가 수정되었습니다.");
+      onOpenChange(false);
+    },
+    onError: (e: Error) => toast.error("수정에 실패했습니다", { description: e.message }),
+  });
+
+  const remove = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("passes").delete().eq("id", row!.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["passes"] });
+      toast.success("이용권이 삭제되었습니다.");
+      setConfirmDeleteOpen(false);
+      onOpenChange(false);
+    },
+    onError: (e: Error) => toast.error("삭제에 실패했습니다", { description: e.message }),
+  });
+
+  return (
+    <>
+      <Dialog open={open} onOpenChange={(v) => !v && onOpenChange(false)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>이용권 수정</DialogTitle>
+            <DialogDescription>
+              유효기간은 오늘 날짜 기준으로 다시 계산됩니다. 변경하지 않으려면 0으로 두세요.
+            </DialogDescription>
+          </DialogHeader>
+          <PassFormFields
+            passType={passType}
+            setPassType={setPassType}
+            title={title}
+            setTitle={setTitle}
+            totalCount={totalCount}
+            setTotalCount={setTotalCount}
+            price={price}
+            setPrice={setPrice}
+            validityValue={validityValue}
+            setValidityValue={setValidityValue}
+            validityUnit={validityUnit}
+            setValidityUnit={setValidityUnit}
+            memo={memo}
+            setMemo={setMemo}
+            active={active}
+            setActive={setActive}
+          />
+          <DialogFooter className="sm:justify-between">
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => setConfirmDeleteOpen(true)}
+              disabled={remove.isPending}
+            >
+              삭제
+            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => onOpenChange(false)}>
+                취소
+              </Button>
+              <Button disabled={!title.trim() || update.isPending} onClick={() => update.mutate()}>
+                {update.isPending ? "저장 중…" : "저장"}
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>이용권을 삭제할까요?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {row?.title} 이용권이 삭제됩니다. 이 작업은 되돌릴 수 없습니다.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={remove.isPending}>취소</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                remove.mutate();
+              }}
+              disabled={remove.isPending}
+            >
+              {remove.isPending ? "삭제 중…" : "삭제"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
