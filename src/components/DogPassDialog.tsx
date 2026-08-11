@@ -31,6 +31,8 @@ const PASS_TYPE_LABELS: Record<string, string> = {
   pickup_dropoff: "픽드랍",
 };
 
+const PASS_TYPES = ["kindergarten", "hotel", "daily_care", "grooming", "pickup_dropoff"] as const;
+
 type DogPass = {
   id: string;
   title: string;
@@ -58,6 +60,7 @@ type CatalogPass = {
 export function DogPassDialog({ pet }: { pet: { id: string; dbId: string; name: string } }) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [catalogType, setCatalogType] = useState("");
   const [catalogId, setCatalogId] = useState("");
 
   const dogPassesQuery = useQuery({
@@ -113,6 +116,7 @@ export function DogPassDialog({ pet }: { pet: { id: string; dbId: string; name: 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["passes"] });
       toast.success("이용권을 지급했습니다");
+      setCatalogType("");
       setCatalogId("");
     },
     onError: (e: Error) => toast.error("지급에 실패했습니다", { description: e.message }),
@@ -157,15 +161,19 @@ export function DogPassDialog({ pet }: { pet: { id: string; dbId: string; name: 
                         {p.active ? "활성화" : "비활성화"}
                       </span>
                     </div>
-                    <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
-                      <span>{PASS_TYPE_LABELS[p.pass_type] ?? p.pass_type}</span>
-                      <span>
-                        잔여 {remaining}/{p.total_count}회 · {formatWon(p.price)}
-                      </span>
+                    <div className="mt-1 flex items-end justify-between gap-2">
+                      <div className="text-xs text-muted-foreground">
+                        <p>{PASS_TYPE_LABELS[p.pass_type] ?? p.pass_type}</p>
+                        <p className="mt-0.5">{p.expires_on ? `~${p.expires_on}까지` : "무제한"}</p>
+                      </div>
+                      <div className="shrink-0 text-right">
+                        <p className="text-xs text-muted-foreground">
+                          잔여 <span className="font-bold text-blue-600">{remaining}</span>
+                          <span style={{ color: "#222222" }}>/{p.total_count}</span>회
+                        </p>
+                        <p className="mt-0.5 text-base font-bold">{formatWon(p.price)}</p>
+                      </div>
                     </div>
-                    <p className="mt-1 text-[11px] text-muted-foreground">
-                      {p.expires_on ? `~${p.expires_on}까지` : "무제한"}
-                    </p>
                   </div>
                 );
               })}
@@ -175,18 +183,42 @@ export function DogPassDialog({ pet }: { pet: { id: string; dbId: string; name: 
 
         <div className="space-y-2 border-t border-border pt-3">
           <p className="text-xs font-semibold text-muted-foreground">이용권 추가</p>
-          <Select value={catalogId} onValueChange={setCatalogId}>
-            <SelectTrigger>
-              <SelectValue placeholder="지급할 이용권을 선택하세요" />
-            </SelectTrigger>
-            <SelectContent>
-              {(catalogQuery.data ?? []).map((c) => (
-                <SelectItem key={c.id} value={c.id}>
-                  {PASS_TYPE_LABELS[c.pass_type] ?? c.pass_type} · {c.title} · {formatWon(c.price)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="grid grid-cols-2 gap-2">
+            <Select
+              value={catalogType}
+              onValueChange={(v) => {
+                setCatalogType(v);
+                setCatalogId("");
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="타입 선택" />
+              </SelectTrigger>
+              <SelectContent>
+                {PASS_TYPES.map((t) => (
+                  <SelectItem key={t} value={t}>
+                    {PASS_TYPE_LABELS[t]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={catalogId} onValueChange={setCatalogId} disabled={!catalogType}>
+              <SelectTrigger>
+                <SelectValue
+                  placeholder={!catalogType ? "타입을 먼저 선택하세요" : "이용권 선택"}
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {(catalogQuery.data ?? [])
+                  .filter((c) => c.pass_type === catalogType)
+                  .map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.title} · {formatWon(c.price)}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          </div>
           <p className="text-xs text-muted-foreground">
             이용권 관리에서 등록한 이용권 상품 중 하나를 선택해 이 반려견에게 지급합니다.
           </p>
