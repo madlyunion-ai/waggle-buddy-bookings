@@ -264,9 +264,9 @@ function PassesPage() {
               key={t}
               type="button"
               onClick={() => setFilterType(t)}
-              className={`rounded-full border px-3 py-1.5 text-xs font-bold transition-colors ${
+              className={`rounded-full border px-3 py-1.5 text-xs font-bold transition-all ${
                 filterType === t
-                  ? "border-primary bg-primary text-primary-foreground"
+                  ? `${PASS_TYPE_STYLES[t]} scale-[1.03]`
                   : "border-border bg-transparent text-muted-foreground hover:bg-secondary"
               }`}
             >
@@ -341,11 +341,13 @@ function PassesPage() {
                           (tripTypeLabel(pass.trip_type) ?? "-")
                         ) : pass.pass_type === "daily_care" ? (
                           formatDuration(pass.total_count)
-                        ) : (
+                        ) : pass.dogs ? (
                           <>
                             {pass.used_count}/{pass.total_count}회
                             <span className="ml-1 text-[10px]">(잔여 {remaining})</span>
                           </>
+                        ) : (
+                          `${pass.total_count}회`
                         )}
                         {pass.pass_type === "hotel" && pass.available_days ? (
                           <span className="block text-[10px]">
