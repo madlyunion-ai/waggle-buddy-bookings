@@ -893,15 +893,15 @@ function DashboardPage() {
               </div>
 
               <dl className="divide-y divide-border rounded-xl border border-border">
-                <div className="px-4 py-2.5 text-sm">
-                  <dt className="text-xs font-semibold text-muted-foreground">보호자</dt>
-                  <dd className="mt-0.5 font-bold">
+                <div className="flex items-center justify-between gap-3 px-4 py-2.5 text-sm">
+                  <dt className="shrink-0 text-xs font-semibold text-muted-foreground">보호자</dt>
+                  <dd className="truncate text-right font-semibold">
                     {detailRow.dogs?.owners?.name ?? "-"} · {detailRow.dogs?.owners?.phone ?? "-"}
                   </dd>
                 </div>
-                <div className="px-4 py-2.5 text-sm">
-                  <dt className="text-xs font-semibold text-muted-foreground">일정</dt>
-                  <dd className="mt-0.5 font-bold">
+                <div className="flex items-center justify-between gap-3 px-4 py-2.5 text-sm">
+                  <dt className="shrink-0 text-xs font-semibold text-muted-foreground">일정</dt>
+                  <dd className="truncate text-right font-semibold">
                     {detailRow.service_type === "hotel" && detailRow.end_date
                       ? `${detailRow.reserved_date} ~ ${detailRow.end_date}`
                       : detailRow.end_date && detailRow.end_date > detailRow.reserved_date
@@ -911,9 +911,11 @@ function DashboardPage() {
                     {formatTime(detailRow.drop_off_time)} ~ {formatTime(detailRow.pick_up_time)}
                   </dd>
                 </div>
-                <div className="px-4 py-2.5 text-sm">
-                  <dt className="text-xs font-semibold text-muted-foreground">이용권 적용</dt>
-                  <dd className="mt-0.5 font-bold">
+                <div className="flex items-center justify-between gap-3 px-4 py-2.5 text-sm">
+                  <dt className="shrink-0 text-xs font-semibold text-muted-foreground">
+                    이용권 적용
+                  </dt>
+                  <dd className="truncate text-right font-semibold">
                     {detailRow.passes ? (
                       <>
                         {detailRow.passes.title} · {formatWon(detailRow.passes.price)}
@@ -924,9 +926,9 @@ function DashboardPage() {
                   </dd>
                 </div>
                 {detailRow.service_type === "kindergarten" ? (
-                  <div className="px-4 py-2.5 text-sm">
-                    <dt className="text-xs font-semibold text-muted-foreground">픽드랍</dt>
-                    <dd className="mt-0.5 font-bold">
+                  <div className="flex items-center justify-between gap-3 px-4 py-2.5 text-sm">
+                    <dt className="shrink-0 text-xs font-semibold text-muted-foreground">픽드랍</dt>
+                    <dd className="truncate text-right font-semibold">
                       {!detailRow.pickup_requested && !detailRow.dropoff_requested ? (
                         <span className="font-normal text-muted-foreground">신청 안 함</span>
                       ) : (
@@ -944,7 +946,7 @@ function DashboardPage() {
                 {detailRow.memo ? (
                   <div className="px-4 py-2.5 text-sm">
                     <dt className="text-xs font-semibold text-muted-foreground">메모</dt>
-                    <dd className="mt-0.5 font-bold">{detailRow.memo}</dd>
+                    <dd className="mt-0.5 font-semibold">{detailRow.memo}</dd>
                   </div>
                 ) : null}
               </dl>
