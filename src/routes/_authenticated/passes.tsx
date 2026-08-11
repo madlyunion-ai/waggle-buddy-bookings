@@ -567,31 +567,30 @@ function PassFormFields({
       ) : null}
 
       {passType === "pickup_dropoff" ? (
-        <div className="space-y-2">
-          <Label>운행구분</Label>
-          <div className="grid grid-cols-2 gap-2">
-            {TRIP_TYPES.map((t) => (
-              <button
-                key={t.value}
-                type="button"
-                onClick={() => setTripType(t.value)}
-                className={`rounded-lg border px-2 py-2 text-sm font-bold transition-colors ${
-                  tripType === t.value
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border bg-transparent text-muted-foreground hover:bg-secondary"
-                }`}
-              >
-                {t.label}
-              </button>
-            ))}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <Label>운행구분</Label>
+            <div className="grid grid-cols-2 gap-2">
+              {TRIP_TYPES.map((t) => (
+                <button
+                  key={t.value}
+                  type="button"
+                  onClick={() => setTripType(t.value)}
+                  className={`rounded-lg border px-2 py-2 text-sm font-bold transition-colors ${
+                    tripType === t.value
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border bg-transparent text-muted-foreground hover:bg-secondary"
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
-      ) : null}
-
-      {passType === "pickup_dropoff" ? (
-        <div className="space-y-2">
-          <Label>이용권 금액 (원)</Label>
-          <CommaNumberInput value={price} onChange={setPrice} />
+          <div className="space-y-2">
+            <Label>이용권 금액(원)</Label>
+            <CommaNumberInput value={price} onChange={setPrice} />
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3">
@@ -641,7 +640,7 @@ function PassFormFields({
             )}
           </div>
           <div className="space-y-2">
-            <Label>{passType === "daily_care" ? "시간당 이용료 (원)" : "이용권 금액 (원)"}</Label>
+            <Label>{passType === "daily_care" ? "시간당 이용료(원)" : "이용권 금액(원)"}</Label>
             <CommaNumberInput value={price} onChange={setPrice} />
             {passType === "daily_care" ? (
               <div className="flex items-center justify-between rounded-lg border border-border bg-secondary/50 px-3 py-2 text-sm font-bold">
@@ -654,64 +653,101 @@ function PassFormFields({
       )}
 
       {passType === "hotel" ? (
-        <div className="space-y-2">
-          <Label>이용가능 요일</Label>
-          <div className="grid grid-cols-3 gap-2">
-            {AVAILABLE_DAYS.map((d) => (
-              <button
-                key={d.value}
-                type="button"
-                onClick={() => setAvailableDays(d.value)}
-                className={`rounded-lg border px-2 py-2 text-sm font-bold transition-colors ${
-                  availableDays === d.value
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border bg-transparent text-muted-foreground hover:bg-secondary"
-                }`}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <Label>이용가능 요일</Label>
+            <div className="grid grid-cols-3 gap-2">
+              {AVAILABLE_DAYS.map((d) => (
+                <button
+                  key={d.value}
+                  type="button"
+                  onClick={() => setAvailableDays(d.value)}
+                  className={`rounded-lg border px-2 py-2 text-sm font-bold transition-colors ${
+                    availableDays === d.value
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border bg-transparent text-muted-foreground hover:bg-secondary"
+                  }`}
+                >
+                  {d.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label>유효기간</Label>
+            <div className="flex items-center gap-2">
+              <CommaNumberInput
+                value={validityValue}
+                onChange={setValidityValue}
+                disabled={unlimited}
+              />
+              <Select
+                value={validityUnit}
+                onValueChange={(v) => setValidityUnit(v as "month" | "day")}
+                disabled={unlimited}
               >
-                {d.label}
-              </button>
-            ))}
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {VALIDITY_UNITS.map((u) => (
+                    <SelectItem key={u.value} value={u.value}>
+                      {u.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <label className="flex items-center gap-1.5 whitespace-nowrap text-sm font-bold">
+              <input
+                type="checkbox"
+                className="size-4 accent-primary"
+                checked={unlimited}
+                onChange={(e) => setUnlimited(e.target.checked)}
+              />
+              무제한
+            </label>
           </div>
         </div>
-      ) : null}
-
-      <div className="space-y-2">
-        <Label>유효기간 (발급일로부터)</Label>
-        <div className="flex items-center gap-2">
-          <div className="grid w-1/2 grid-cols-2 gap-2">
-            <CommaNumberInput
-              value={validityValue}
-              onChange={setValidityValue}
-              disabled={unlimited}
-            />
-            <Select
-              value={validityUnit}
-              onValueChange={(v) => setValidityUnit(v as "month" | "day")}
-              disabled={unlimited}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {VALIDITY_UNITS.map((u) => (
-                  <SelectItem key={u.value} value={u.value}>
-                    {u.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+      ) : (
+        <div className="space-y-2">
+          <Label>유효기간 (발급일로부터)</Label>
+          <div className="flex items-center gap-2">
+            <div className="grid w-1/2 grid-cols-2 gap-2">
+              <CommaNumberInput
+                value={validityValue}
+                onChange={setValidityValue}
+                disabled={unlimited}
+              />
+              <Select
+                value={validityUnit}
+                onValueChange={(v) => setValidityUnit(v as "month" | "day")}
+                disabled={unlimited}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {VALIDITY_UNITS.map((u) => (
+                    <SelectItem key={u.value} value={u.value}>
+                      {u.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <label className="flex items-center gap-1.5 whitespace-nowrap text-sm font-bold">
+              <input
+                type="checkbox"
+                className="size-4 accent-primary"
+                checked={unlimited}
+                onChange={(e) => setUnlimited(e.target.checked)}
+              />
+              무제한
+            </label>
           </div>
-          <label className="flex items-center gap-1.5 whitespace-nowrap text-sm font-bold">
-            <input
-              type="checkbox"
-              className="size-4 accent-primary"
-              checked={unlimited}
-              onChange={(e) => setUnlimited(e.target.checked)}
-            />
-            무제한
-          </label>
         </div>
-      </div>
+      )}
 
       <div className="space-y-2">
         <Label>비고</Label>
