@@ -122,7 +122,7 @@ function DogsPage() {
                 <th className="hidden px-4 py-3 sm:table-cell">나이</th>
                 <th className="hidden px-4 py-3 sm:table-cell">몸무게</th>
                 <th className="px-4 py-3">보호자</th>
-                <th className="px-4 py-3 text-right">예약</th>
+                <th className="px-4 py-3">예약</th>
               </tr>
             </thead>
             <tbody>
@@ -166,20 +166,20 @@ function DogsPage() {
                         ) : null}
                       </div>
                     </td>
-                    <td className="hidden px-4 py-3 text-muted-foreground sm:table-cell">
+                    <td className="hidden px-4 py-3 text-center text-muted-foreground sm:table-cell">
                       {pet.breed ?? "견종 미입력"}
                     </td>
-                    <td className="hidden px-4 py-3 sm:table-cell">
+                    <td className="hidden px-4 py-3 text-center sm:table-cell">
                       {GENDER_LABELS[pet.gender ?? "unknown"] ?? "미입력"}
                     </td>
-                    <td className="hidden px-4 py-3 text-muted-foreground sm:table-cell">
+                    <td className="hidden px-4 py-3 text-center text-muted-foreground sm:table-cell">
                       {ageLabel(pet.birthDate)}
                     </td>
-                    <td className="hidden px-4 py-3 text-muted-foreground sm:table-cell">
+                    <td className="hidden px-4 py-3 text-center text-muted-foreground sm:table-cell">
                       {pet.weight ? `${pet.weight}kg` : "-"}
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      <div className="flex min-w-0 items-center gap-1">
+                    <td className="px-4 py-3 text-center text-muted-foreground">
+                      <div className="flex min-w-0 items-center justify-center gap-1">
                         <span className="hidden truncate sm:inline">
                           {pet.ownerNames[0] ?? "보호자 미확인"}
                           {pet.ownerPhone ? ` · ${pet.ownerPhone}` : ""}
@@ -187,7 +187,7 @@ function DogsPage() {
                         <OwnerInfoDialog pet={pet} />
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-4 py-3 text-center">
                       <ReserveDialog pet={pet} />
                     </td>
                   </tr>
