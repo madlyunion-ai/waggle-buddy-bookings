@@ -424,8 +424,6 @@ function PassFormFields({
   setBillingHourPreset,
   dailyCareHour,
   setDailyCareHour,
-  dailyCareMinute,
-  setDailyCareMinute,
   tripType,
   setTripType,
   title,
@@ -453,8 +451,6 @@ function PassFormFields({
   setBillingHourPreset: (v: string) => void;
   dailyCareHour: string;
   setDailyCareHour: (v: string) => void;
-  dailyCareMinute: string;
-  setDailyCareMinute: (v: string) => void;
   tripType: string;
   setTripType: (v: string) => void;
   title: string;
@@ -587,44 +583,21 @@ function PassFormFields({
                   </SelectContent>
                 </Select>
                 {billingHourPreset === "custom" ? (
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="relative">
-                      <Input
-                        type="number"
-                        min="0"
-                        placeholder="0"
-                        value={dailyCareHour}
-                        onChange={(e) => {
-                          setDailyCareHour(e.target.value);
-                          setTotalCount(
-                            String(Number(e.target.value || 0) * 60 + Number(dailyCareMinute || 0)),
-                          );
-                        }}
-                        className="pr-8"
-                      />
-                      <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
-                        시간
-                      </span>
-                    </div>
-                    <div className="relative">
-                      <Input
-                        type="number"
-                        min="0"
-                        max="59"
-                        placeholder="0"
-                        value={dailyCareMinute}
-                        onChange={(e) => {
-                          setDailyCareMinute(e.target.value);
-                          setTotalCount(
-                            String(Number(dailyCareHour || 0) * 60 + Number(e.target.value || 0)),
-                          );
-                        }}
-                        className="pr-8"
-                      />
-                      <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
-                        분
-                      </span>
-                    </div>
+                  <div className="relative">
+                    <Input
+                      type="number"
+                      min="0"
+                      placeholder="0"
+                      value={dailyCareHour}
+                      onChange={(e) => {
+                        setDailyCareHour(e.target.value);
+                        setTotalCount(String(Number(e.target.value || 0) * 60));
+                      }}
+                      className="pr-8"
+                    />
+                    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                      시간
+                    </span>
                   </div>
                 ) : null}
               </div>
@@ -638,8 +611,13 @@ function PassFormFields({
             )}
           </div>
           <div className="space-y-2">
-            <Label>이용권 금액 (원)</Label>
+            <Label>{passType === "daily_care" ? "시간당 이용료 (원)" : "이용권 금액 (원)"}</Label>
             <Input type="number" min="0" value={price} onChange={(e) => setPrice(e.target.value)} />
+            {passType === "daily_care" ? (
+              <div className="rounded-lg border border-border bg-secondary/50 px-3 py-2 text-sm font-bold">
+                합계 {formatWon((Number(totalCount || 0) / 60) * Number(price || 0))}
+              </div>
+            ) : null}
           </div>
         </div>
       )}
@@ -724,7 +702,6 @@ function NewPassDialog() {
   const [availableDays, setAvailableDays] = useState("all");
   const [billingHourPreset, setBillingHourPreset] = useState("60");
   const [dailyCareHour, setDailyCareHour] = useState("0");
-  const [dailyCareMinute, setDailyCareMinute] = useState("0");
   const [tripType, setTripType] = useState("one_way");
   const [title, setTitle] = useState("");
   const [totalCount, setTotalCount] = useState("10");
@@ -740,7 +717,6 @@ function NewPassDialog() {
     setAvailableDays("all");
     setBillingHourPreset("60");
     setDailyCareHour("0");
-    setDailyCareMinute("0");
     setTripType("one_way");
     setTitle("");
     setTotalCount("10");
@@ -754,7 +730,11 @@ function NewPassDialog() {
   const create = useMutation({
     mutationFn: async () => {
       const isPickupDropoff = passType === "pickup_dropoff";
+      const isDailyCare = passType === "daily_care";
       const expiresOn = computeExpiresOn(Number(validityValue), validityUnit);
+      const finalPrice = isDailyCare
+        ? Math.round((Number(totalCount || 0) / 60) * Number(price || 0))
+        : Number(price);
       const { error } = await supabase.from("passes").insert({
         pass_type: passType,
         weight_class:
@@ -765,7 +745,7 @@ function NewPassDialog() {
         trip_type: isPickupDropoff ? tripType || null : null,
         title: title.trim(),
         total_count: isPickupDropoff ? 1 : Number(totalCount),
-        price: Number(price),
+        price: finalPrice,
         expires_on: expiresOn,
         memo: memo.trim() || null,
         active,
@@ -810,8 +790,6 @@ function NewPassDialog() {
           setBillingHourPreset={setBillingHourPreset}
           dailyCareHour={dailyCareHour}
           setDailyCareHour={setDailyCareHour}
-          dailyCareMinute={dailyCareMinute}
-          setDailyCareMinute={setDailyCareMinute}
           tripType={tripType}
           setTripType={setTripType}
           title={title}
@@ -852,7 +830,6 @@ function EditPassDialog({
   const [availableDays, setAvailableDays] = useState("all");
   const [billingHourPreset, setBillingHourPreset] = useState("60");
   const [dailyCareHour, setDailyCareHour] = useState("0");
-  const [dailyCareMinute, setDailyCareMinute] = useState("0");
   const [tripType, setTripType] = useState("one_way");
   const [title, setTitle] = useState("");
   const [totalCount, setTotalCount] = useState("10");
@@ -877,11 +854,14 @@ function EditPassDialog({
         : "custom",
     );
     setDailyCareHour(String(Math.floor(row.total_count / 60)));
-    setDailyCareMinute(String(row.total_count % 60));
     setTripType(row.trip_type ?? "one_way");
     setTitle(row.title);
     setTotalCount(String(row.total_count));
-    setPrice(String(row.price));
+    setPrice(
+      row.pass_type === "daily_care" && row.total_count > 0
+        ? String(Math.round((row.price / row.total_count) * 60))
+        : String(row.price),
+    );
     setValidityValue("0");
     setValidityUnit("month");
     setMemo(row.memo ?? "");
@@ -891,7 +871,11 @@ function EditPassDialog({
   const update = useMutation({
     mutationFn: async () => {
       const isPickupDropoff = passType === "pickup_dropoff";
+      const isDailyCare = passType === "daily_care";
       const newExpiresOn = computeExpiresOn(Number(validityValue), validityUnit);
+      const finalPrice = isDailyCare
+        ? Math.round((Number(totalCount || 0) / 60) * Number(price || 0))
+        : Number(price);
       const { error } = await supabase
         .from("passes")
         .update({
@@ -904,7 +888,7 @@ function EditPassDialog({
           trip_type: isPickupDropoff ? tripType || null : null,
           title: title.trim(),
           total_count: isPickupDropoff ? 1 : Number(totalCount),
-          price: Number(price),
+          price: finalPrice,
           memo: memo.trim() || null,
           active,
           ...(newExpiresOn ? { expires_on: newExpiresOn } : {}),
@@ -955,8 +939,6 @@ function EditPassDialog({
             setBillingHourPreset={setBillingHourPreset}
             dailyCareHour={dailyCareHour}
             setDailyCareHour={setDailyCareHour}
-            dailyCareMinute={dailyCareMinute}
-            setDailyCareMinute={setDailyCareMinute}
             tripType={tripType}
             setTripType={setTripType}
             title={title}
