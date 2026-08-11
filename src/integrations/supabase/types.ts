@@ -1,485 +1,476 @@
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[]
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.15"
-  }
+    PostgrestVersion: "14.15";
+  };
   public: {
     Tables: {
       dogs: {
         Row: {
-          active: boolean
-          birth_date: string | null
-          breed: string | null
-          created_at: string
-          external_id: string | null
-          gender: string
-          id: string
-          name: string
-          neutered: boolean
-          notes: string | null
-          owner_id: string
-          photo_url: string | null
-          synced_at: string | null
-          updated_at: string
-          vaccine_expires_on: string | null
-          weight_kg: number | null
-        }
+          active: boolean;
+          birth_date: string | null;
+          breed: string | null;
+          created_at: string;
+          external_id: string | null;
+          gender: string;
+          id: string;
+          name: string;
+          neutered: boolean;
+          notes: string | null;
+          owner_id: string;
+          photo_url: string | null;
+          synced_at: string | null;
+          updated_at: string;
+          vaccine_expires_on: string | null;
+          weight_kg: number | null;
+        };
         Insert: {
-          active?: boolean
-          birth_date?: string | null
-          breed?: string | null
-          created_at?: string
-          external_id?: string | null
-          gender?: string
-          id?: string
-          name: string
-          neutered?: boolean
-          notes?: string | null
-          owner_id: string
-          photo_url?: string | null
-          synced_at?: string | null
-          updated_at?: string
-          vaccine_expires_on?: string | null
-          weight_kg?: number | null
-        }
+          active?: boolean;
+          birth_date?: string | null;
+          breed?: string | null;
+          created_at?: string;
+          external_id?: string | null;
+          gender?: string;
+          id?: string;
+          name: string;
+          neutered?: boolean;
+          notes?: string | null;
+          owner_id: string;
+          photo_url?: string | null;
+          synced_at?: string | null;
+          updated_at?: string;
+          vaccine_expires_on?: string | null;
+          weight_kg?: number | null;
+        };
         Update: {
-          active?: boolean
-          birth_date?: string | null
-          breed?: string | null
-          created_at?: string
-          external_id?: string | null
-          gender?: string
-          id?: string
-          name?: string
-          neutered?: boolean
-          notes?: string | null
-          owner_id?: string
-          photo_url?: string | null
-          synced_at?: string | null
-          updated_at?: string
-          vaccine_expires_on?: string | null
-          weight_kg?: number | null
-        }
+          active?: boolean;
+          birth_date?: string | null;
+          breed?: string | null;
+          created_at?: string;
+          external_id?: string | null;
+          gender?: string;
+          id?: string;
+          name?: string;
+          neutered?: boolean;
+          notes?: string | null;
+          owner_id?: string;
+          photo_url?: string | null;
+          synced_at?: string | null;
+          updated_at?: string;
+          vaccine_expires_on?: string | null;
+          weight_kg?: number | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "dogs_owner_id_fkey"
-            columns: ["owner_id"]
-            isOneToOne: false
-            referencedRelation: "owners"
-            referencedColumns: ["id"]
+            foreignKeyName: "dogs_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: false;
+            referencedRelation: "owners";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       owners: {
         Row: {
-          address: string | null
-          created_at: string
-          email: string | null
-          external_id: string | null
-          external_source: string | null
-          id: string
-          memo: string | null
-          name: string
-          phone: string
-          updated_at: string
-        }
+          address: string | null;
+          created_at: string;
+          email: string | null;
+          external_id: string | null;
+          external_source: string | null;
+          id: string;
+          memo: string | null;
+          name: string;
+          phone: string;
+          updated_at: string;
+        };
         Insert: {
-          address?: string | null
-          created_at?: string
-          email?: string | null
-          external_id?: string | null
-          external_source?: string | null
-          id?: string
-          memo?: string | null
-          name: string
-          phone: string
-          updated_at?: string
-        }
+          address?: string | null;
+          created_at?: string;
+          email?: string | null;
+          external_id?: string | null;
+          external_source?: string | null;
+          id?: string;
+          memo?: string | null;
+          name: string;
+          phone: string;
+          updated_at?: string;
+        };
         Update: {
-          address?: string | null
-          created_at?: string
-          email?: string | null
-          external_id?: string | null
-          external_source?: string | null
-          id?: string
-          memo?: string | null
-          name?: string
-          phone?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
+          address?: string | null;
+          created_at?: string;
+          email?: string | null;
+          external_id?: string | null;
+          external_source?: string | null;
+          id?: string;
+          memo?: string | null;
+          name?: string;
+          phone?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       passes: {
         Row: {
-          active: boolean
-          created_at: string
-          dog_id: string | null
-          expires_on: string | null
-          id: string
-          memo: string | null
-          paid_at: string | null
-          pass_type: string
-          payment_status: string
-          price: number
-          purchased_on: string
-          title: string
-          total_count: number
-          updated_at: string
-          used_count: number
-        }
+          active: boolean;
+          created_at: string;
+          dog_id: string | null;
+          expires_on: string | null;
+          id: string;
+          memo: string | null;
+          paid_at: string | null;
+          pass_type: string;
+          payment_status: string;
+          price: number;
+          purchased_on: string;
+          title: string;
+          total_count: number;
+          updated_at: string;
+          used_count: number;
+          weight_class: string | null;
+        };
         Insert: {
-          active?: boolean
-          created_at?: string
-          dog_id?: string | null
-          expires_on?: string | null
-          id?: string
-          memo?: string | null
-          paid_at?: string | null
-          pass_type?: string
-          payment_status?: string
-          price?: number
-          purchased_on?: string
-          title: string
-          total_count?: number
-          updated_at?: string
-          used_count?: number
-        }
+          active?: boolean;
+          created_at?: string;
+          dog_id?: string | null;
+          expires_on?: string | null;
+          id?: string;
+          memo?: string | null;
+          paid_at?: string | null;
+          pass_type?: string;
+          payment_status?: string;
+          price?: number;
+          purchased_on?: string;
+          title: string;
+          total_count?: number;
+          updated_at?: string;
+          used_count?: number;
+          weight_class?: string | null;
+        };
         Update: {
-          active?: boolean
-          created_at?: string
-          dog_id?: string | null
-          expires_on?: string | null
-          id?: string
-          memo?: string | null
-          paid_at?: string | null
-          pass_type?: string
-          payment_status?: string
-          price?: number
-          purchased_on?: string
-          title?: string
-          total_count?: number
-          updated_at?: string
-          used_count?: number
-        }
+          active?: boolean;
+          created_at?: string;
+          dog_id?: string | null;
+          expires_on?: string | null;
+          id?: string;
+          memo?: string | null;
+          paid_at?: string | null;
+          pass_type?: string;
+          payment_status?: string;
+          price?: number;
+          purchased_on?: string;
+          title?: string;
+          total_count?: number;
+          updated_at?: string;
+          used_count?: number;
+          weight_class?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "passes_dog_id_fkey"
-            columns: ["dog_id"]
-            isOneToOne: false
-            referencedRelation: "dogs"
-            referencedColumns: ["id"]
+            foreignKeyName: "passes_dog_id_fkey";
+            columns: ["dog_id"];
+            isOneToOne: false;
+            referencedRelation: "dogs";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       profiles: {
         Row: {
-          created_at: string
-          full_name: string | null
-          id: string
-          role: string
-          updated_at: string
-        }
+          created_at: string;
+          full_name: string | null;
+          id: string;
+          role: string;
+          updated_at: string;
+        };
         Insert: {
-          created_at?: string
-          full_name?: string | null
-          id: string
-          role?: string
-          updated_at?: string
-        }
+          created_at?: string;
+          full_name?: string | null;
+          id: string;
+          role?: string;
+          updated_at?: string;
+        };
         Update: {
-          created_at?: string
-          full_name?: string | null
-          id?: string
-          role?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
+          created_at?: string;
+          full_name?: string | null;
+          id?: string;
+          role?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       reservations: {
         Row: {
-          checked_in_at: string | null
-          checked_out_at: string | null
-          created_at: string
-          created_by: string | null
-          dog_id: string
-          drop_off_time: string
-          end_date: string | null
-          id: string
-          memo: string | null
-          pass_id: string | null
-          pick_up_time: string
-          reserved_date: string
-          service_type: string
-          status: string
-          updated_at: string
-        }
+          checked_in_at: string | null;
+          checked_out_at: string | null;
+          created_at: string;
+          created_by: string | null;
+          dog_id: string;
+          drop_off_time: string;
+          end_date: string | null;
+          id: string;
+          memo: string | null;
+          pass_id: string | null;
+          pick_up_time: string;
+          reserved_date: string;
+          service_type: string;
+          status: string;
+          updated_at: string;
+        };
         Insert: {
-          checked_in_at?: string | null
-          checked_out_at?: string | null
-          created_at?: string
-          created_by?: string | null
-          dog_id: string
-          drop_off_time?: string
-          end_date?: string | null
-          id?: string
-          memo?: string | null
-          pass_id?: string | null
-          pick_up_time?: string
-          reserved_date: string
-          service_type?: string
-          status?: string
-          updated_at?: string
-        }
+          checked_in_at?: string | null;
+          checked_out_at?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          dog_id: string;
+          drop_off_time?: string;
+          end_date?: string | null;
+          id?: string;
+          memo?: string | null;
+          pass_id?: string | null;
+          pick_up_time?: string;
+          reserved_date: string;
+          service_type?: string;
+          status?: string;
+          updated_at?: string;
+        };
         Update: {
-          checked_in_at?: string | null
-          checked_out_at?: string | null
-          created_at?: string
-          created_by?: string | null
-          dog_id?: string
-          drop_off_time?: string
-          end_date?: string | null
-          id?: string
-          memo?: string | null
-          pass_id?: string | null
-          pick_up_time?: string
-          reserved_date?: string
-          service_type?: string
-          status?: string
-          updated_at?: string
-        }
+          checked_in_at?: string | null;
+          checked_out_at?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          dog_id?: string;
+          drop_off_time?: string;
+          end_date?: string | null;
+          id?: string;
+          memo?: string | null;
+          pass_id?: string | null;
+          pick_up_time?: string;
+          reserved_date?: string;
+          service_type?: string;
+          status?: string;
+          updated_at?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "reservations_dog_id_fkey"
-            columns: ["dog_id"]
-            isOneToOne: false
-            referencedRelation: "dogs"
-            referencedColumns: ["id"]
+            foreignKeyName: "reservations_dog_id_fkey";
+            columns: ["dog_id"];
+            isOneToOne: false;
+            referencedRelation: "dogs";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "reservations_pass_id_fkey"
-            columns: ["pass_id"]
-            isOneToOne: false
-            referencedRelation: "passes"
-            referencedColumns: ["id"]
+            foreignKeyName: "reservations_pass_id_fkey";
+            columns: ["pass_id"];
+            isOneToOne: false;
+            referencedRelation: "passes";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       staff: {
         Row: {
-          branch_name: string | null
-          created_at: string
-          email: string
-          external_id: string | null
-          id: string
-          name: string
-          phone: string | null
-          role: string
-          status: string
-          updated_at: string
-          username: string | null
-        }
+          branch_name: string | null;
+          created_at: string;
+          email: string;
+          external_id: string | null;
+          id: string;
+          name: string;
+          phone: string | null;
+          role: string;
+          status: string;
+          updated_at: string;
+          username: string | null;
+        };
         Insert: {
-          branch_name?: string | null
-          created_at?: string
-          email: string
-          external_id?: string | null
-          id?: string
-          name: string
-          phone?: string | null
-          role?: string
-          status?: string
-          updated_at?: string
-          username?: string | null
-        }
+          branch_name?: string | null;
+          created_at?: string;
+          email: string;
+          external_id?: string | null;
+          id?: string;
+          name: string;
+          phone?: string | null;
+          role?: string;
+          status?: string;
+          updated_at?: string;
+          username?: string | null;
+        };
         Update: {
-          branch_name?: string | null
-          created_at?: string
-          email?: string
-          external_id?: string | null
-          id?: string
-          name?: string
-          phone?: string | null
-          role?: string
-          status?: string
-          updated_at?: string
-          username?: string | null
-        }
-        Relationships: []
-      }
+          branch_name?: string | null;
+          created_at?: string;
+          email?: string;
+          external_id?: string | null;
+          id?: string;
+          name?: string;
+          phone?: string | null;
+          role?: string;
+          status?: string;
+          updated_at?: string;
+          username?: string | null;
+        };
+        Relationships: [];
+      };
       sync_log: {
         Row: {
-          created_at: string
-          dogs_upserted: number
-          error_message: string | null
-          id: string
-          kind: string
-          owners_upserted: number
-          updated_at: string
-        }
+          created_at: string;
+          dogs_upserted: number;
+          error_message: string | null;
+          id: string;
+          kind: string;
+          owners_upserted: number;
+          updated_at: string;
+        };
         Insert: {
-          created_at?: string
-          dogs_upserted?: number
-          error_message?: string | null
-          id?: string
-          kind?: string
-          owners_upserted?: number
-          updated_at?: string
-        }
+          created_at?: string;
+          dogs_upserted?: number;
+          error_message?: string | null;
+          id?: string;
+          kind?: string;
+          owners_upserted?: number;
+          updated_at?: string;
+        };
         Update: {
-          created_at?: string
-          dogs_upserted?: number
-          error_message?: string | null
-          id?: string
-          kind?: string
-          owners_upserted?: number
-          updated_at?: string
-        }
-        Relationships: []
-      }
-    }
+          created_at?: string;
+          dogs_upserted?: number;
+          error_message?: string | null;
+          id?: string;
+          kind?: string;
+          owners_upserted?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+    };
     Views: {
-      [_ in never]: never
-    }
+      [_ in never]: never;
+    };
     Functions: {
-      [_ in never]: never
-    }
+      [_ in never]: never;
+    };
     Enums: {
-      [_ in never]: never
-    }
+      [_ in never]: never;
+    };
     CompositeTypes: {
-      [_ in never]: never
-    }
-  }
-}
+      [_ in never]: never;
+    };
+  };
+};
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">;
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">];
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
       DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
-      Row: infer R
+      Row: infer R;
     }
     ? R
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-        Row: infer R
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] & DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R;
       }
       ? R
       : never
-    : never
+    : never;
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I
+      Insert: infer I;
     }
     ? I
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
     ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Insert: infer I
+        Insert: infer I;
       }
       ? I
       : never
-    : never
+    : never;
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U
+      Update: infer U;
     }
     ? U
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
     ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Update: infer U
+        Update: infer U;
       }
       ? U
       : never
-    : never
+    : never;
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
-    | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    keyof DefaultSchema["Enums"] | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-    : never
+    : never;
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    keyof DefaultSchema["CompositeTypes"] | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
+    : never;
 
 export const Constants = {
   public: {
     Enums: {},
   },
-} as const
+} as const;

@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Pencil, Plus, Ticket } from "lucide-react";
+import { BedDouble, CalendarCheck, Clock, Pencil, Plus, Scissors, Ticket } from "lucide-react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/AppShell";
@@ -35,10 +35,35 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
-import { SERVICE_LABELS, SERVICE_TYPES, formatWon, type ServiceType } from "@/lib/kindergarten";
+import {
+  SERVICE_LABELS,
+  SERVICE_STYLES,
+  SERVICE_TYPES,
+  formatWon,
+  type ServiceType,
+} from "@/lib/kindergarten";
+
+const SERVICE_ICONS: Record<ServiceType, typeof CalendarCheck> = {
+  kindergarten: CalendarCheck,
+  hotel: BedDouble,
+  daily_care: Clock,
+  grooming: Scissors,
+};
+
+const WEIGHT_CLASSES = [
+  { value: "small", label: "소형(2~4.9kg)" },
+  { value: "small_medium", label: "중소형(5~9.9kg)" },
+  { value: "medium", label: "중형(10~14.9kg)" },
+  { value: "medium_large", label: "중대형(15~19.9kg)" },
+  { value: "large", label: "대형(20kg이상)" },
+] as const;
+
+function weightClassLabel(value: string | null) {
+  if (!value) return null;
+  return WEIGHT_CLASSES.find((w) => w.value === value)?.label ?? value;
+}
 
 export const Route = createFileRoute("/_authenticated/passes")({
   head: () => ({
@@ -68,6 +93,7 @@ type PassRow = {
   expires_on: string | null;
   memo: string | null;
   active: boolean;
+  weight_class: string | null;
   dogs: { id: string; name: string; owners: { name: string; phone: string } | null } | null;
 };
 
@@ -85,7 +111,7 @@ function PassesPage() {
       const { data, error } = await supabase
         .from("passes")
         .select(
-          "id, title, pass_type, total_count, used_count, price, purchased_on, expires_on, memo, active, dogs(id, name, owners(name, phone))",
+          "id, title, pass_type, total_count, used_count, price, purchased_on, expires_on, memo, active, weight_class, dogs(id, name, owners(name, phone))",
         )
         .order("purchased_on", { ascending: false });
       if (error) throw error;
@@ -180,6 +206,11 @@ function PassesPage() {
                       </td>
                       <td className="px-4 py-3 text-center text-muted-foreground">
                         {passTypeLabel(pass.pass_type)}
+                        {pass.pass_type === "kindergarten" && pass.weight_class ? (
+                          <span className="block text-[10px]">
+                            {weightClassLabel(pass.weight_class)}
+                          </span>
+                        ) : null}
                       </td>
                       <td className="px-4 py-3 text-center text-muted-foreground">
                         {pass.used_count}/{pass.total_count}회
@@ -246,6 +277,8 @@ function computeExpiresOn(value: number, unit: "month" | "day"): string | null {
 function PassFormFields({
   passType,
   setPassType,
+  weightClass,
+  setWeightClass,
   title,
   setTitle,
   totalCount,
@@ -263,6 +296,8 @@ function PassFormFields({
 }: {
   passType: ServiceType;
   setPassType: (v: ServiceType) => void;
+  weightClass: string;
+  setWeightClass: (v: string) => void;
   title: string;
   setTitle: (v: string) => void;
   totalCount: string;
@@ -282,15 +317,27 @@ function PassFormFields({
     <div className="space-y-4">
       <div className="space-y-2">
         <Label>이용권 타입</Label>
-        <Tabs value={passType} onValueChange={(v) => setPassType(v as ServiceType)}>
-          <TabsList className="grid w-full grid-cols-4">
-            {SERVICE_TYPES.map((t) => (
-              <TabsTrigger key={t} value={t}>
+        <div className="grid grid-cols-4 gap-2">
+          {SERVICE_TYPES.map((t) => {
+            const Icon = SERVICE_ICONS[t];
+            const isActive = passType === t;
+            return (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setPassType(t)}
+                className={`flex flex-col items-center gap-1.5 rounded-xl border-2 px-2 py-3 text-xs font-bold transition-all ${
+                  isActive
+                    ? `${SERVICE_STYLES[t]} scale-[1.03] shadow-sm`
+                    : "border-border bg-transparent text-muted-foreground hover:bg-secondary"
+                }`}
+              >
+                <Icon className="size-5" />
                 {SERVICE_LABELS[t]}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <div className="space-y-2">
@@ -302,6 +349,24 @@ function PassFormFields({
           onChange={(e) => setTitle(e.target.value)}
         />
       </div>
+
+      {passType === "kindergarten" ? (
+        <div className="space-y-2">
+          <Label>반려견 체중 구분</Label>
+          <Select value={weightClass} onValueChange={setWeightClass}>
+            <SelectTrigger>
+              <SelectValue placeholder="체중 구분을 선택하세요" />
+            </SelectTrigger>
+            <SelectContent>
+              {WEIGHT_CLASSES.map((w) => (
+                <SelectItem key={w.value} value={w.value}>
+                  {w.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      ) : null}
 
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-2">
@@ -373,6 +438,7 @@ function NewPassDialog() {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [passType, setPassType] = useState<ServiceType>("kindergarten");
+  const [weightClass, setWeightClass] = useState("");
   const [title, setTitle] = useState("");
   const [totalCount, setTotalCount] = useState("10");
   const [price, setPrice] = useState("300000");
@@ -383,6 +449,7 @@ function NewPassDialog() {
 
   function reset() {
     setPassType("kindergarten");
+    setWeightClass("");
     setTitle("");
     setTotalCount("10");
     setPrice("300000");
@@ -397,6 +464,7 @@ function NewPassDialog() {
       const expiresOn = computeExpiresOn(Number(validityValue), validityUnit);
       const { error } = await supabase.from("passes").insert({
         pass_type: passType,
+        weight_class: passType === "kindergarten" ? weightClass || null : null,
         title: title.trim(),
         total_count: Number(totalCount),
         price: Number(price),
@@ -436,6 +504,8 @@ function NewPassDialog() {
         <PassFormFields
           passType={passType}
           setPassType={setPassType}
+          weightClass={weightClass}
+          setWeightClass={setWeightClass}
           title={title}
           setTitle={setTitle}
           totalCount={totalCount}
@@ -470,6 +540,7 @@ function EditPassDialog({
 }) {
   const queryClient = useQueryClient();
   const [passType, setPassType] = useState<ServiceType>("kindergarten");
+  const [weightClass, setWeightClass] = useState("");
   const [title, setTitle] = useState("");
   const [totalCount, setTotalCount] = useState("10");
   const [price, setPrice] = useState("0");
@@ -485,6 +556,7 @@ function EditPassDialog({
   if (row && loadedFor !== row.id) {
     setLoadedFor(row.id);
     setPassType((row.pass_type as ServiceType) ?? "kindergarten");
+    setWeightClass(row.weight_class ?? "");
     setTitle(row.title);
     setTotalCount(String(row.total_count));
     setPrice(String(row.price));
@@ -501,6 +573,7 @@ function EditPassDialog({
         .from("passes")
         .update({
           pass_type: passType,
+          weight_class: passType === "kindergarten" ? weightClass || null : null,
           title: title.trim(),
           total_count: Number(totalCount),
           price: Number(price),
@@ -546,6 +619,8 @@ function EditPassDialog({
           <PassFormFields
             passType={passType}
             setPassType={setPassType}
+            weightClass={weightClass}
+            setWeightClass={setWeightClass}
             title={title}
             setTitle={setTitle}
             totalCount={totalCount}
