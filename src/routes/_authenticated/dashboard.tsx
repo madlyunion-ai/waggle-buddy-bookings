@@ -464,7 +464,7 @@ function DashboardPage() {
                               setCreateDate(key);
                             }
                           }}
-                          className={`flex min-h-[44px] max-h-[92px] cursor-pointer flex-col items-stretch gap-0.5 overflow-hidden border-b border-border/60 p-1 text-left align-top transition-colors sm:min-h-[104px] sm:max-h-none sm:gap-1 sm:rounded-xl sm:border sm:p-1.5 ${
+                          className={`flex min-h-[44px] max-h-[92px] cursor-pointer flex-col items-stretch gap-0.5 overflow-hidden border-b border-border/60 p-1 text-left align-top transition-colors sm:min-h-[112px] sm:max-h-none sm:gap-1 sm:rounded-xl sm:border sm:p-1.5 ${
                             isSelected ? "bg-primary/5" : !isMonth ? "bg-[#f3f3f3]" : ""
                           } ${isToday ? `${sm("border-2 border-primary")}` : sm("border")} ${
                             isSelected
@@ -530,7 +530,7 @@ function DashboardPage() {
 
                   {/* 데스크톱: 연박 예약이 여러 날짜에 걸쳐 하나의 막대로 이어지는 오버레이 */}
                   <div
-                    className="pointer-events-none absolute inset-x-0 top-[22px] hidden grid-cols-7 gap-1.5 sm:grid"
+                    className="pointer-events-none absolute inset-x-0 top-[26px] hidden grid-cols-7 gap-x-1.5 gap-y-1 sm:grid"
                     style={{ gridAutoRows: "17px" }}
                   >
                     {placed.map(({ seg, lane }) => (
@@ -539,12 +539,13 @@ function DashboardPage() {
                         style={{
                           gridColumn: `${seg.startCol + 1} / span ${seg.span}`,
                           gridRow: lane + 1,
+                          backgroundColor: "transparent",
                         }}
                         onClick={(e) => {
                           e.stopPropagation();
                           setSelected(weekKeys[seg.startCol]!);
                         }}
-                        className={`pointer-events-auto mx-0.5 flex items-center gap-1 truncate rounded-md border px-1.5 text-[10px] font-semibold leading-[16px] ${SERVICE_STYLES[seg.row.service_type]}`}
+                        className={`pointer-events-auto mx-0.5 flex items-center gap-1 truncate rounded-md border px-2 text-[10px] font-semibold leading-[16px] ${SERVICE_STYLES[seg.row.service_type]}`}
                       >
                         <span className="min-w-0 flex-1 truncate">{seg.row.dogs?.name ?? "-"}</span>
                         <span className="shrink-0 opacity-80">
