@@ -114,14 +114,12 @@ function pricingBasisLabel(value: string | null) {
   return GROOMING_PRICING.find((p) => p.value === value)?.label ?? value;
 }
 
-/** 과거 등록분(반려견 체중 구분/이용가능 요일)을 목록에서 계속 표시하기 위한 레거시 헬퍼 */
 const WEIGHT_CLASSES = [
-  { value: "small", label: "소형(2~4.9kg)" },
-  { value: "small_medium", label: "중소형(5~9.9kg)" },
-  { value: "medium", label: "중형(10~14.9kg)" },
-  { value: "medium_large", label: "중대형(15~19.9kg)" },
-  { value: "large", label: "대형(20kg이상)" },
-  { value: "etc", label: "기타" },
+  { value: "small", label: "소형" },
+  { value: "small_medium", label: "중소형" },
+  { value: "medium", label: "중형" },
+  { value: "medium_large", label: "중대형" },
+  { value: "large", label: "대형" },
 ] as const;
 
 function weightClassLabel(value: string | null) {
@@ -478,6 +476,8 @@ function PassFormFields({
   setPassType,
   title,
   setTitle,
+  weightClass,
+  setWeightClass,
   totalCount,
   setTotalCount,
   price,
@@ -501,6 +501,8 @@ function PassFormFields({
   setPassType: (v: PassType) => void;
   title: string;
   setTitle: (v: string) => void;
+  weightClass: string;
+  setWeightClass: (v: string) => void;
   totalCount: string;
   setTotalCount: (v: string) => void;
   price: string;
@@ -556,6 +558,24 @@ function PassFormFields({
           value={title}
           onChange={(e) => setTitle(e.target.value)}
         />
+      </div>
+
+      <div className="space-y-2">
+        <Label>
+          반려견 체중 구분 <span className="text-destructive">*</span>
+        </Label>
+        <Select value={weightClass} onValueChange={setWeightClass}>
+          <SelectTrigger>
+            <SelectValue placeholder="체중 구분을 선택하세요" />
+          </SelectTrigger>
+          <SelectContent>
+            {WEIGHT_CLASSES.map((w) => (
+              <SelectItem key={w.value} value={w.value}>
+                {w.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {passType === "kindergarten" ? (
@@ -726,6 +746,7 @@ function NewPassDialog() {
   const [open, setOpen] = useState(false);
   const [passType, setPassType] = useState<PassType>("kindergarten");
   const [title, setTitle] = useState("");
+  const [weightClass, setWeightClass] = useState("small");
   const [totalCount, setTotalCount] = useState("10");
   const [price, setPrice] = useState("0");
   const [validityValue, setValidityValue] = useState("3");
@@ -739,6 +760,7 @@ function NewPassDialog() {
   function reset() {
     setPassType("kindergarten");
     setTitle("");
+    setWeightClass("small");
     setTotalCount("10");
     setPrice("0");
     setValidityValue("3");
@@ -766,7 +788,7 @@ function NewPassDialog() {
         price: Number(price),
         trip_type: isPickupDropoff ? tripType || null : null,
         pricing_basis: isGrooming ? pricingBasis || null : null,
-        weight_class: null,
+        weight_class: weightClass || null,
         available_days: null,
         expires_on: expiresOn,
         memo: memo.trim() || null,
@@ -806,6 +828,8 @@ function NewPassDialog() {
           setPassType={setPassType}
           title={title}
           setTitle={setTitle}
+          weightClass={weightClass}
+          setWeightClass={setWeightClass}
           totalCount={totalCount}
           setTotalCount={setTotalCount}
           price={price}
@@ -845,6 +869,7 @@ function EditPassDialog({
   const queryClient = useQueryClient();
   const [passType, setPassType] = useState<PassType>("kindergarten");
   const [title, setTitle] = useState("");
+  const [weightClass, setWeightClass] = useState("small");
   const [totalCount, setTotalCount] = useState("10");
   const [price, setPrice] = useState("0");
   const [validityValue, setValidityValue] = useState("0");
@@ -863,6 +888,7 @@ function EditPassDialog({
     setLoadedFor(row.id);
     setPassType((row.pass_type as PassType) ?? "kindergarten");
     setTitle(row.title);
+    setWeightClass(row.weight_class ?? "small");
     setTotalCount(String(row.total_count));
     setPrice(String(row.price));
     setValidityValue("0");
@@ -900,7 +926,7 @@ function EditPassDialog({
           price: Number(price),
           trip_type: isPickupDropoff ? tripType || null : null,
           pricing_basis: isGrooming ? pricingBasis || null : null,
-          weight_class: null,
+          weight_class: weightClass || null,
           available_days: null,
           memo: memo.trim() || null,
           active,
@@ -947,6 +973,8 @@ function EditPassDialog({
             setPassType={setPassType}
             title={title}
             setTitle={setTitle}
+            weightClass={weightClass}
+            setWeightClass={setWeightClass}
             totalCount={totalCount}
             setTotalCount={setTotalCount}
             price={price}
