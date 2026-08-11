@@ -125,6 +125,7 @@ export type Database = {
           pass_type: string;
           payment_status: string;
           price: number;
+          pricing_basis: string | null;
           purchased_on: string;
           title: string;
           total_count: number;
@@ -145,6 +146,7 @@ export type Database = {
           pass_type?: string;
           payment_status?: string;
           price?: number;
+          pricing_basis?: string | null;
           purchased_on?: string;
           title: string;
           total_count?: number;
@@ -165,6 +167,7 @@ export type Database = {
           pass_type?: string;
           payment_status?: string;
           price?: number;
+          pricing_basis?: string | null;
           purchased_on?: string;
           title?: string;
           total_count?: number;
