@@ -520,9 +520,8 @@ function PassFormFields({
                 type="button"
                 onClick={() => {
                   setPassType(t);
-                  if (t === "daily_care") {
-                    if (billingHourPreset !== "custom") setTotalCount(billingHourPreset);
-                    setPrice("6000");
+                  if (t === "daily_care" && billingHourPreset !== "custom") {
+                    setTotalCount(billingHourPreset);
                   }
                 }}
                 className={`flex flex-col items-center gap-1 rounded-xl border px-1 py-2.5 text-[11px] font-bold shadow-none transition-all ${
@@ -679,28 +678,29 @@ function PassFormFields({
       <div className="space-y-2">
         <Label>유효기간 (발급일로부터)</Label>
         <div className="flex items-center gap-2">
-          <CommaNumberInput
-            value={validityValue}
-            onChange={setValidityValue}
-            disabled={unlimited}
-            className="flex-1"
-          />
-          <Select
-            value={validityUnit}
-            onValueChange={(v) => setValidityUnit(v as "month" | "day")}
-            disabled={unlimited}
-          >
-            <SelectTrigger className="w-24">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {VALIDITY_UNITS.map((u) => (
-                <SelectItem key={u.value} value={u.value}>
-                  {u.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="grid w-1/2 grid-cols-2 gap-2">
+            <CommaNumberInput
+              value={validityValue}
+              onChange={setValidityValue}
+              disabled={unlimited}
+            />
+            <Select
+              value={validityUnit}
+              onValueChange={(v) => setValidityUnit(v as "month" | "day")}
+              disabled={unlimited}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {VALIDITY_UNITS.map((u) => (
+                  <SelectItem key={u.value} value={u.value}>
+                    {u.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <label className="flex items-center gap-1.5 whitespace-nowrap text-sm font-bold">
             <input
               type="checkbox"
@@ -747,7 +747,7 @@ function NewPassDialog() {
   const [tripType, setTripType] = useState("one_way");
   const [title, setTitle] = useState("");
   const [totalCount, setTotalCount] = useState("10");
-  const [price, setPrice] = useState("300000");
+  const [price, setPrice] = useState("0");
   const [validityValue, setValidityValue] = useState("3");
   const [validityUnit, setValidityUnit] = useState<"month" | "day">("month");
   const [unlimited, setUnlimited] = useState(false);
@@ -763,7 +763,7 @@ function NewPassDialog() {
     setTripType("one_way");
     setTitle("");
     setTotalCount("10");
-    setPrice("300000");
+    setPrice("0");
     setValidityValue("3");
     setValidityUnit("month");
     setUnlimited(false);
