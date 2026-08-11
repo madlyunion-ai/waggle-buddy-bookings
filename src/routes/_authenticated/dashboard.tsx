@@ -127,6 +127,76 @@ function sm(classes: string): string {
     .join(" ");
 }
 
+/** 연박(퇴실일이 입실일 이후) 예약인지 여부 */
+function isMultiDay(r: Row): boolean {
+  return !!r.end_date && r.end_date > r.reserved_date;
+}
+
+/** 연박 예약을 우선(긴 일정일수록 먼저) 배치하고, 그다음 단일예약을 시간순으로 정렬 */
+function sortForDisplay(items: Row[]): Row[] {
+  return [...items].sort((a, b) => {
+    const aMulti = isMultiDay(a) ? 0 : 1;
+    const bMulti = isMultiDay(b) ? 0 : 1;
+    if (aMulti !== bMulti) return aMulti - bMulti;
+    if (aMulti === 0) {
+      const aDur = nightsBetween(a.reserved_date, a.end_date!);
+      const bDur = nightsBetween(b.reserved_date, b.end_date!);
+      if (aDur !== bDur) return bDur - aDur;
+    }
+    return a.drop_off_time.localeCompare(b.drop_off_time);
+  });
+}
+
+/** 한 주(7일) 안에서 예약을 겹치지 않는 레인에 배치해 연속 바 형태로 표시하기 위한 계산 */
+const MAX_CALENDAR_LANES = 3;
+
+type WeekSegment = { row: Row; startCol: number; span: number };
+
+function computeWeekLanes(weekKeys: string[], reservations: Row[]) {
+  const weekStart = weekKeys[0]!;
+  const weekEnd = weekKeys[6]!;
+
+  const segments: WeekSegment[] = [];
+  for (const row of reservations) {
+    const rowEnd = isMultiDay(row) ? row.end_date! : row.reserved_date;
+    const segStart = row.reserved_date < weekStart ? weekStart : row.reserved_date;
+    const segEnd = rowEnd > weekEnd ? weekEnd : rowEnd;
+    if (segStart > segEnd) continue;
+    const startCol = weekKeys.indexOf(segStart);
+    const endCol = weekKeys.indexOf(segEnd);
+    if (startCol === -1 || endCol === -1) continue;
+    segments.push({ row, startCol, span: endCol - startCol + 1 });
+  }
+
+  const priorityOrder = sortForDisplay(segments.map((s) => s.row));
+  const sortedSegments = priorityOrder
+    .map((row) => segments.find((s) => s.row.id === row.id))
+    .filter((s): s is WeekSegment => s !== undefined);
+
+  const laneEnds: number[] = [];
+  const placed: { seg: WeekSegment; lane: number }[] = [];
+  for (const seg of sortedSegments) {
+    let lane = laneEnds.findIndex((end) => end < seg.startCol);
+    if (lane === -1) {
+      lane = laneEnds.length;
+      laneEnds.push(seg.startCol + seg.span - 1);
+    } else {
+      laneEnds[lane] = seg.startCol + seg.span - 1;
+    }
+    placed.push({ seg, lane });
+  }
+
+  const hiddenCountByCol = Array(7).fill(0) as number[];
+  for (const { seg, lane } of placed) {
+    if (lane < MAX_CALENDAR_LANES) continue;
+    for (let c = seg.startCol; c < seg.startCol + seg.span; c += 1) {
+      hiddenCountByCol[c] = (hiddenCountByCol[c] ?? 0) + 1;
+    }
+  }
+
+  return { placed: placed.filter((p) => p.lane < MAX_CALENDAR_LANES), hiddenCountByCol };
+}
+
 function DashboardPage() {
   const queryClient = useQueryClient();
   const [anchor, setAnchor] = useState(() => new Date());
@@ -175,7 +245,7 @@ function DashboardPage() {
     return map;
   }, [monthQuery.data]);
 
-  const rows = byDate[selected] ?? [];
+  const rows = sortForDisplay(byDate[selected] ?? []);
   const active = rows.filter((r) => r.status !== "cancelled");
 
   const updateStatus = useMutation({
@@ -213,6 +283,21 @@ function DashboardPage() {
 
   const cells = monthMatrix(anchor);
   const todayKey = toDateKey(new Date());
+
+  const filteredMonthReservations = useMemo(
+    () =>
+      (monthQuery.data ?? []).filter(
+        (r) =>
+          r.status !== "cancelled" && (serviceFilter === "all" || r.service_type === serviceFilter),
+      ),
+    [monthQuery.data, serviceFilter],
+  );
+
+  const weeks = useMemo(() => {
+    const out: Date[][] = [];
+    for (let i = 0; i < cells.length; i += 7) out.push(cells.slice(i, i + 7));
+    return out;
+  }, [cells]);
 
   const byType = useMemo(() => {
     const base: Record<ServiceType, Row[]> = {
@@ -332,128 +417,165 @@ function DashboardPage() {
             ))}
           </div>
 
-          <div className="grid min-h-0 flex-1 auto-rows-fr grid-cols-7 gap-0 overflow-hidden border-b border-border pb-3 sm:gap-1.5 sm:border-b-0 sm:pb-0">
-            {cells.map((d) => {
-              const key = toDateKey(d);
-              const isMonth = d.getMonth() === anchor.getMonth();
-              const isSelected = key === selected;
-              const isToday = key === todayKey;
-              const dow = d.getDay();
-              const items = (byDate[key] ?? []).filter(
-                (r) =>
-                  r.status !== "cancelled" &&
-                  (serviceFilter === "all" || r.service_type === serviceFilter),
+          <div className="grid min-h-0 flex-1 grid-rows-6 gap-0 overflow-hidden border-b border-border pb-3 sm:gap-1.5 sm:border-b-0 sm:pb-0">
+            {weeks.map((week, weekIdx) => {
+              const weekKeys = week.map((d) => toDateKey(d));
+              const { placed, hiddenCountByCol } = computeWeekLanes(
+                weekKeys,
+                filteredMonthReservations,
               );
               return (
-                <div
-                  key={key}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => {
-                    setSelected(key);
-                    if (isCompact) {
-                      if (items.length > 0) setDayListDate(key);
-                      else setEmptyDayAlertOpen(true);
-                    } else {
-                      setCreateDate(key);
-                    }
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key !== "Enter" && e.key !== " ") return;
-                    setSelected(key);
-                    if (isCompact) {
-                      if (items.length > 0) setDayListDate(key);
-                      else setEmptyDayAlertOpen(true);
-                    } else {
-                      setCreateDate(key);
-                    }
-                  }}
-                  className={`flex min-h-[44px] max-h-[92px] cursor-pointer flex-col items-stretch gap-0.5 overflow-hidden border-b border-border/60 p-1 text-left align-top transition-colors sm:min-h-0 sm:max-h-none sm:gap-1 sm:rounded-xl sm:border sm:p-1.5 ${
-                    isSelected ? "bg-primary/5" : !isMonth ? "bg-[#f3f3f3]" : ""
-                  } ${isToday ? `${sm("border-2 border-primary")}` : sm("border")} ${
-                    isSelected
-                      ? sm("bg-primary/8")
-                      : isMonth
-                        ? dow === 0
-                          ? sm(`bg-card hover:bg-rose-50/60 ${isToday ? "" : "border-rose-300/70"}`)
-                          : dow === 6
-                            ? sm(`bg-card hover:bg-sky-50/60 ${isToday ? "" : "border-sky-300/70"}`)
-                            : sm(`bg-card hover:bg-secondary/60 ${isToday ? "" : "border-border"}`)
-                        : sm(`bg-muted/40 ${isToday ? "" : "border-transparent"}`)
-                  }`}
-                >
-                  <div className="flex shrink-0 items-center justify-between px-0.5">
-                    <span
-                      className={`text-xs font-bold ${
-                        key === todayKey
-                          ? "rounded-full bg-primary px-1.5 py-0.5 text-primary-foreground"
-                          : !isMonth
-                            ? "text-muted-foreground/50"
-                            : dow === 0
-                              ? "text-rose-500"
-                              : dow === 6
-                                ? "text-sky-600"
-                                : ""
-                      }`}
-                    >
-                      {d.getDate()}
-                    </span>
-                    {items.length > 0 ? (
-                      <span className="hidden text-[10px] font-bold text-muted-foreground sm:inline">
-                        {items.length}건
-                      </span>
-                    ) : null}
+                <div key={weekIdx} className="relative min-h-0">
+                  <div className="grid h-full grid-cols-7 gap-0 sm:gap-1.5">
+                    {week.map((d, colIdx) => {
+                      const key = weekKeys[colIdx]!;
+                      const isMonth = d.getMonth() === anchor.getMonth();
+                      const isSelected = key === selected;
+                      const isToday = key === todayKey;
+                      const dow = d.getDay();
+                      const items = sortForDisplay(
+                        (byDate[key] ?? []).filter(
+                          (r) =>
+                            r.status !== "cancelled" &&
+                            (serviceFilter === "all" || r.service_type === serviceFilter),
+                        ),
+                      );
+                      return (
+                        <div
+                          key={key}
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => {
+                            setSelected(key);
+                            if (isCompact) {
+                              if (items.length > 0) setDayListDate(key);
+                              else setEmptyDayAlertOpen(true);
+                            } else {
+                              setCreateDate(key);
+                            }
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key !== "Enter" && e.key !== " ") return;
+                            setSelected(key);
+                            if (isCompact) {
+                              if (items.length > 0) setDayListDate(key);
+                              else setEmptyDayAlertOpen(true);
+                            } else {
+                              setCreateDate(key);
+                            }
+                          }}
+                          className={`flex min-h-[44px] max-h-[92px] cursor-pointer flex-col items-stretch gap-0.5 overflow-hidden border-b border-border/60 p-1 text-left align-top transition-colors sm:min-h-[104px] sm:max-h-none sm:gap-1 sm:rounded-xl sm:border sm:p-1.5 ${
+                            isSelected ? "bg-primary/5" : !isMonth ? "bg-[#f3f3f3]" : ""
+                          } ${isToday ? `${sm("border-2 border-primary")}` : sm("border")} ${
+                            isSelected
+                              ? sm("bg-primary/8")
+                              : isMonth
+                                ? dow === 0
+                                  ? sm(
+                                      `bg-card hover:bg-rose-50/60 ${isToday ? "" : "border-rose-300/70"}`,
+                                    )
+                                  : dow === 6
+                                    ? sm(
+                                        `bg-card hover:bg-sky-50/60 ${isToday ? "" : "border-sky-300/70"}`,
+                                      )
+                                    : sm(
+                                        `bg-card hover:bg-secondary/60 ${isToday ? "" : "border-border"}`,
+                                      )
+                                : sm(`bg-muted/40 ${isToday ? "" : "border-transparent"}`)
+                          }`}
+                        >
+                          <div className="flex shrink-0 items-center justify-between px-0.5">
+                            <span
+                              className={`text-xs font-bold ${
+                                key === todayKey
+                                  ? "rounded-full bg-primary px-1.5 py-0.5 text-primary-foreground"
+                                  : !isMonth
+                                    ? "text-muted-foreground/50"
+                                    : dow === 0
+                                      ? "text-rose-500"
+                                      : dow === 6
+                                        ? "text-sky-600"
+                                        : ""
+                              }`}
+                            >
+                              {d.getDate()}
+                            </span>
+                            {items.length > 0 ? (
+                              <span className="hidden text-[10px] font-bold text-muted-foreground sm:inline">
+                                {items.length}건
+                              </span>
+                            ) : null}
+                          </div>
+
+                          {/* 모바일(360~390px): 여백 카드 없이 라인(리스트) 형태로 요약. 연박 예약이 상단에 오도록 정렬됨 */}
+                          {items.length > 0 ? (
+                            <div className="flex min-h-0 flex-1 flex-col gap-px overflow-hidden sm:hidden">
+                              {items.slice(0, 6).map((r) => (
+                                <span
+                                  key={`${key}-line-${r.id}`}
+                                  className={`truncate text-left text-[9px] font-semibold leading-tight ${SERVICE_TEXT_SOLID[r.service_type]}`}
+                                >
+                                  · {r.dogs?.name ?? "-"}{" "}
+                                  {r.service_type === "hotel" && r.end_date
+                                    ? `~${r.end_date.slice(5).replace("-", "/")}`
+                                    : formatTime(r.drop_off_time)}
+                                </span>
+                              ))}
+                            </div>
+                          ) : null}
+                        </div>
+                      );
+                    })}
                   </div>
-                  {/* 데스크톱: 이름+시간이 보이는 전체 칩 목록 */}
-                  <div className="hidden min-h-0 flex-1 flex-col gap-0.5 overflow-hidden sm:flex">
-                    {items.slice(0, 3).map((r) => (
+
+                  {/* 데스크톱: 연박 예약이 여러 날짜에 걸쳐 하나의 막대로 이어지는 오버레이 */}
+                  <div
+                    className="pointer-events-none absolute inset-x-0 top-[22px] hidden grid-cols-7 gap-1.5 sm:grid"
+                    style={{ gridAutoRows: "17px" }}
+                  >
+                    {placed.map(({ seg, lane }) => (
                       <div
-                        key={`${key}-${r.id}`}
+                        key={seg.row.id}
+                        style={{
+                          gridColumn: `${seg.startCol + 1} / span ${seg.span}`,
+                          gridRow: lane + 1,
+                        }}
                         onClick={(e) => {
                           e.stopPropagation();
-                          setSelected(key);
+                          setSelected(weekKeys[seg.startCol]!);
                         }}
-                        className={`flex shrink-0 items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-semibold leading-tight ${SERVICE_STYLES[r.service_type]}`}
+                        className={`pointer-events-auto mx-0.5 flex items-center gap-1 truncate rounded-md border px-1.5 text-[10px] font-semibold leading-[16px] ${SERVICE_STYLES[seg.row.service_type]}`}
                       >
-                        <span className="min-w-0 flex-1 truncate">{r.dogs?.name ?? "-"}</span>
+                        <span className="min-w-0 flex-1 truncate">{seg.row.dogs?.name ?? "-"}</span>
                         <span className="shrink-0 opacity-80">
-                          {r.service_type === "hotel" && r.end_date
-                            ? `~${r.end_date.slice(5).replace("-", "/")}`
-                            : formatTime(r.drop_off_time)}
+                          {seg.span > 1
+                            ? `~${(seg.row.end_date ?? seg.row.reserved_date).slice(5).replace("-", "/")}`
+                            : formatTime(seg.row.drop_off_time)}
                         </span>
                       </div>
                     ))}
-                    {items.length > 3 ? (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelected(key);
-                          setDayListDate(key);
-                        }}
-                        className="mt-auto flex shrink-0 items-center gap-1 rounded-md px-1 text-[10px] font-bold text-primary hover:bg-primary/10"
-                      >
-                        <Plus className="size-3" /> {items.length - 3}개 더보기
-                      </button>
-                    ) : null}
-                  </div>
-
-                  {/* 모바일(360~390px): 여백 카드 없이 라인(리스트) 형태로 요약. 공간이 부족하면 그대로 잘려서 보임 */}
-                  {items.length > 0 ? (
-                    <div className="flex min-h-0 flex-1 flex-col gap-px overflow-hidden sm:hidden">
-                      {items.slice(0, 6).map((r) => (
-                        <span
-                          key={`${key}-line-${r.id}`}
-                          className={`truncate text-left text-[9px] font-semibold leading-tight ${SERVICE_TEXT_SOLID[r.service_type]}`}
+                    {week.map((d, colIdx) =>
+                      (hiddenCountByCol[colIdx] ?? 0) > 0 ? (
+                        <button
+                          key={`more-${weekIdx}-${colIdx}`}
+                          type="button"
+                          style={{
+                            gridColumn: `${colIdx + 1} / span 1`,
+                            gridRow: MAX_CALENDAR_LANES + 1,
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const key = weekKeys[colIdx]!;
+                            setSelected(key);
+                            setDayListDate(key);
+                          }}
+                          className="pointer-events-auto mx-0.5 flex items-center gap-1 truncate rounded-md px-1 text-[10px] font-bold text-primary hover:bg-primary/10"
                         >
-                          · {r.dogs?.name ?? "-"}{" "}
-                          {r.service_type === "hotel" && r.end_date
-                            ? `~${r.end_date.slice(5).replace("-", "/")}`
-                            : formatTime(r.drop_off_time)}
-                        </span>
-                      ))}
-                    </div>
-                  ) : null}
+                          <Plus className="size-3" /> {hiddenCountByCol[colIdx] ?? 0}개 더보기
+                        </button>
+                      ) : null,
+                    )}
+                  </div>
                 </div>
               );
             })}
@@ -625,10 +747,12 @@ function DashboardPage() {
           </DialogHeader>
           <div className="space-y-2">
             {(dayListDate
-              ? (byDate[dayListDate] ?? []).filter(
-                  (r) =>
-                    r.status !== "cancelled" &&
-                    (serviceFilter === "all" || r.service_type === serviceFilter),
+              ? sortForDisplay(
+                  (byDate[dayListDate] ?? []).filter(
+                    (r) =>
+                      r.status !== "cancelled" &&
+                      (serviceFilter === "all" || r.service_type === serviceFilter),
+                  ),
                 )
               : []
             ).map((r) => (
