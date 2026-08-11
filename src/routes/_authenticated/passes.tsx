@@ -318,7 +318,7 @@ function PassesPage() {
                 <th className="px-4 py-3">유효기간</th>
                 <th className="px-4 py-3">사용상태</th>
                 <th className="hidden px-4 py-3 sm:table-cell">비고</th>
-                <th className="px-4 py-3 text-right">수정</th>
+                <th className="px-4 py-3">수정</th>
               </tr>
             </thead>
             <tbody>
@@ -343,7 +343,7 @@ function PassesPage() {
                       key={pass.id}
                       className="border-t border-border transition-colors hover:bg-secondary/50"
                     >
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 text-center">
                         <span
                           className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[11px] font-bold ${
                             PASS_TYPE_STYLES[pass.pass_type as PassType] ??
@@ -406,7 +406,7 @@ function PassesPage() {
                       <td className="hidden max-w-[200px] truncate px-4 py-3 text-muted-foreground sm:table-cell">
                         {pass.memo || "-"}
                       </td>
-                      <td className="px-4 py-3 text-right">
+                      <td className="px-4 py-3 text-center">
                         <Button
                           variant="ghost"
                           size="sm"

@@ -243,9 +243,9 @@ function ReservationsPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="flex min-w-0 items-center gap-1">
-                        <div className="hidden min-w-0 sm:block">
+                    <td className="px-4 py-3 text-center">
+                      <div className="flex min-w-0 items-center justify-center gap-1">
+                        <div className="hidden min-w-0 text-center sm:block">
                           <p className="truncate">{row.dogs?.owners?.name ?? "보호자 미확인"}</p>
                           <p className="truncate text-xs text-muted-foreground">
                             {row.dogs?.owners?.phone ?? "-"}
@@ -257,27 +257,27 @@ function ReservationsPage() {
                         />
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-[10px] text-muted-foreground sm:text-sm">
+                    <td className="px-4 py-3 text-center text-[10px] text-muted-foreground sm:text-sm">
                       {formatDateKorean(row.reserved_date)}
                     </td>
-                    <td className="hidden px-4 py-3 sm:table-cell">
+                    <td className="hidden px-4 py-3 text-center sm:table-cell">
                       <Badge variant="outline" className={SERVICE_STYLES[row.service_type]}>
                         {SERVICE_LABELS[row.service_type] ?? row.service_type}
                       </Badge>
                     </td>
-                    <td className="hidden px-4 py-3 text-muted-foreground sm:table-cell">
+                    <td className="hidden px-4 py-3 text-center text-muted-foreground sm:table-cell">
                       {row.service_type === "hotel" && row.end_date
                         ? `${stayLabel(row.reserved_date, row.end_date)} · ${row.end_date}`
                         : `${formatTime(row.drop_off_time)} ~ ${formatTime(row.pick_up_time)}`}
                     </td>
-                    <td className="hidden px-4 py-3 sm:table-cell">
+                    <td className="hidden px-4 py-3 text-center sm:table-cell">
                       <span
                         className={`rounded-md px-2 py-1 text-xs font-bold ${STATUS_STYLES[row.status]}`}
                       >
                         {STATUS_LABELS[row.status] ?? row.status}
                       </span>
                     </td>
-                    <td className="hidden px-4 py-3 text-xs text-muted-foreground sm:table-cell">
+                    <td className="hidden px-4 py-3 text-center text-xs text-muted-foreground sm:table-cell">
                       {row.memo || "-"}
                     </td>
                   </tr>

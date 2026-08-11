@@ -171,7 +171,7 @@ function StaffPage() {
                 <th className="hidden px-4 py-3 sm:table-cell">이메일</th>
                 <th className="w-[28%] px-2 py-3 sm:w-auto sm:px-4">연락처</th>
                 <th className="hidden px-4 py-3 sm:table-cell">상태</th>
-                <th className="hidden px-4 py-3 text-right sm:table-cell">관리</th>
+                <th className="hidden px-4 py-3 sm:table-cell">관리</th>
               </tr>
             </thead>
 
@@ -192,7 +192,7 @@ function StaffPage() {
                 rows.map((row) => (
                   <tr key={row.id} className="border-t border-border">
                     <td className="truncate px-2 py-3 font-semibold sm:px-4">{row.name}</td>
-                    <td className="truncate px-2 py-3 sm:px-4">
+                    <td className="truncate px-2 py-3 text-center sm:px-4">
                       <Badge
                         variant={row.role === "STAFF" ? "secondary" : "default"}
                         className="max-w-full truncate"
@@ -200,20 +200,20 @@ function StaffPage() {
                         {roleLabel(row.role)}
                       </Badge>
                     </td>
-                    <td className="truncate px-2 py-3 font-medium sm:px-4">
+                    <td className="truncate px-2 py-3 text-center font-medium sm:px-4">
                       {row.username ?? "-"}
                     </td>
                     <td className="hidden px-4 py-3 text-muted-foreground sm:table-cell">
                       {row.email ?? "-"}
                     </td>
 
-                    <td className="truncate px-2 py-3 text-muted-foreground sm:px-4">
+                    <td className="truncate px-2 py-3 text-center text-muted-foreground sm:px-4">
                       {formatPhone(row.phone)}
                     </td>
-                    <td className="hidden px-4 py-3 text-muted-foreground sm:table-cell">
+                    <td className="hidden px-4 py-3 text-center text-muted-foreground sm:table-cell">
                       {row.status ? (STATUS_LABELS[row.status] ?? row.status) : "-"}
                     </td>
-                    <td className="hidden px-4 py-3 text-right sm:table-cell">
+                    <td className="hidden px-4 py-3 text-center sm:table-cell">
                       {row.local ? (
                         <Button
                           variant="ghost"
