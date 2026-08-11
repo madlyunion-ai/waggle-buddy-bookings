@@ -118,12 +118,12 @@ const SERVICE_TEXT_SOLID: Record<ServiceType, string> = {
   grooming: "text-warning-foreground",
 };
 
-/** 캘린더 막대(연속 예약 바)용 스타일 - 배경 불투명도 80%, 폰트는 흰색 80%로 통일 */
+/** 캘린더 막대(연속 예약 바)용 스타일 - 배경 불투명도 80%, 폰트는 흰색으로 통일 */
 const SERVICE_BAR_STYLES: Record<ServiceType, string> = {
-  kindergarten: "bg-primary/80 text-white/80 border-primary/25",
-  hotel: "bg-accent/80 text-white/80 border-accent/35",
-  daily_care: "bg-rose-300/80 text-white/80 border-rose-300/45",
-  grooming: "bg-warning/80 text-white/80 border-warning/35",
+  kindergarten: "bg-primary/80 text-white border-primary/25",
+  hotel: "bg-accent/80 text-white border-accent/35",
+  daily_care: "bg-rose-300/80 text-white border-rose-300/45",
+  grooming: "bg-warning/80 text-white border-warning/35",
 };
 
 /** 클래스 문자열 전체를 sm: 반응형 접두사로 감싸는 헬퍼 (데스크톱 전용 스타일 재사용) */
@@ -181,16 +181,21 @@ function computeWeekLanes(weekKeys: string[], reservations: Row[]) {
     .map((row) => segments.find((s) => s.row.id === row.id))
     .filter((s): s is WeekSegment => s !== undefined);
 
-  const laneEnds: number[] = [];
+  // 레인별로 이미 배치된 구간들과 겹치지 않는 첫 레인을 찾는다 (직전 구간의 끝 컬럼만 보면
+  // 정렬 순서상 나중에 처리되는, 더 이른 날짜의 단일예약이 실제로는 겹치지 않는데도
+  // 잘못 밀려나는 문제가 있어 레인 내 전체 구간과 비교한다)
+  const laneOccupied: { startCol: number; endCol: number }[][] = [];
   const placed: { seg: WeekSegment; lane: number }[] = [];
   for (const seg of sortedSegments) {
-    let lane = laneEnds.findIndex((end) => end < seg.startCol);
+    const segEndCol = seg.startCol + seg.span - 1;
+    let lane = laneOccupied.findIndex((ranges) =>
+      ranges.every((r) => segEndCol < r.startCol || seg.startCol > r.endCol),
+    );
     if (lane === -1) {
-      lane = laneEnds.length;
-      laneEnds.push(seg.startCol + seg.span - 1);
-    } else {
-      laneEnds[lane] = seg.startCol + seg.span - 1;
+      lane = laneOccupied.length;
+      laneOccupied.push([]);
     }
+    laneOccupied[lane]!.push({ startCol: seg.startCol, endCol: segEndCol });
     placed.push({ seg, lane });
   }
 
