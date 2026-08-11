@@ -1,7 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { BedDouble, CalendarCheck, Car, Clock, Pencil, Plus, Scissors, Ticket } from "lucide-react";
+import {
+  BedDouble,
+  CalendarCheck,
+  Car,
+  Clock,
+  Pencil,
+  Plus,
+  Scissors,
+  Search,
+  Ticket,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/AppShell";
@@ -98,17 +108,25 @@ const AVAILABLE_DAYS = [
 ] as const;
 
 const BILLING_HOUR_PRESETS = [
-  { value: "1", label: "1시간" },
-  { value: "2", label: "2시간" },
-  { value: "3", label: "3시간" },
-  { value: "6", label: "6시간" },
-  { value: "12", label: "12시간" },
+  { value: "60", label: "1시간" },
+  { value: "120", label: "2시간" },
+  { value: "180", label: "3시간" },
+  { value: "360", label: "6시간" },
+  { value: "720", label: "12시간" },
   { value: "custom", label: "직접입력" },
 ] as const;
 
 function availableDaysLabel(value: string | null) {
   if (!value) return null;
   return AVAILABLE_DAYS.find((d) => d.value === value)?.label ?? value;
+}
+
+function formatDuration(totalMinutes: number) {
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (hours && minutes) return `${hours}시간 ${minutes}분`;
+  if (hours) return `${hours}시간`;
+  return `${minutes}분`;
 }
 
 export const Route = createFileRoute("/_authenticated/passes")({
@@ -152,6 +170,8 @@ function passTypeLabel(type: string) {
 function PassesPage() {
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState<PassRow | null>(null);
+  const [search, setSearch] = useState("");
+  const [filterType, setFilterType] = useState<PassType | "all">("all");
 
   const passesQuery = useQuery({
     queryKey: ["passes", "list"],
@@ -169,6 +189,15 @@ function PassesPage() {
 
   const passes = passesQuery.data ?? [];
   const activeCount = passes.filter((p) => p.active).length;
+  const typeCounts = PASS_TYPES.reduce<Record<string, number>>((acc, t) => {
+    acc[t] = passes.filter((p) => p.pass_type === t).length;
+    return acc;
+  }, {});
+  const filteredPasses = passes.filter((p) => {
+    const matchesType = filterType === "all" || p.pass_type === filterType;
+    const matchesSearch = p.title.toLowerCase().includes(search.trim().toLowerCase());
+    return matchesType && matchesSearch;
+  });
 
   const toggleActive = useMutation({
     mutationFn: async ({ id, active }: { id: string; active: boolean }) => {
@@ -208,42 +237,94 @@ function PassesPage() {
         </div>
       </div>
 
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative sm:w-64">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="상품명 검색"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setFilterType("all")}
+            className={`rounded-full border px-3 py-1.5 text-xs font-bold transition-colors ${
+              filterType === "all"
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-border bg-transparent text-muted-foreground hover:bg-secondary"
+            }`}
+          >
+            전체 {passes.length}
+          </button>
+          {PASS_TYPES.map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setFilterType(t)}
+              className={`rounded-full border px-3 py-1.5 text-xs font-bold transition-colors ${
+                filterType === t
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border bg-transparent text-muted-foreground hover:bg-secondary"
+              }`}
+            >
+              {PASS_TYPE_LABELS[t]} {typeCounts[t] ?? 0}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="overflow-hidden rounded-lg border border-border bg-card">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-0 text-[11px] sm:min-w-[820px] sm:text-sm">
+          <table className="w-full min-w-0 text-[11px] sm:min-w-[900px] sm:text-sm">
             <thead className="bg-secondary/60 text-center text-xs font-bold text-muted-foreground">
               <tr>
-                <th className="px-4 py-3">이용권</th>
-                <th className="px-4 py-3">타입</th>
-                <th className="px-4 py-3">횟수</th>
+                <th className="px-4 py-3">구분</th>
+                <th className="px-4 py-3">이용권 이름</th>
+                <th className="px-4 py-3">반려견 체중</th>
+                <th className="px-4 py-3">과금 기준</th>
                 <th className="px-4 py-3">금액</th>
                 <th className="px-4 py-3">유효기간</th>
-                <th className="hidden px-4 py-3 sm:table-cell">비고</th>
                 <th className="px-4 py-3">사용상태</th>
-                <th className="px-4 py-3 text-right">관리</th>
+                <th className="hidden px-4 py-3 sm:table-cell">비고</th>
+                <th className="px-4 py-3 text-right">수정</th>
               </tr>
             </thead>
             <tbody>
               {passesQuery.isLoading ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-10 text-center text-muted-foreground">
+                  <td colSpan={9} className="px-4 py-10 text-center text-muted-foreground">
                     불러오는 중…
                   </td>
                 </tr>
-              ) : passes.length === 0 ? (
+              ) : filteredPasses.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-10 text-center text-muted-foreground">
-                    등록된 이용권이 없습니다. &ldquo;이용권 등록&rdquo;으로 상품을 만들어 보세요.
+                  <td colSpan={9} className="px-4 py-10 text-center text-muted-foreground">
+                    조건에 맞는 이용권이 없습니다.
                   </td>
                 </tr>
               ) : (
-                passes.map((pass) => {
+                filteredPasses.map((pass) => {
                   const remaining = Math.max(0, pass.total_count - pass.used_count);
+                  const Icon = PASS_TYPE_ICONS[pass.pass_type as PassType] ?? Ticket;
                   return (
                     <tr
                       key={pass.id}
                       className="border-t border-border transition-colors hover:bg-secondary/50"
                     >
+                      <td className="px-4 py-3">
+                        <span
+                          className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[11px] font-bold ${
+                            PASS_TYPE_STYLES[pass.pass_type as PassType] ??
+                            "border-border text-muted-foreground"
+                          }`}
+                        >
+                          <Icon className="size-3.5" />
+                          {passTypeLabel(pass.pass_type)}
+                        </span>
+                      </td>
                       <td className="px-4 py-3">
                         <p className="truncate font-bold">{pass.title}</p>
                         {pass.dogs ? (
@@ -253,15 +334,19 @@ function PassesPage() {
                         ) : null}
                       </td>
                       <td className="px-4 py-3 text-center text-muted-foreground">
-                        {passTypeLabel(pass.pass_type)}
-                        {(pass.pass_type === "kindergarten" ||
-                          pass.pass_type === "hotel" ||
-                          pass.pass_type === "daily_care") &&
-                        pass.weight_class ? (
-                          <span className="block text-[10px]">
-                            {weightClassLabel(pass.weight_class)}
-                          </span>
-                        ) : null}
+                        {weightClassLabel(pass.weight_class) ?? "-"}
+                      </td>
+                      <td className="px-4 py-3 text-center text-muted-foreground">
+                        {pass.pass_type === "pickup_dropoff" ? (
+                          (tripTypeLabel(pass.trip_type) ?? "-")
+                        ) : pass.pass_type === "daily_care" ? (
+                          formatDuration(pass.total_count)
+                        ) : (
+                          <>
+                            {pass.used_count}/{pass.total_count}회
+                            <span className="ml-1 text-[10px]">(잔여 {remaining})</span>
+                          </>
+                        )}
                         {pass.pass_type === "hotel" && pass.available_days ? (
                           <span className="block text-[10px]">
                             이용가능: {availableDaysLabel(pass.available_days)}
@@ -269,25 +354,10 @@ function PassesPage() {
                         ) : null}
                       </td>
                       <td className="px-4 py-3 text-center text-muted-foreground">
-                        {pass.pass_type === "pickup_dropoff" ? (
-                          (tripTypeLabel(pass.trip_type) ?? "-")
-                        ) : pass.pass_type === "daily_care" ? (
-                          `${pass.total_count}시간`
-                        ) : (
-                          <>
-                            {pass.used_count}/{pass.total_count}회
-                            <span className="ml-1 text-[10px]">(잔여 {remaining})</span>
-                          </>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-center text-muted-foreground">
                         {formatWon(pass.price)}
                       </td>
                       <td className="px-4 py-3 text-center text-muted-foreground">
                         {pass.expires_on ? `~${pass.expires_on}` : "무제한"}
-                      </td>
-                      <td className="hidden max-w-[200px] truncate px-4 py-3 text-muted-foreground sm:table-cell">
-                        {pass.memo || "-"}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-center gap-2">
@@ -299,6 +369,9 @@ function PassesPage() {
                             {pass.active ? "활성화" : "비활성화"}
                           </span>
                         </div>
+                      </td>
+                      <td className="hidden max-w-[200px] truncate px-4 py-3 text-muted-foreground sm:table-cell">
+                        {pass.memo || "-"}
                       </td>
                       <td className="px-4 py-3 text-right">
                         <Button
@@ -347,6 +420,10 @@ function PassFormFields({
   setAvailableDays,
   billingHourPreset,
   setBillingHourPreset,
+  dailyCareHour,
+  setDailyCareHour,
+  dailyCareMinute,
+  setDailyCareMinute,
   tripType,
   setTripType,
   title,
@@ -372,6 +449,10 @@ function PassFormFields({
   setAvailableDays: (v: string) => void;
   billingHourPreset: string;
   setBillingHourPreset: (v: string) => void;
+  dailyCareHour: string;
+  setDailyCareHour: (v: string) => void;
+  dailyCareMinute: string;
+  setDailyCareMinute: (v: string) => void;
   tripType: string;
   setTripType: (v: string) => void;
   title: string;
@@ -504,13 +585,45 @@ function PassFormFields({
                   </SelectContent>
                 </Select>
                 {billingHourPreset === "custom" ? (
-                  <Input
-                    type="number"
-                    min="1"
-                    placeholder="시간을 직접 입력하세요"
-                    value={totalCount}
-                    onChange={(e) => setTotalCount(e.target.value)}
-                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="relative">
+                      <Input
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        value={dailyCareHour}
+                        onChange={(e) => {
+                          setDailyCareHour(e.target.value);
+                          setTotalCount(
+                            String(Number(e.target.value || 0) * 60 + Number(dailyCareMinute || 0)),
+                          );
+                        }}
+                        className="pr-8"
+                      />
+                      <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                        시간
+                      </span>
+                    </div>
+                    <div className="relative">
+                      <Input
+                        type="number"
+                        min="0"
+                        max="59"
+                        placeholder="0"
+                        value={dailyCareMinute}
+                        onChange={(e) => {
+                          setDailyCareMinute(e.target.value);
+                          setTotalCount(
+                            String(Number(dailyCareHour || 0) * 60 + Number(e.target.value || 0)),
+                          );
+                        }}
+                        className="pr-8"
+                      />
+                      <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                        분
+                      </span>
+                    </div>
+                  </div>
                 ) : null}
               </div>
             ) : (
@@ -551,37 +664,32 @@ function PassFormFields({
         </div>
       ) : null}
 
-      {passType === "pickup_dropoff" ? null : (
-        <div className="space-y-2">
-          <Label>유효기간 (발급일로부터)</Label>
-          <div className="grid grid-cols-2 gap-3">
-            <Input
-              type="number"
-              min="0"
-              value={validityValue}
-              onChange={(e) => setValidityValue(e.target.value)}
-            />
-            <Select
-              value={validityUnit}
-              onValueChange={(v) => setValidityUnit(v as "month" | "day")}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {VALIDITY_UNITS.map((u) => (
-                  <SelectItem key={u.value} value={u.value}>
-                    {u.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            0으로 두면 만료일 없이 무제한으로 등록됩니다.
-          </p>
+      <div className="space-y-2">
+        <Label>유효기간 (발급일로부터)</Label>
+        <div className="grid grid-cols-2 gap-3">
+          <Input
+            type="number"
+            min="0"
+            value={validityValue}
+            onChange={(e) => setValidityValue(e.target.value)}
+          />
+          <Select value={validityUnit} onValueChange={(v) => setValidityUnit(v as "month" | "day")}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {VALIDITY_UNITS.map((u) => (
+                <SelectItem key={u.value} value={u.value}>
+                  {u.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-      )}
+        <p className="text-xs text-muted-foreground">
+          0으로 두면 만료일 없이 무제한으로 등록됩니다.
+        </p>
+      </div>
 
       <div className="space-y-2">
         <Label>비고</Label>
@@ -612,7 +720,9 @@ function NewPassDialog() {
   const [passType, setPassType] = useState<PassType>("kindergarten");
   const [weightClass, setWeightClass] = useState("");
   const [availableDays, setAvailableDays] = useState("all");
-  const [billingHourPreset, setBillingHourPreset] = useState("1");
+  const [billingHourPreset, setBillingHourPreset] = useState("60");
+  const [dailyCareHour, setDailyCareHour] = useState("0");
+  const [dailyCareMinute, setDailyCareMinute] = useState("0");
   const [tripType, setTripType] = useState("one_way");
   const [title, setTitle] = useState("");
   const [totalCount, setTotalCount] = useState("10");
@@ -626,7 +736,9 @@ function NewPassDialog() {
     setPassType("kindergarten");
     setWeightClass("");
     setAvailableDays("all");
-    setBillingHourPreset("1");
+    setBillingHourPreset("60");
+    setDailyCareHour("0");
+    setDailyCareMinute("0");
     setTripType("one_way");
     setTitle("");
     setTotalCount("10");
@@ -640,9 +752,7 @@ function NewPassDialog() {
   const create = useMutation({
     mutationFn: async () => {
       const isPickupDropoff = passType === "pickup_dropoff";
-      const expiresOn = isPickupDropoff
-        ? null
-        : computeExpiresOn(Number(validityValue), validityUnit);
+      const expiresOn = computeExpiresOn(Number(validityValue), validityUnit);
       const { error } = await supabase.from("passes").insert({
         pass_type: passType,
         weight_class:
@@ -696,6 +806,10 @@ function NewPassDialog() {
           setAvailableDays={setAvailableDays}
           billingHourPreset={billingHourPreset}
           setBillingHourPreset={setBillingHourPreset}
+          dailyCareHour={dailyCareHour}
+          setDailyCareHour={setDailyCareHour}
+          dailyCareMinute={dailyCareMinute}
+          setDailyCareMinute={setDailyCareMinute}
           tripType={tripType}
           setTripType={setTripType}
           title={title}
@@ -734,7 +848,9 @@ function EditPassDialog({
   const [passType, setPassType] = useState<PassType>("kindergarten");
   const [weightClass, setWeightClass] = useState("");
   const [availableDays, setAvailableDays] = useState("all");
-  const [billingHourPreset, setBillingHourPreset] = useState("1");
+  const [billingHourPreset, setBillingHourPreset] = useState("60");
+  const [dailyCareHour, setDailyCareHour] = useState("0");
+  const [dailyCareMinute, setDailyCareMinute] = useState("0");
   const [tripType, setTripType] = useState("one_way");
   const [title, setTitle] = useState("");
   const [totalCount, setTotalCount] = useState("10");
@@ -758,6 +874,8 @@ function EditPassDialog({
         ? String(row.total_count)
         : "custom",
     );
+    setDailyCareHour(String(Math.floor(row.total_count / 60)));
+    setDailyCareMinute(String(row.total_count % 60));
     setTripType(row.trip_type ?? "one_way");
     setTitle(row.title);
     setTotalCount(String(row.total_count));
@@ -771,9 +889,7 @@ function EditPassDialog({
   const update = useMutation({
     mutationFn: async () => {
       const isPickupDropoff = passType === "pickup_dropoff";
-      const newExpiresOn = isPickupDropoff
-        ? null
-        : computeExpiresOn(Number(validityValue), validityUnit);
+      const newExpiresOn = computeExpiresOn(Number(validityValue), validityUnit);
       const { error } = await supabase
         .from("passes")
         .update({
@@ -789,7 +905,6 @@ function EditPassDialog({
           price: Number(price),
           memo: memo.trim() || null,
           active,
-          ...(isPickupDropoff ? { expires_on: null } : {}),
           ...(newExpiresOn ? { expires_on: newExpiresOn } : {}),
         })
         .eq("id", row!.id);
@@ -836,6 +951,10 @@ function EditPassDialog({
             setAvailableDays={setAvailableDays}
             billingHourPreset={billingHourPreset}
             setBillingHourPreset={setBillingHourPreset}
+            dailyCareHour={dailyCareHour}
+            setDailyCareHour={setDailyCareHour}
+            dailyCareMinute={dailyCareMinute}
+            setDailyCareMinute={setDailyCareMinute}
             tripType={tripType}
             setTripType={setTripType}
             title={title}
