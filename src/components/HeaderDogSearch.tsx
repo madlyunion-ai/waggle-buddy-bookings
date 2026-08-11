@@ -51,7 +51,7 @@ export function HeaderDogSearch() {
   const results = searchQuery.data?.pets ?? [];
 
   return (
-    <div ref={containerRef} className="relative w-full max-w-xs">
+    <div ref={containerRef} className="relative w-full max-w-2xl">
       <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
       <input
         value={query}
@@ -61,7 +61,7 @@ export function HeaderDogSearch() {
         }}
         onFocus={() => setDropdownOpen(true)}
         placeholder="반려견 이름으로 검색"
-        className="h-8 w-full rounded-full border border-white/20 bg-white/10 pl-9 pr-3 text-xs text-white placeholder:text-white/60 focus:border-white/40 focus:outline-none"
+        className="h-8 w-full rounded-full border border-border bg-white pl-9 pr-3 text-xs text-black placeholder:text-muted-foreground focus:border-primary focus:outline-none"
       />
 
       {dropdownOpen && debounced.length > 0 ? (
@@ -156,7 +156,7 @@ export function HeaderDogSearch() {
         </DialogContent>
       </Dialog>
 
-      {selectedPet?.ownerId ? (
+      {selectedPet ? (
         <NewReservationDialog
           defaultDate={toDateKey(new Date())}
           open={reserveOpen}
@@ -165,8 +165,8 @@ export function HeaderDogSearch() {
             if (!next) setSelectedPet(null);
           }}
           hideTrigger
-          initialMember={{ id: selectedPet.ownerId, name: selectedPet.ownerNames[0] ?? "" }}
-          initialPetId={selectedPet.id}
+          initialDogId={selectedPet.dbId}
+          initialPetName={selectedPet.name}
         />
       ) : null}
     </div>

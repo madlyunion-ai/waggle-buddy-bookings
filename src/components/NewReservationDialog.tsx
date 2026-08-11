@@ -31,11 +31,16 @@ import {
   SERVICE_TYPES,
   addDays,
   addMinutes,
-  formatWon,
   nightsBetween,
   stayLabel,
   type ServiceType,
 } from "@/lib/kindergarten";
+
+const PICKUP_USAGE_MODES = [
+  { value: "pickup", label: "픽업" },
+  { value: "dropoff", label: "드랍" },
+  { value: "round_trip", label: "왕복" },
+] as const;
 
 export function NewReservationDialog({
   defaultDate,
@@ -44,6 +49,8 @@ export function NewReservationDialog({
   hideTrigger,
   initialMember,
   initialPetId,
+  initialDogId,
+  initialPetName,
 }: {
   defaultDate: string;
   open?: boolean;
@@ -52,6 +59,9 @@ export function NewReservationDialog({
   /** 헤더 검색 등에서 특정 회원/반려견을 미리 선택된 상태로 열 때 사용 */
   initialMember?: { id: string; name: string };
   initialPetId?: string;
+  /** 이미 동기화된 반려견의 내부 DB id. 있으면 회원/반려견 검색 없이 바로 이 반려견으로 예약한다 */
+  initialDogId?: string;
+  initialPetName?: string;
 }) {
   const queryClient = useQueryClient();
   const [openState, setOpenState] = useState(false);
@@ -60,6 +70,8 @@ export function NewReservationDialog({
     setOpenState(next);
     onOpenChange?.(next);
   };
+
+  const usingKnownDog = !!initialDogId;
 
   const [serviceType, setServiceType] = useState<ServiceType>("kindergarten");
   const [memberSearch, setMemberSearch] = useState("");
@@ -72,9 +84,9 @@ export function NewReservationDialog({
   const [slot, setSlot] = useState("10:00");
   const [memo, setMemo] = useState("");
   const [passId, setPassId] = useState("none");
-  const [pickupChecked, setPickupChecked] = useState(false);
-  const [dropoffChecked, setDropoffChecked] = useState(false);
   const [pickupPassId, setPickupPassId] = useState("none");
+  const [pickupUsageMode, setPickupUsageMode] =
+    useState<(typeof PICKUP_USAGE_MODES)[number]["value"]>("round_trip");
 
   const fetchMembers = useServerFn(listExternalMembers);
   const fetchPets = useServerFn(listExternalPets);
@@ -82,7 +94,7 @@ export function NewReservationDialog({
   const membersQuery = useQuery({
     queryKey: ["external-members", memberSearch],
     queryFn: () => fetchMembers({ data: { search: memberSearch, limit: 30 } }),
-    enabled: open,
+    enabled: open && !usingKnownDog,
   });
 
   const member = (membersQuery.data ?? []).find((m) => m.id === memberId) ?? null;
@@ -93,12 +105,12 @@ export function NewReservationDialog({
       fetchPets({
         data: { memberId, source: member?.source ?? "owner", search: member?.name ?? "" },
       }),
-    enabled: open && !!memberId,
+    enabled: open && !usingKnownDog && !!memberId,
   });
 
   const pet = (petsQuery.data ?? []).find((p) => p.id === petId) ?? null;
 
-  // 선택한 반려견의 내부 이용권 목록 (동기화된 강아지 기준)
+  // 선택한 반려견이 실제로 보유한 이용권 목록 (동기화된 강아지 기준)
   const passesQuery = useQuery({
     queryKey: ["passes", "for-external-pet", petId],
     queryFn: async () => {
@@ -110,7 +122,7 @@ export function NewReservationDialog({
       if (!dog) return [];
       const { data, error } = await supabase
         .from("passes")
-        .select("id, title, total_count, used_count, payment_status, expires_on")
+        .select("id, title, pass_type, total_count, used_count, payment_status, expires_on")
         .eq("dog_id", dog.id)
         .order("purchased_on", { ascending: true });
       if (error) throw error;
@@ -119,115 +131,97 @@ export function NewReservationDialog({
     enabled: open && !!petId,
   });
 
-  const availablePasses = (passesQuery.data ?? []).filter(
-    (p) => p.payment_status === "paid" && p.used_count < p.total_count,
+  const ownedPasses = passesQuery.data ?? [];
+  const availablePasses = ownedPasses.filter(
+    (p) =>
+      p.pass_type === serviceType && p.payment_status === "paid" && p.used_count < p.total_count,
+  );
+  const availableKindergartenPasses = ownedPasses.filter(
+    (p) =>
+      p.pass_type === "kindergarten" && p.payment_status === "paid" && p.used_count < p.total_count,
+  );
+  const availablePickupPasses = ownedPasses.filter(
+    (p) =>
+      p.pass_type === "pickup_dropoff" &&
+      p.payment_status === "paid" &&
+      p.used_count < p.total_count,
   );
 
-  // 유치원: 이용권 관리에서 등록한 유치원 타입 이용권 카탈로그
-  const kindergartenPassesQuery = useQuery({
-    queryKey: ["passes", "catalog", "kindergarten"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("passes")
-        .select("id, title, price")
-        .eq("pass_type", "kindergarten")
-        .eq("active", true)
-        .order("title", { ascending: true });
-      if (error) throw error;
-      return data ?? [];
-    },
-    enabled: open && serviceType === "kindergarten",
-  });
-
-  // 유치원: 픽드랍 신청 시 선택할 픽드랍 이용권 카탈로그
-  const pickupPassesQuery = useQuery({
-    queryKey: ["passes", "catalog", "pickup_dropoff"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("passes")
-        .select("id, title, price")
-        .eq("pass_type", "pickup_dropoff")
-        .eq("active", true)
-        .order("title", { ascending: true });
-      if (error) throw error;
-      return data ?? [];
-    },
-    enabled: open && serviceType === "kindergarten" && (pickupChecked || dropoffChecked),
-  });
-
-  const selectedKindergartenPass = (kindergartenPassesQuery.data ?? []).find(
-    (p) => p.id === passId,
-  );
-  const selectedPickupPass = (pickupPassesQuery.data ?? []).find((p) => p.id === pickupPassId);
-  const finalAmount =
-    (selectedKindergartenPass?.price ?? 0) +
-    ((pickupChecked || dropoffChecked) && selectedPickupPass ? selectedPickupPass.price : 0);
+  const selectedKindergartenPass = availableKindergartenPasses.find((p) => p.id === passId);
+  const selectedPickupPass = availablePickupPasses.find((p) => p.id === pickupPassId);
 
   const create = useMutation({
     mutationFn: async () => {
-      if (!member || !pet) throw new Error("회원과 반려견을 선택해 주세요.");
+      let dogId: string;
 
-      // 외부 회원을 내부 보호자 레코드와 동기화
-      const { data: existingOwner } = await supabase
-        .from("owners")
-        .select("id")
-        .eq("external_id", member.id)
-        .maybeSingle();
-      let ownerId = existingOwner?.id ?? null;
-      if (!ownerId) {
-        const { data: inserted, error: ownerError } = await supabase
+      if (usingKnownDog) {
+        dogId = initialDogId!;
+      } else {
+        if (!member || !pet) throw new Error("회원과 반려견을 선택해 주세요.");
+
+        // 외부 회원을 내부 보호자 레코드와 동기화
+        const { data: existingOwner } = await supabase
           .from("owners")
-          .insert({
-            name: member.name,
-            phone: member.phone ?? "-",
-            email: member.email,
-            external_id: member.id,
-            external_source: member.source,
-          })
           .select("id")
-          .single();
-        if (ownerError) throw ownerError;
-        ownerId = inserted.id;
-      }
+          .eq("external_id", member.id)
+          .maybeSingle();
+        let ownerId = existingOwner?.id ?? null;
+        if (!ownerId) {
+          const { data: inserted, error: ownerError } = await supabase
+            .from("owners")
+            .insert({
+              name: member.name,
+              phone: member.phone ?? "-",
+              email: member.email,
+              external_id: member.id,
+              external_source: member.source,
+            })
+            .select("id")
+            .single();
+          if (ownerError) throw ownerError;
+          ownerId = inserted.id;
+        }
 
-      // 외부 반려견을 내부 강아지 레코드와 동기화
-      const { data: existingDog } = await supabase
-        .from("dogs")
-        .select("id")
-        .eq("external_id", pet.id)
-        .maybeSingle();
-      let dogId = existingDog?.id ?? null;
-      if (!dogId) {
-        const { data: insertedDog, error: dogError } = await supabase
+        // 외부 반려견을 내부 강아지 레코드와 동기화
+        const { data: existingDog } = await supabase
           .from("dogs")
-          .insert({
-            owner_id: ownerId,
-            name: pet.name,
-            breed: pet.breed,
-            birth_date: pet.birthDate,
-            weight_kg: pet.weight,
-            external_id: pet.id,
-          })
           .select("id")
-          .single();
-        if (dogError) throw dogError;
-        dogId = insertedDog.id;
+          .eq("external_id", pet.id)
+          .maybeSingle();
+        let resolvedDogId = existingDog?.id ?? null;
+        if (!resolvedDogId) {
+          const { data: insertedDog, error: dogError } = await supabase
+            .from("dogs")
+            .insert({
+              owner_id: ownerId,
+              name: pet.name,
+              breed: pet.breed,
+              birth_date: pet.birthDate,
+              weight_kg: pet.weight,
+              external_id: pet.id,
+            })
+            .select("id")
+            .single();
+          if (dogError) throw dogError;
+          resolvedDogId = insertedDog.id;
+        }
+        dogId = resolvedDogId;
       }
 
-      // 이용권 적용: 유치원은 이용권 관리 카탈로그에서 직접 선택, 그 외 타입은 반려견이
-      // 보유한 개인 이용권을 선택("자동"이면 사용 가능한 이용권을 자동 적용)
+      // 이용권 적용: 반려견이 실제로 보유한 이용권 중에서만 선택 가능
+      // (유치원: 직접 선택 / 그 외: "자동"이면 사용 가능한 이용권을 자동 적용)
       let appliedPassId: string | null = null;
       let appliedPickupPassId: string | null = null;
       if (serviceType === "kindergarten") {
         appliedPassId = passId !== "none" ? passId : null;
-        appliedPickupPassId =
-          (pickupChecked || dropoffChecked) && pickupPassId !== "none" ? pickupPassId : null;
+        appliedPickupPassId = pickupPassId !== "none" ? pickupPassId : null;
       } else if (passId !== "none") {
         if (passId === "auto") {
           const { data: pass } = await supabase
             .from("passes")
             .select("id, total_count, used_count")
             .eq("dog_id", dogId)
+            .eq("pass_type", serviceType)
             .eq("payment_status", "paid")
             .order("purchased_on", { ascending: true });
           appliedPassId = (pass ?? []).find((p) => p.used_count < p.total_count)?.id ?? null;
@@ -253,10 +247,32 @@ export function NewReservationDialog({
         memo: memo || null,
         pass_id: appliedPassId,
         pickup_pass_id: appliedPickupPassId,
-        pickup_requested: serviceType === "kindergarten" ? pickupChecked : false,
-        dropoff_requested: serviceType === "kindergarten" ? dropoffChecked : false,
+        pickup_requested:
+          serviceType === "kindergarten" &&
+          appliedPickupPassId !== null &&
+          (pickupUsageMode === "pickup" || pickupUsageMode === "round_trip"),
+        dropoff_requested:
+          serviceType === "kindergarten" &&
+          appliedPickupPassId !== null &&
+          (pickupUsageMode === "dropoff" || pickupUsageMode === "round_trip"),
       });
       if (error) throw error;
+
+      // 이용권 적용 시 횟수 차감
+      for (const id of [appliedPassId, appliedPickupPassId]) {
+        if (!id) continue;
+        const { data: applied } = await supabase
+          .from("passes")
+          .select("used_count, total_count")
+          .eq("id", id)
+          .maybeSingle();
+        if (applied) {
+          await supabase
+            .from("passes")
+            .update({ used_count: Math.min(applied.total_count, applied.used_count + 1) })
+            .eq("id", id);
+        }
+      }
     },
 
     onSuccess: () => {
@@ -267,9 +283,8 @@ export function NewReservationDialog({
       setMemo("");
       setPetId("");
       setPassId("none");
-      setPickupChecked(false);
-      setDropoffChecked(false);
       setPickupPassId("none");
+      setPickupUsageMode("round_trip");
     },
     onError: (e: Error) => toast.error("예약 등록에 실패했습니다", { description: e.message }),
   });
@@ -323,75 +338,83 @@ export function NewReservationDialog({
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label>회원 검색</Label>
-            <div className="grid grid-cols-2 gap-3">
-              <Input
-                value={memberSearch}
-                placeholder="이름 또는 전화번호로 검색"
-                onChange={(e) => {
-                  setMemberSearch(e.target.value);
-                  setMemberId("");
-                  setPetId("");
-                }}
-              />
-              <Select
-                value={memberId}
-                onValueChange={(v) => {
-                  setMemberId(v);
-                  setPetId("");
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue
-                    placeholder={
-                      membersQuery.isLoading ? "회원을 불러오는 중…" : "회원을 선택하세요"
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {(membersQuery.data ?? []).map((m) => (
-                    <SelectItem key={`${m.source}-${m.id}`} value={m.id}>
-                      {m.name} · {m.phone ?? "연락처 없음"}
-                      {m.source === "user" ? " (직원)" : ""}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          {usingKnownDog ? (
+            <div className="rounded-lg border border-border bg-secondary/50 px-3 py-2.5 text-sm font-bold">
+              {initialPetName ?? "선택한 반려견"} 반려견으로 예약을 등록합니다.
             </div>
-            {membersQuery.isError ? (
-              <p className="text-xs font-semibold text-destructive">
-                외부 회원 목록을 불러오지 못했습니다.
-              </p>
-            ) : null}
-          </div>
+          ) : (
+            <>
+              <div className="space-y-2">
+                <Label>회원 검색</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  <Input
+                    value={memberSearch}
+                    placeholder="이름 또는 전화번호로 검색"
+                    onChange={(e) => {
+                      setMemberSearch(e.target.value);
+                      setMemberId("");
+                      setPetId("");
+                    }}
+                  />
+                  <Select
+                    value={memberId}
+                    onValueChange={(v) => {
+                      setMemberId(v);
+                      setPetId("");
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue
+                        placeholder={
+                          membersQuery.isLoading ? "회원을 불러오는 중…" : "회원을 선택하세요"
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(membersQuery.data ?? []).map((m) => (
+                        <SelectItem key={`${m.source}-${m.id}`} value={m.id}>
+                          {m.name} · {m.phone ?? "연락처 없음"}
+                          {m.source === "user" ? " (직원)" : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {membersQuery.isError ? (
+                  <p className="text-xs font-semibold text-destructive">
+                    외부 회원 목록을 불러오지 못했습니다.
+                  </p>
+                ) : null}
+              </div>
 
-          <div className="space-y-2">
-            <Label>강아지</Label>
-            <Select value={petId} onValueChange={setPetId} disabled={!memberId}>
-              <SelectTrigger>
-                <SelectValue
-                  placeholder={
-                    !memberId
-                      ? "회원을 먼저 선택하세요"
-                      : petsQuery.isLoading
-                        ? "불러오는 중…"
-                        : (petsQuery.data ?? []).length === 0
-                          ? "등록된 강아지가 없습니다."
-                          : "강아지를 선택하세요"
-                  }
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {(petsQuery.data ?? []).map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.name}
-                    {p.breed ? ` · ${p.breed}` : ""}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+              <div className="space-y-2">
+                <Label>강아지</Label>
+                <Select value={petId} onValueChange={setPetId} disabled={!memberId}>
+                  <SelectTrigger>
+                    <SelectValue
+                      placeholder={
+                        !memberId
+                          ? "회원을 먼저 선택하세요"
+                          : petsQuery.isLoading
+                            ? "불러오는 중…"
+                            : (petsQuery.data ?? []).length === 0
+                              ? "등록된 강아지가 없습니다."
+                              : "강아지를 선택하세요"
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(petsQuery.data ?? []).map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.name}
+                        {p.breed ? ` · ${p.breed}` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </>
+          )}
 
           {serviceType !== "kindergarten" ? (
             <div className="space-y-2">
@@ -399,12 +422,20 @@ export function NewReservationDialog({
               <Select value={passId} onValueChange={setPassId} disabled={!petId}>
                 <SelectTrigger>
                   <SelectValue
-                    placeholder={!petId ? "강아지를 먼저 선택하세요" : "이용권을 선택하세요"}
+                    placeholder={
+                      !petId
+                        ? "강아지를 먼저 선택하세요"
+                        : availablePasses.length === 0
+                          ? "적용 가능한 이용권이 없습니다"
+                          : "이용권을 선택하세요"
+                    }
                   />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">사용 안 함</SelectItem>
-                  <SelectItem value="auto">자동 (사용 가능한 이용권)</SelectItem>
+                  {availablePasses.length > 0 ? (
+                    <SelectItem value="auto">자동 (사용 가능한 이용권)</SelectItem>
+                  ) : null}
                   {availablePasses.map((p) => (
                     <SelectItem key={p.id} value={p.id}>
                       {p.title} · 잔여 {p.total_count - p.used_count}회
@@ -522,15 +553,23 @@ export function NewReservationDialog({
 
               <div className="space-y-2">
                 <Label>이용권 적용</Label>
-                <Select value={passId} onValueChange={setPassId}>
+                <Select value={passId} onValueChange={setPassId} disabled={!petId}>
                   <SelectTrigger>
-                    <SelectValue placeholder="이용권을 선택하세요" />
+                    <SelectValue
+                      placeholder={
+                        !petId
+                          ? "강아지를 먼저 선택하세요"
+                          : availableKindergartenPasses.length === 0
+                            ? "적용 가능한 이용권이 없습니다"
+                            : "이용권을 선택하세요"
+                      }
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">사용 안 함</SelectItem>
-                    {(kindergartenPassesQuery.data ?? []).map((p) => (
+                    {availableKindergartenPasses.map((p) => (
                       <SelectItem key={p.id} value={p.id}>
-                        {p.title} · {formatWon(p.price)}
+                        {p.title} · 잔여 {p.total_count - p.used_count}회
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -538,37 +577,42 @@ export function NewReservationDialog({
               </div>
 
               <div className="space-y-2">
-                <div className="flex items-center gap-4">
-                  <Label className="mb-0">픽드랍 설정</Label>
-                  <label className="flex items-center gap-1.5 text-sm font-bold">
-                    <input
-                      type="checkbox"
-                      className="size-4 accent-primary"
-                      checked={pickupChecked}
-                      onChange={(e) => setPickupChecked(e.target.checked)}
+                <Label>픽드랍 설정</Label>
+                <Select value={pickupPassId} onValueChange={setPickupPassId} disabled={!petId}>
+                  <SelectTrigger>
+                    <SelectValue
+                      placeholder={
+                        !petId
+                          ? "강아지를 먼저 선택하세요"
+                          : availablePickupPasses.length === 0
+                            ? "적용 가능한 이용권이 없습니다"
+                            : "픽드랍 이용권을 선택하세요"
+                      }
                     />
-                    픽업
-                  </label>
-                  <label className="flex items-center gap-1.5 text-sm font-bold">
-                    <input
-                      type="checkbox"
-                      className="size-4 accent-primary"
-                      checked={dropoffChecked}
-                      onChange={(e) => setDropoffChecked(e.target.checked)}
-                    />
-                    드랍
-                  </label>
-                </div>
-                {pickupChecked || dropoffChecked ? (
-                  <Select value={pickupPassId} onValueChange={setPickupPassId}>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">사용 안 함</SelectItem>
+                    {availablePickupPasses.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.title} · 잔여 {p.total_count - p.used_count}회
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {pickupPassId !== "none" ? (
+                  <Select
+                    value={pickupUsageMode}
+                    onValueChange={(v) =>
+                      setPickupUsageMode(v as (typeof PICKUP_USAGE_MODES)[number]["value"])
+                    }
+                  >
                     <SelectTrigger>
-                      <SelectValue placeholder="픽드랍 이용권을 선택하세요" />
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">사용 안 함</SelectItem>
-                      {(pickupPassesQuery.data ?? []).map((p) => (
-                        <SelectItem key={p.id} value={p.id}>
-                          {p.title} · {formatWon(p.price)}
+                      {PICKUP_USAGE_MODES.map((m) => (
+                        <SelectItem key={m.value} value={m.value}>
+                          {m.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -576,10 +620,11 @@ export function NewReservationDialog({
                 ) : null}
               </div>
 
-              <div className="flex items-center justify-between rounded-lg bg-secondary px-3 py-2.5 text-sm font-bold">
-                <span>최종 금액</span>
-                <span className="text-primary">{formatWon(finalAmount)}</span>
-              </div>
+              {selectedKindergartenPass || selectedPickupPass ? (
+                <p className="text-xs text-muted-foreground">
+                  적용된 이용권은 등록 시 잔여 횟수가 1회 차감됩니다.
+                </p>
+              ) : null}
             </div>
           ) : (
             <div className="space-y-3">
