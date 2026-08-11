@@ -118,12 +118,12 @@ const SERVICE_TEXT_SOLID: Record<ServiceType, string> = {
   grooming: "text-warning-foreground",
 };
 
-/** 캘린더 막대(연속 예약 바)용 스타일 - 배경 불투명도만 80%로 높여 SERVICE_STYLES와 구분 */
+/** 캘린더 막대(연속 예약 바)용 스타일 - 배경 불투명도 80%, 폰트는 흰색 80%로 통일 */
 const SERVICE_BAR_STYLES: Record<ServiceType, string> = {
-  kindergarten: "bg-primary/80 text-primary border-primary/25",
-  hotel: "bg-accent/80 text-accent-foreground/70 border-accent/35",
-  daily_care: "bg-rose-300/80 text-rose-400/80 border-rose-300/45",
-  grooming: "bg-warning/80 text-warning-foreground/70 border-warning/35",
+  kindergarten: "bg-primary/80 text-white/80 border-primary/25",
+  hotel: "bg-accent/80 text-white/80 border-accent/35",
+  daily_care: "bg-rose-300/80 text-white/80 border-rose-300/45",
+  grooming: "bg-warning/80 text-white/80 border-warning/35",
 };
 
 /** 클래스 문자열 전체를 sm: 반응형 접두사로 감싸는 헬퍼 (데스크톱 전용 스타일 재사용) */
@@ -555,7 +555,7 @@ function DashboardPage() {
                         className={`pointer-events-auto mx-0.5 flex items-center gap-1 truncate rounded-md border px-2 text-[10px] font-semibold leading-[16px] ${SERVICE_BAR_STYLES[seg.row.service_type]}`}
                       >
                         <span className="min-w-0 flex-1 truncate">{seg.row.dogs?.name ?? "-"}</span>
-                        <span className="shrink-0 opacity-80">
+                        <span className="shrink-0">
                           {seg.span > 1
                             ? `~${(seg.row.end_date ?? seg.row.reserved_date).slice(5).replace("-", "/")}`
                             : formatTime(seg.row.drop_off_time)}
