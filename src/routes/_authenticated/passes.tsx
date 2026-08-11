@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { BedDouble, CalendarCheck, Clock, Pencil, Plus, Scissors, Ticket } from "lucide-react";
+import { BedDouble, CalendarCheck, Car, Clock, Pencil, Plus, Scissors, Ticket } from "lucide-react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/AppShell";
@@ -45,12 +45,37 @@ import {
   type ServiceType,
 } from "@/lib/kindergarten";
 
-const SERVICE_ICONS: Record<ServiceType, typeof CalendarCheck> = {
+type PassType = ServiceType | "pickup_dropoff";
+
+const PASS_TYPES: PassType[] = [...SERVICE_TYPES, "pickup_dropoff"];
+
+const PASS_TYPE_LABELS: Record<PassType, string> = {
+  ...SERVICE_LABELS,
+  pickup_dropoff: "픽드랍",
+};
+
+const PASS_TYPE_STYLES: Record<PassType, string> = {
+  ...SERVICE_STYLES,
+  pickup_dropoff: "bg-sky-300/10 text-sky-500/80 border-sky-300/45",
+};
+
+const PASS_TYPE_ICONS: Record<PassType, typeof CalendarCheck> = {
   kindergarten: CalendarCheck,
   hotel: BedDouble,
   daily_care: Clock,
   grooming: Scissors,
+  pickup_dropoff: Car,
 };
+
+const TRIP_TYPES = [
+  { value: "one_way", label: "편도" },
+  { value: "round_trip", label: "왕복" },
+] as const;
+
+function tripTypeLabel(value: string | null) {
+  if (!value) return null;
+  return TRIP_TYPES.find((t) => t.value === value)?.label ?? value;
+}
 
 const WEIGHT_CLASSES = [
   { value: "small", label: "소형(2~4.9kg)" },
@@ -116,11 +141,12 @@ type PassRow = {
   active: boolean;
   weight_class: string | null;
   available_days: string | null;
+  trip_type: string | null;
   dogs: { id: string; name: string; owners: { name: string; phone: string } | null } | null;
 };
 
 function passTypeLabel(type: string) {
-  return SERVICE_LABELS[type as ServiceType] ?? type;
+  return PASS_TYPE_LABELS[type as PassType] ?? type;
 }
 
 function PassesPage() {
@@ -133,7 +159,7 @@ function PassesPage() {
       const { data, error } = await supabase
         .from("passes")
         .select(
-          "id, title, pass_type, total_count, used_count, price, purchased_on, expires_on, memo, active, weight_class, available_days, dogs(id, name, owners(name, phone))",
+          "id, title, pass_type, total_count, used_count, price, purchased_on, expires_on, memo, active, weight_class, available_days, trip_type, dogs(id, name, owners(name, phone))",
         )
         .order("purchased_on", { ascending: false });
       if (error) throw error;
@@ -228,7 +254,10 @@ function PassesPage() {
                       </td>
                       <td className="px-4 py-3 text-center text-muted-foreground">
                         {passTypeLabel(pass.pass_type)}
-                        {pass.pass_type === "kindergarten" && pass.weight_class ? (
+                        {(pass.pass_type === "kindergarten" ||
+                          pass.pass_type === "hotel" ||
+                          pass.pass_type === "daily_care") &&
+                        pass.weight_class ? (
                           <span className="block text-[10px]">
                             {weightClassLabel(pass.weight_class)}
                           </span>
@@ -240,7 +269,9 @@ function PassesPage() {
                         ) : null}
                       </td>
                       <td className="px-4 py-3 text-center text-muted-foreground">
-                        {pass.pass_type === "daily_care" ? (
+                        {pass.pass_type === "pickup_dropoff" ? (
+                          (tripTypeLabel(pass.trip_type) ?? "-")
+                        ) : pass.pass_type === "daily_care" ? (
                           `${pass.total_count}시간`
                         ) : (
                           <>
@@ -316,6 +347,8 @@ function PassFormFields({
   setAvailableDays,
   billingHourPreset,
   setBillingHourPreset,
+  tripType,
+  setTripType,
   title,
   setTitle,
   totalCount,
@@ -331,14 +364,16 @@ function PassFormFields({
   active,
   setActive,
 }: {
-  passType: ServiceType;
-  setPassType: (v: ServiceType) => void;
+  passType: PassType;
+  setPassType: (v: PassType) => void;
   weightClass: string;
   setWeightClass: (v: string) => void;
   availableDays: string;
   setAvailableDays: (v: string) => void;
   billingHourPreset: string;
   setBillingHourPreset: (v: string) => void;
+  tripType: string;
+  setTripType: (v: string) => void;
   title: string;
   setTitle: (v: string) => void;
   totalCount: string;
@@ -354,13 +389,16 @@ function PassFormFields({
   active: boolean;
   setActive: (v: boolean) => void;
 }) {
+  const showWeightClass =
+    passType === "kindergarten" || passType === "hotel" || passType === "daily_care";
+
   return (
     <div className="space-y-4">
       <div className="space-y-2">
         <Label>이용권 타입</Label>
-        <div className="grid grid-cols-4 gap-2">
-          {SERVICE_TYPES.map((t) => {
-            const Icon = SERVICE_ICONS[t];
+        <div className="grid grid-cols-5 gap-1.5">
+          {PASS_TYPES.map((t) => {
+            const Icon = PASS_TYPE_ICONS[t];
             const isActive = passType === t;
             return (
               <button
@@ -372,14 +410,14 @@ function PassFormFields({
                     setTotalCount(billingHourPreset);
                   }
                 }}
-                className={`flex flex-col items-center gap-1.5 rounded-xl border px-2 py-3 text-xs font-bold shadow-none transition-all ${
+                className={`flex flex-col items-center gap-1 rounded-xl border px-1 py-2.5 text-[11px] font-bold shadow-none transition-all ${
                   isActive
-                    ? `${SERVICE_STYLES[t]} scale-[1.03]`
+                    ? `${PASS_TYPE_STYLES[t]} scale-[1.03]`
                     : "border-border bg-transparent text-muted-foreground hover:bg-secondary"
                 }`}
               >
-                <Icon className="size-5" />
-                {SERVICE_LABELS[t]}
+                <Icon className="size-4" />
+                {PASS_TYPE_LABELS[t]}
               </button>
             );
           })}
@@ -396,7 +434,7 @@ function PassFormFields({
         />
       </div>
 
-      {passType === "kindergarten" ? (
+      {showWeightClass ? (
         <div className="space-y-2">
           <Label>반려견 체중 구분</Label>
           <Select value={weightClass} onValueChange={setWeightClass}>
@@ -414,53 +452,82 @@ function PassFormFields({
         </div>
       ) : null}
 
-      <div className="grid grid-cols-2 gap-3">
+      {passType === "pickup_dropoff" ? (
         <div className="space-y-2">
-          <Label>{passType === "daily_care" ? "과금 시간" : "이용권 횟수"}</Label>
-          {passType === "daily_care" ? (
-            <div className="space-y-2">
-              <Select
-                value={billingHourPreset}
-                onValueChange={(v) => {
-                  setBillingHourPreset(v);
-                  if (v !== "custom") setTotalCount(v);
-                }}
+          <Label>운행구분</Label>
+          <div className="grid grid-cols-2 gap-2">
+            {TRIP_TYPES.map((t) => (
+              <button
+                key={t.value}
+                type="button"
+                onClick={() => setTripType(t.value)}
+                className={`rounded-lg border px-2 py-2 text-sm font-bold transition-colors ${
+                  tripType === t.value
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border bg-transparent text-muted-foreground hover:bg-secondary"
+                }`}
               >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {BILLING_HOUR_PRESETS.map((p) => (
-                    <SelectItem key={p.value} value={p.value}>
-                      {p.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {billingHourPreset === "custom" ? (
-                <Input
-                  type="number"
-                  min="1"
-                  placeholder="시간을 직접 입력하세요"
-                  value={totalCount}
-                  onChange={(e) => setTotalCount(e.target.value)}
-                />
-              ) : null}
-            </div>
-          ) : (
-            <Input
-              type="number"
-              min="1"
-              value={totalCount}
-              onChange={(e) => setTotalCount(e.target.value)}
-            />
-          )}
+                {t.label}
+              </button>
+            ))}
+          </div>
         </div>
+      ) : null}
+
+      {passType === "pickup_dropoff" ? (
         <div className="space-y-2">
           <Label>이용권 금액 (원)</Label>
           <Input type="number" min="0" value={price} onChange={(e) => setPrice(e.target.value)} />
         </div>
-      </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <Label>{passType === "daily_care" ? "과금 시간" : "이용권 횟수"}</Label>
+            {passType === "daily_care" ? (
+              <div className="space-y-2">
+                <Select
+                  value={billingHourPreset}
+                  onValueChange={(v) => {
+                    setBillingHourPreset(v);
+                    if (v !== "custom") setTotalCount(v);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {BILLING_HOUR_PRESETS.map((p) => (
+                      <SelectItem key={p.value} value={p.value}>
+                        {p.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {billingHourPreset === "custom" ? (
+                  <Input
+                    type="number"
+                    min="1"
+                    placeholder="시간을 직접 입력하세요"
+                    value={totalCount}
+                    onChange={(e) => setTotalCount(e.target.value)}
+                  />
+                ) : null}
+              </div>
+            ) : (
+              <Input
+                type="number"
+                min="1"
+                value={totalCount}
+                onChange={(e) => setTotalCount(e.target.value)}
+              />
+            )}
+          </div>
+          <div className="space-y-2">
+            <Label>이용권 금액 (원)</Label>
+            <Input type="number" min="0" value={price} onChange={(e) => setPrice(e.target.value)} />
+          </div>
+        </div>
+      )}
 
       {passType === "hotel" ? (
         <div className="space-y-2">
@@ -484,32 +551,37 @@ function PassFormFields({
         </div>
       ) : null}
 
-      <div className="space-y-2">
-        <Label>유효기간 (발급일로부터)</Label>
-        <div className="grid grid-cols-2 gap-3">
-          <Input
-            type="number"
-            min="0"
-            value={validityValue}
-            onChange={(e) => setValidityValue(e.target.value)}
-          />
-          <Select value={validityUnit} onValueChange={(v) => setValidityUnit(v as "month" | "day")}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {VALIDITY_UNITS.map((u) => (
-                <SelectItem key={u.value} value={u.value}>
-                  {u.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      {passType === "pickup_dropoff" ? null : (
+        <div className="space-y-2">
+          <Label>유효기간 (발급일로부터)</Label>
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              type="number"
+              min="0"
+              value={validityValue}
+              onChange={(e) => setValidityValue(e.target.value)}
+            />
+            <Select
+              value={validityUnit}
+              onValueChange={(v) => setValidityUnit(v as "month" | "day")}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {VALIDITY_UNITS.map((u) => (
+                  <SelectItem key={u.value} value={u.value}>
+                    {u.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            0으로 두면 만료일 없이 무제한으로 등록됩니다.
+          </p>
         </div>
-        <p className="text-xs text-muted-foreground">
-          0으로 두면 만료일 없이 무제한으로 등록됩니다.
-        </p>
-      </div>
+      )}
 
       <div className="space-y-2">
         <Label>비고</Label>
@@ -537,10 +609,11 @@ function PassFormFields({
 function NewPassDialog() {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [passType, setPassType] = useState<ServiceType>("kindergarten");
+  const [passType, setPassType] = useState<PassType>("kindergarten");
   const [weightClass, setWeightClass] = useState("");
   const [availableDays, setAvailableDays] = useState("all");
   const [billingHourPreset, setBillingHourPreset] = useState("1");
+  const [tripType, setTripType] = useState("one_way");
   const [title, setTitle] = useState("");
   const [totalCount, setTotalCount] = useState("10");
   const [price, setPrice] = useState("300000");
@@ -554,6 +627,7 @@ function NewPassDialog() {
     setWeightClass("");
     setAvailableDays("all");
     setBillingHourPreset("1");
+    setTripType("one_way");
     setTitle("");
     setTotalCount("10");
     setPrice("300000");
@@ -565,13 +639,20 @@ function NewPassDialog() {
 
   const create = useMutation({
     mutationFn: async () => {
-      const expiresOn = computeExpiresOn(Number(validityValue), validityUnit);
+      const isPickupDropoff = passType === "pickup_dropoff";
+      const expiresOn = isPickupDropoff
+        ? null
+        : computeExpiresOn(Number(validityValue), validityUnit);
       const { error } = await supabase.from("passes").insert({
         pass_type: passType,
-        weight_class: passType === "kindergarten" ? weightClass || null : null,
+        weight_class:
+          passType === "kindergarten" || passType === "hotel" || passType === "daily_care"
+            ? weightClass || null
+            : null,
         available_days: passType === "hotel" ? availableDays || null : null,
+        trip_type: isPickupDropoff ? tripType || null : null,
         title: title.trim(),
-        total_count: Number(totalCount),
+        total_count: isPickupDropoff ? 1 : Number(totalCount),
         price: Number(price),
         expires_on: expiresOn,
         memo: memo.trim() || null,
@@ -615,6 +696,8 @@ function NewPassDialog() {
           setAvailableDays={setAvailableDays}
           billingHourPreset={billingHourPreset}
           setBillingHourPreset={setBillingHourPreset}
+          tripType={tripType}
+          setTripType={setTripType}
           title={title}
           setTitle={setTitle}
           totalCount={totalCount}
@@ -648,10 +731,11 @@ function EditPassDialog({
   onOpenChange: (v: boolean) => void;
 }) {
   const queryClient = useQueryClient();
-  const [passType, setPassType] = useState<ServiceType>("kindergarten");
+  const [passType, setPassType] = useState<PassType>("kindergarten");
   const [weightClass, setWeightClass] = useState("");
   const [availableDays, setAvailableDays] = useState("all");
   const [billingHourPreset, setBillingHourPreset] = useState("1");
+  const [tripType, setTripType] = useState("one_way");
   const [title, setTitle] = useState("");
   const [totalCount, setTotalCount] = useState("10");
   const [price, setPrice] = useState("0");
@@ -666,7 +750,7 @@ function EditPassDialog({
   const [loadedFor, setLoadedFor] = useState<string | null>(null);
   if (row && loadedFor !== row.id) {
     setLoadedFor(row.id);
-    setPassType((row.pass_type as ServiceType) ?? "kindergarten");
+    setPassType((row.pass_type as PassType) ?? "kindergarten");
     setWeightClass(row.weight_class ?? "");
     setAvailableDays(row.available_days ?? "all");
     setBillingHourPreset(
@@ -674,6 +758,7 @@ function EditPassDialog({
         ? String(row.total_count)
         : "custom",
     );
+    setTripType(row.trip_type ?? "one_way");
     setTitle(row.title);
     setTotalCount(String(row.total_count));
     setPrice(String(row.price));
@@ -685,18 +770,26 @@ function EditPassDialog({
 
   const update = useMutation({
     mutationFn: async () => {
-      const newExpiresOn = computeExpiresOn(Number(validityValue), validityUnit);
+      const isPickupDropoff = passType === "pickup_dropoff";
+      const newExpiresOn = isPickupDropoff
+        ? null
+        : computeExpiresOn(Number(validityValue), validityUnit);
       const { error } = await supabase
         .from("passes")
         .update({
           pass_type: passType,
-          weight_class: passType === "kindergarten" ? weightClass || null : null,
+          weight_class:
+            passType === "kindergarten" || passType === "hotel" || passType === "daily_care"
+              ? weightClass || null
+              : null,
           available_days: passType === "hotel" ? availableDays || null : null,
+          trip_type: isPickupDropoff ? tripType || null : null,
           title: title.trim(),
-          total_count: Number(totalCount),
+          total_count: isPickupDropoff ? 1 : Number(totalCount),
           price: Number(price),
           memo: memo.trim() || null,
           active,
+          ...(isPickupDropoff ? { expires_on: null } : {}),
           ...(newExpiresOn ? { expires_on: newExpiresOn } : {}),
         })
         .eq("id", row!.id);
@@ -743,6 +836,8 @@ function EditPassDialog({
             setAvailableDays={setAvailableDays}
             billingHourPreset={billingHourPreset}
             setBillingHourPreset={setBillingHourPreset}
+            tripType={tripType}
+            setTripType={setTripType}
             title={title}
             setTitle={setTitle}
             totalCount={totalCount}

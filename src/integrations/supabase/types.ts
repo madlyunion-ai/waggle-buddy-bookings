@@ -128,6 +128,7 @@ export type Database = {
           purchased_on: string;
           title: string;
           total_count: number;
+          trip_type: string | null;
           updated_at: string;
           used_count: number;
           weight_class: string | null;
@@ -147,6 +148,7 @@ export type Database = {
           purchased_on?: string;
           title: string;
           total_count?: number;
+          trip_type?: string | null;
           updated_at?: string;
           used_count?: number;
           weight_class?: string | null;
@@ -166,6 +168,7 @@ export type Database = {
           purchased_on?: string;
           title?: string;
           total_count?: number;
+          trip_type?: string | null;
           updated_at?: string;
           used_count?: number;
           weight_class?: string | null;
