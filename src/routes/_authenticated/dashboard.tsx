@@ -237,6 +237,10 @@ function DashboardPage() {
   const [isCompact, setIsCompact] = useState(false);
   const [detailRow, setDetailRow] = useState<Row | null>(null);
   const [passPopoverId, setPassPopoverId] = useState<string | null>(null);
+  const [passPopoverAnchor, setPassPopoverAnchor] = useState<{
+    bottom: number;
+    right: number;
+  } | null>(null);
 
   // 모바일(라인형 캘린더) 여부 - Tailwind sm 브레이크포인트(640px)와 동일 기준
   useEffect(() => {
@@ -687,42 +691,22 @@ function DashboardPage() {
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setPassPopoverId(passPopoverId === row.id ? null : row.id);
+                              if (passPopoverId === row.id) {
+                                setPassPopoverId(null);
+                                setPassPopoverAnchor(null);
+                              } else {
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                setPassPopoverAnchor({
+                                  bottom: window.innerHeight - rect.top + 4,
+                                  right: window.innerWidth - rect.right,
+                                });
+                                setPassPopoverId(row.id);
+                              }
                             }}
                             className="cursor-pointer rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary"
                           >
                             이용권
                           </button>
-                          {passPopoverId === row.id ? (
-                            <div className="absolute bottom-full right-0 z-20 mb-1 w-52 space-y-1.5 rounded-lg border border-border bg-card p-2.5 text-left shadow-lg">
-                              {row.passes ? (
-                                <div>
-                                  <p className="truncate text-xs font-bold">{row.passes.title}</p>
-                                  <p className="mt-0.5 text-[11px] text-muted-foreground">
-                                    {PASS_TYPE_LABELS[row.passes.pass_type] ?? row.passes.pass_type}{" "}
-                                    · {formatWon(row.passes.price)}
-                                  </p>
-                                </div>
-                              ) : null}
-                              {row.pickup_passes ? (
-                                <div className={row.passes ? "border-t border-border pt-1.5" : ""}>
-                                  <p className="truncate text-xs font-bold">
-                                    {row.pickup_passes.title}
-                                    {row.pickup_requested && row.dropoff_requested
-                                      ? " (픽업+드랍)"
-                                      : row.pickup_requested
-                                        ? " (픽업)"
-                                        : row.dropoff_requested
-                                          ? " (드랍)"
-                                          : ""}
-                                  </p>
-                                  <p className="mt-0.5 text-[11px] text-muted-foreground">
-                                    {formatWon(row.pickup_passes.price)}
-                                  </p>
-                                </div>
-                              ) : null}
-                            </div>
-                          ) : null}
                         </div>
                       ) : null}
                       <Badge
@@ -797,6 +781,55 @@ function DashboardPage() {
           </section>
         </div>
       </div>
+
+      {passPopoverId && passPopoverAnchor ? (
+        <>
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => {
+              setPassPopoverId(null);
+              setPassPopoverAnchor(null);
+            }}
+          />
+          {(() => {
+            const popoverRow = rows.find((r) => r.id === passPopoverId);
+            if (!popoverRow) return null;
+            return (
+              <div
+                className="fixed z-50 w-52 space-y-1.5 rounded-lg border border-border bg-card p-2.5 text-left shadow-lg"
+                style={{ bottom: passPopoverAnchor.bottom, right: passPopoverAnchor.right }}
+              >
+                {popoverRow.passes ? (
+                  <div>
+                    <p className="truncate text-xs font-bold">{popoverRow.passes.title}</p>
+                    <p className="mt-0.5 text-[11px] text-muted-foreground">
+                      {PASS_TYPE_LABELS[popoverRow.passes.pass_type] ?? popoverRow.passes.pass_type}{" "}
+                      · {formatWon(popoverRow.passes.price)}
+                    </p>
+                  </div>
+                ) : null}
+                {popoverRow.pickup_passes ? (
+                  <div className={popoverRow.passes ? "border-t border-border pt-1.5" : ""}>
+                    <p className="truncate text-xs font-bold">
+                      {popoverRow.pickup_passes.title}
+                      {popoverRow.pickup_requested && popoverRow.dropoff_requested
+                        ? " (픽업+드랍)"
+                        : popoverRow.pickup_requested
+                          ? " (픽업)"
+                          : popoverRow.dropoff_requested
+                            ? " (드랍)"
+                            : ""}
+                    </p>
+                    <p className="mt-0.5 text-[11px] text-muted-foreground">
+                      {formatWon(popoverRow.pickup_passes.price)}
+                    </p>
+                  </div>
+                ) : null}
+              </div>
+            );
+          })()}
+        </>
+      ) : null}
 
       <NewReservationDialog
         defaultDate={createDate ?? selected}

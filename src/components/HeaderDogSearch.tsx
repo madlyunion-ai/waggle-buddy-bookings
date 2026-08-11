@@ -85,7 +85,7 @@ export function HeaderDogSearch() {
                 <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-secondary font-display text-[10px] font-extrabold text-primary">
                   {p.name.slice(0, 1)}
                 </span>
-                <span className="min-w-0 flex-1 truncate font-bold">{p.name}</span>
+                <span className="min-w-0 flex-1 truncate font-bold text-blue-600">{p.name}</span>
                 <span className="shrink-0 truncate text-muted-foreground">
                   {p.ownerNames[0] ?? "보호자 미확인"}
                 </span>

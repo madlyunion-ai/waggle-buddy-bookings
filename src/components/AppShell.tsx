@@ -105,7 +105,7 @@ export function AppShell({
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-30 border-b border-[#cccccc] bg-[#17214c] text-white">
-        <div className="flex h-[48px] items-center gap-3 px-4 lg:px-6">
+        <div className="flex h-[52px] items-center gap-3 px-4 lg:px-6">
           <Link to="/dashboard" className="flex shrink-0 items-baseline gap-2">
             <span className="font-display text-[17px] font-semibold tracking-tight text-white">
               허그앤멍 예약관리시스템
@@ -115,11 +115,11 @@ export function AppShell({
             </span>
           </Link>
 
-          <div className="mx-auto hidden flex-1 justify-center sm:flex">
+          <div className="ml-6 hidden sm:block">
             <HeaderDogSearch />
           </div>
 
-          <div className="ml-auto flex shrink-0 items-center gap-2 sm:ml-0">
+          <div className="ml-auto flex shrink-0 items-center gap-2">
             <a
               href={BRANCH_MAP_URL}
               target="_blank"
@@ -154,7 +154,7 @@ export function AppShell({
       </header>
 
       <div className="flex">
-        <aside className="sticky top-[48px] hidden h-[calc(100vh-48px)] w-56 shrink-0 overflow-y-auto border-r border-border bg-sidebar px-3 py-4 lg:block">
+        <aside className="sticky top-[52px] hidden h-[calc(100vh-52px)] w-56 shrink-0 overflow-y-auto border-r border-border bg-sidebar px-3 py-4 lg:block">
           <div className="relative mb-4 flex items-center gap-2.5 rounded-lg border border-border bg-card px-3 py-2.5">
             <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 font-display text-sm font-extrabold text-primary">
               {initial}
