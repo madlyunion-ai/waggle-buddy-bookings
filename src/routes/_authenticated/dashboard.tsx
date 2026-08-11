@@ -118,6 +118,14 @@ const SERVICE_TEXT_SOLID: Record<ServiceType, string> = {
   grooming: "text-warning-foreground",
 };
 
+/** 캘린더 막대(연속 예약 바)용 스타일 - 배경 불투명도만 80%로 높여 SERVICE_STYLES와 구분 */
+const SERVICE_BAR_STYLES: Record<ServiceType, string> = {
+  kindergarten: "bg-primary/80 text-primary border-primary/25",
+  hotel: "bg-accent/80 text-accent-foreground/70 border-accent/35",
+  daily_care: "bg-rose-300/80 text-rose-400/80 border-rose-300/45",
+  grooming: "bg-warning/80 text-warning-foreground/70 border-warning/35",
+};
+
 /** 클래스 문자열 전체를 sm: 반응형 접두사로 감싸는 헬퍼 (데스크톱 전용 스타일 재사용) */
 function sm(classes: string): string {
   return classes
@@ -464,7 +472,7 @@ function DashboardPage() {
                               setCreateDate(key);
                             }
                           }}
-                          className={`flex min-h-[44px] max-h-[92px] cursor-pointer flex-col items-stretch gap-0.5 overflow-hidden border-b border-border/60 p-1 text-left align-top transition-colors sm:min-h-[112px] sm:max-h-none sm:gap-1 sm:rounded-xl sm:border sm:p-1.5 ${
+                          className={`flex min-h-[44px] max-h-[92px] cursor-pointer flex-col items-stretch gap-0.5 overflow-hidden border-b border-border/60 p-1 text-left align-top transition-colors sm:min-h-[114px] sm:max-h-none sm:gap-1 sm:rounded-xl sm:border sm:p-1.5 ${
                             isSelected ? "bg-primary/5" : !isMonth ? "bg-[#f3f3f3]" : ""
                           } ${isToday ? `${sm("border-2 border-primary")}` : sm("border")} ${
                             isSelected
@@ -530,7 +538,7 @@ function DashboardPage() {
 
                   {/* 데스크톱: 연박 예약이 여러 날짜에 걸쳐 하나의 막대로 이어지는 오버레이 */}
                   <div
-                    className="pointer-events-none absolute inset-x-0 top-[26px] hidden grid-cols-7 gap-x-1.5 gap-y-1 sm:grid"
+                    className="pointer-events-none absolute inset-x-0 top-[28px] hidden grid-cols-7 gap-x-1.5 gap-y-1 px-1 pb-1 sm:grid"
                     style={{ gridAutoRows: "17px" }}
                   >
                     {placed.map(({ seg, lane }) => (
@@ -539,13 +547,12 @@ function DashboardPage() {
                         style={{
                           gridColumn: `${seg.startCol + 1} / span ${seg.span}`,
                           gridRow: lane + 1,
-                          backgroundColor: "transparent",
                         }}
                         onClick={(e) => {
                           e.stopPropagation();
                           setSelected(weekKeys[seg.startCol]!);
                         }}
-                        className={`pointer-events-auto mx-0.5 flex items-center gap-1 truncate rounded-md border px-2 text-[10px] font-semibold leading-[16px] ${SERVICE_STYLES[seg.row.service_type]}`}
+                        className={`pointer-events-auto mx-0.5 flex items-center gap-1 truncate rounded-md border px-2 text-[10px] font-semibold leading-[16px] ${SERVICE_BAR_STYLES[seg.row.service_type]}`}
                       >
                         <span className="min-w-0 flex-1 truncate">{seg.row.dogs?.name ?? "-"}</span>
                         <span className="shrink-0 opacity-80">
