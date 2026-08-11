@@ -72,6 +72,15 @@ const AVAILABLE_DAYS = [
   { value: "weekend", label: "주말" },
 ] as const;
 
+const BILLING_HOUR_PRESETS = [
+  { value: "1", label: "1시간" },
+  { value: "2", label: "2시간" },
+  { value: "3", label: "3시간" },
+  { value: "6", label: "6시간" },
+  { value: "12", label: "12시간" },
+  { value: "custom", label: "직접입력" },
+] as const;
+
 function availableDaysLabel(value: string | null) {
   if (!value) return null;
   return AVAILABLE_DAYS.find((d) => d.value === value)?.label ?? value;
@@ -231,8 +240,14 @@ function PassesPage() {
                         ) : null}
                       </td>
                       <td className="px-4 py-3 text-center text-muted-foreground">
-                        {pass.used_count}/{pass.total_count}회
-                        <span className="ml-1 text-[10px]">(잔여 {remaining})</span>
+                        {pass.pass_type === "daily_care" ? (
+                          `${pass.total_count}시간`
+                        ) : (
+                          <>
+                            {pass.used_count}/{pass.total_count}회
+                            <span className="ml-1 text-[10px]">(잔여 {remaining})</span>
+                          </>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-center text-muted-foreground">
                         {formatWon(pass.price)}
@@ -299,6 +314,8 @@ function PassFormFields({
   setWeightClass,
   availableDays,
   setAvailableDays,
+  billingHourPreset,
+  setBillingHourPreset,
   title,
   setTitle,
   totalCount,
@@ -320,6 +337,8 @@ function PassFormFields({
   setWeightClass: (v: string) => void;
   availableDays: string;
   setAvailableDays: (v: string) => void;
+  billingHourPreset: string;
+  setBillingHourPreset: (v: string) => void;
   title: string;
   setTitle: (v: string) => void;
   totalCount: string;
@@ -347,7 +366,12 @@ function PassFormFields({
               <button
                 key={t}
                 type="button"
-                onClick={() => setPassType(t)}
+                onClick={() => {
+                  setPassType(t);
+                  if (t === "daily_care" && billingHourPreset !== "custom") {
+                    setTotalCount(billingHourPreset);
+                  }
+                }}
                 className={`flex flex-col items-center gap-1.5 rounded-xl border px-2 py-3 text-xs font-bold shadow-none transition-all ${
                   isActive
                     ? `${SERVICE_STYLES[t]} scale-[1.03]`
@@ -392,13 +416,45 @@ function PassFormFields({
 
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-2">
-          <Label>이용권 횟수</Label>
-          <Input
-            type="number"
-            min="1"
-            value={totalCount}
-            onChange={(e) => setTotalCount(e.target.value)}
-          />
+          <Label>{passType === "daily_care" ? "과금 시간" : "이용권 횟수"}</Label>
+          {passType === "daily_care" ? (
+            <div className="space-y-2">
+              <Select
+                value={billingHourPreset}
+                onValueChange={(v) => {
+                  setBillingHourPreset(v);
+                  if (v !== "custom") setTotalCount(v);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {BILLING_HOUR_PRESETS.map((p) => (
+                    <SelectItem key={p.value} value={p.value}>
+                      {p.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {billingHourPreset === "custom" ? (
+                <Input
+                  type="number"
+                  min="1"
+                  placeholder="시간을 직접 입력하세요"
+                  value={totalCount}
+                  onChange={(e) => setTotalCount(e.target.value)}
+                />
+              ) : null}
+            </div>
+          ) : (
+            <Input
+              type="number"
+              min="1"
+              value={totalCount}
+              onChange={(e) => setTotalCount(e.target.value)}
+            />
+          )}
         </div>
         <div className="space-y-2">
           <Label>이용권 금액 (원)</Label>
@@ -484,6 +540,7 @@ function NewPassDialog() {
   const [passType, setPassType] = useState<ServiceType>("kindergarten");
   const [weightClass, setWeightClass] = useState("");
   const [availableDays, setAvailableDays] = useState("all");
+  const [billingHourPreset, setBillingHourPreset] = useState("1");
   const [title, setTitle] = useState("");
   const [totalCount, setTotalCount] = useState("10");
   const [price, setPrice] = useState("300000");
@@ -496,6 +553,7 @@ function NewPassDialog() {
     setPassType("kindergarten");
     setWeightClass("");
     setAvailableDays("all");
+    setBillingHourPreset("1");
     setTitle("");
     setTotalCount("10");
     setPrice("300000");
@@ -555,6 +613,8 @@ function NewPassDialog() {
           setWeightClass={setWeightClass}
           availableDays={availableDays}
           setAvailableDays={setAvailableDays}
+          billingHourPreset={billingHourPreset}
+          setBillingHourPreset={setBillingHourPreset}
           title={title}
           setTitle={setTitle}
           totalCount={totalCount}
@@ -591,6 +651,7 @@ function EditPassDialog({
   const [passType, setPassType] = useState<ServiceType>("kindergarten");
   const [weightClass, setWeightClass] = useState("");
   const [availableDays, setAvailableDays] = useState("all");
+  const [billingHourPreset, setBillingHourPreset] = useState("1");
   const [title, setTitle] = useState("");
   const [totalCount, setTotalCount] = useState("10");
   const [price, setPrice] = useState("0");
@@ -608,6 +669,11 @@ function EditPassDialog({
     setPassType((row.pass_type as ServiceType) ?? "kindergarten");
     setWeightClass(row.weight_class ?? "");
     setAvailableDays(row.available_days ?? "all");
+    setBillingHourPreset(
+      BILLING_HOUR_PRESETS.some((p) => p.value === String(row.total_count))
+        ? String(row.total_count)
+        : "custom",
+    );
     setTitle(row.title);
     setTotalCount(String(row.total_count));
     setPrice(String(row.price));
@@ -675,6 +741,8 @@ function EditPassDialog({
             setWeightClass={setWeightClass}
             availableDays={availableDays}
             setAvailableDays={setAvailableDays}
+            billingHourPreset={billingHourPreset}
+            setBillingHourPreset={setBillingHourPreset}
             title={title}
             setTitle={setTitle}
             totalCount={totalCount}
