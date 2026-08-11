@@ -64,6 +64,7 @@ import {
   dateRangeKeys,
   formatDateKorean,
   formatTime,
+  formatWon,
   monthMatrix,
   nightsBetween,
   stayLabel,
@@ -89,6 +90,8 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   component: DashboardPage,
 });
 
+type PassInfo = { id: string; title: string; pass_type: string; price: number } | null;
+
 type Row = {
   id: string;
   reserved_date: string;
@@ -99,16 +102,29 @@ type Row = {
   service_type: ServiceType;
   memo: string | null;
   pass_id: string | null;
+  pickup_pass_id: string | null;
+  pickup_requested: boolean;
+  dropoff_requested: boolean;
   dogs: {
     id: string;
     name: string;
     breed: string | null;
     owners: { name: string; phone: string } | null;
   } | null;
+  passes: PassInfo;
+  pickup_passes: PassInfo;
 };
 
 const SELECT_COLUMNS =
-  "id, reserved_date, end_date, drop_off_time, pick_up_time, status, service_type, memo, pass_id, dogs(id, name, breed, owners(name, phone))";
+  "id, reserved_date, end_date, drop_off_time, pick_up_time, status, service_type, memo, pass_id, pickup_pass_id, pickup_requested, dropoff_requested, dogs(id, name, breed, owners(name, phone)), passes!reservations_pass_id_fkey(id, title, pass_type, price), pickup_passes:passes!reservations_pickup_pass_id_fkey(id, title, pass_type, price)";
+
+const PASS_TYPE_LABELS: Record<string, string> = {
+  kindergarten: "유치원 이용권",
+  hotel: "호텔 이용권",
+  daily_care: "데이케어",
+  grooming: "미용 기본",
+  pickup_dropoff: "픽드랍",
+};
 
 /** 모바일 캘린더 라인 목록용 솔리드 텍스트 색상 */
 const SERVICE_TEXT_SOLID: Record<ServiceType, string> = {
@@ -219,6 +235,8 @@ function DashboardPage() {
   const [dayListDate, setDayListDate] = useState<string | null>(null);
   const [emptyDayAlertOpen, setEmptyDayAlertOpen] = useState(false);
   const [isCompact, setIsCompact] = useState(false);
+  const [detailRow, setDetailRow] = useState<Row | null>(null);
+  const [passPopoverId, setPassPopoverId] = useState<string | null>(null);
 
   // 모바일(라인형 캘린더) 여부 - Tailwind sm 브레이크포인트(640px)와 동일 기준
   useEffect(() => {
@@ -259,7 +277,6 @@ function DashboardPage() {
   }, [monthQuery.data]);
 
   const rows = sortForDisplay(byDate[selected] ?? []);
-  const active = rows.filter((r) => r.status !== "cancelled");
 
   const updateStatus = useMutation({
     mutationFn: async ({ row, status }: { row: Row; status: ReservationStatus }) => {
@@ -312,17 +329,18 @@ function DashboardPage() {
     return out;
   }, [cells]);
 
-  const byType = useMemo(() => {
+  // "오늘 이용정보"는 캘린더에서 다른 날짜를 클릭해도 항상 접속일(today) 기준으로 표시
+  const todayActive = (byDate[todayKey] ?? []).filter((r) => r.status !== "cancelled");
+  const todayByType = useMemo(() => {
     const base: Record<ServiceType, Row[]> = {
       kindergarten: [],
       hotel: [],
       daily_care: [],
       grooming: [],
     };
-    for (const r of active) base[r.service_type]?.push(r);
+    for (const r of todayActive) base[r.service_type]?.push(r);
     return base;
-  }, [active]);
-  const checkInToday = byType.hotel.filter((r) => r.reserved_date === selected).length;
+  }, [todayActive]);
 
   const monthlyTotals = useMemo(() => {
     const totals: Record<ServiceType, number> = {
@@ -377,7 +395,7 @@ function DashboardPage() {
                 <button
                   type="button"
                   onClick={() => setServiceFilter("all")}
-                  className={`rounded-full border border-border bg-secondary px-3 py-1.5 text-sm font-bold text-muted-foreground transition-shadow ${
+                  className={`cursor-pointer rounded-full border border-border bg-secondary px-3 py-1.5 text-sm font-bold text-muted-foreground transition-shadow ${
                     serviceFilter === "all" ? "ring-2 ring-muted-foreground/50 ring-offset-1" : ""
                   }`}
                 >
@@ -388,7 +406,7 @@ function DashboardPage() {
                     key={t}
                     type="button"
                     onClick={() => setServiceFilter(t)}
-                    className={`rounded-full border px-3 py-1.5 text-sm font-bold transition-shadow ${SERVICE_STYLES[t]} ${
+                    className={`cursor-pointer rounded-full border px-3 py-1.5 text-sm font-bold transition-shadow ${SERVICE_STYLES[t]} ${
                       serviceFilter === t ? "ring-2 ring-current ring-offset-1" : ""
                     }`}
                   >
@@ -556,8 +574,9 @@ function DashboardPage() {
                         onClick={(e) => {
                           e.stopPropagation();
                           setSelected(weekKeys[seg.startCol]!);
+                          setDetailRow(seg.row);
                         }}
-                        className={`pointer-events-auto mx-0.5 flex items-center gap-1 truncate rounded-md border px-2 text-[10px] font-semibold leading-[16px] ${SERVICE_BAR_STYLES[seg.row.service_type]}`}
+                        className={`pointer-events-auto mx-0.5 flex cursor-pointer items-center gap-1 truncate rounded-md border px-2 text-[10px] font-semibold leading-[16px] ${SERVICE_BAR_STYLES[seg.row.service_type]}`}
                       >
                         <span className="min-w-0 flex-1 truncate">{seg.row.dogs?.name ?? "-"}</span>
                         <span className="shrink-0">
@@ -613,28 +632,28 @@ function DashboardPage() {
               icon={<CalendarCheck className="size-4" />}
               tint="bg-primary/12 text-primary"
               label="오늘 등원 예정"
-              value={byType.kindergarten.length}
+              value={todayByType.kindergarten.length}
               unit="마리"
             />
             <SummaryCard
               icon={<BedDouble className="size-4" />}
               tint="bg-accent/25 text-accent-foreground"
               label="오늘 호텔 이용"
-              value={byType.hotel.length}
+              value={todayByType.hotel.length}
               unit="마리"
             />
             <SummaryCard
               icon={<Clock className="size-4" />}
               tint="bg-rose-400/15 text-rose-400"
               label="오늘 데이케어"
-              value={byType.daily_care.length}
+              value={todayByType.daily_care.length}
               unit="건"
             />
             <SummaryCard
               icon={<Scissors className="size-4" />}
               tint="bg-warning/25 text-warning-foreground"
               label="오늘 미용"
-              value={byType.grooming.length}
+              value={todayByType.grooming.length}
               unit="건"
             />
           </div>
@@ -662,6 +681,50 @@ function DashboardPage() {
                       <h3 className="min-w-0 flex-1 truncate text-sm font-bold">
                         {row.dogs?.name ?? "삭제된 강아지"}
                       </h3>
+                      {row.passes || row.pickup_passes ? (
+                        <div className="relative shrink-0">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setPassPopoverId(passPopoverId === row.id ? null : row.id);
+                            }}
+                            className="cursor-pointer rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary"
+                          >
+                            이용권
+                          </button>
+                          {passPopoverId === row.id ? (
+                            <div className="absolute bottom-full right-0 z-20 mb-1 w-52 space-y-1.5 rounded-lg border border-border bg-card p-2.5 text-left shadow-lg">
+                              {row.passes ? (
+                                <div>
+                                  <p className="truncate text-xs font-bold">{row.passes.title}</p>
+                                  <p className="mt-0.5 text-[11px] text-muted-foreground">
+                                    {PASS_TYPE_LABELS[row.passes.pass_type] ?? row.passes.pass_type}{" "}
+                                    · {formatWon(row.passes.price)}
+                                  </p>
+                                </div>
+                              ) : null}
+                              {row.pickup_passes ? (
+                                <div className={row.passes ? "border-t border-border pt-1.5" : ""}>
+                                  <p className="truncate text-xs font-bold">
+                                    {row.pickup_passes.title}
+                                    {row.pickup_requested && row.dropoff_requested
+                                      ? " (픽업+드랍)"
+                                      : row.pickup_requested
+                                        ? " (픽업)"
+                                        : row.dropoff_requested
+                                          ? " (드랍)"
+                                          : ""}
+                                  </p>
+                                  <p className="mt-0.5 text-[11px] text-muted-foreground">
+                                    {formatWon(row.pickup_passes.price)}
+                                  </p>
+                                </div>
+                              ) : null}
+                            </div>
+                          ) : null}
+                        </div>
+                      ) : null}
                       <Badge
                         variant="outline"
                         className={`shrink-0 text-[10px] ${SERVICE_STYLES[row.service_type]}`}
@@ -793,6 +856,100 @@ function DashboardPage() {
               </div>
             ))}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={detailRow !== null} onOpenChange={(next) => !next && setDetailRow(null)}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>예약 상세</DialogTitle>
+            <DialogDescription>
+              {detailRow ? (detailRow.dogs?.name ?? "삭제된 강아지") : ""} 예약 정보입니다.
+            </DialogDescription>
+          </DialogHeader>
+          {detailRow ? (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-secondary font-display text-sm font-extrabold text-primary">
+                  {detailRow.dogs?.name?.slice(0, 1) ?? "?"}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-bold">
+                    {detailRow.dogs?.name ?? "삭제된 강아지"}
+                  </p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {detailRow.dogs?.breed ?? "견종 미입력"}
+                  </p>
+                </div>
+                <Badge
+                  variant="outline"
+                  className={`shrink-0 text-[10px] ${SERVICE_STYLES[detailRow.service_type]}`}
+                >
+                  {SERVICE_LABELS[detailRow.service_type]}
+                </Badge>
+                <Badge className={`shrink-0 text-[10px] ${STATUS_STYLES[detailRow.status]}`}>
+                  {STATUS_LABELS[detailRow.status]}
+                </Badge>
+              </div>
+
+              <dl className="divide-y divide-border rounded-xl border border-border">
+                <div className="px-4 py-2.5 text-sm">
+                  <dt className="text-xs font-semibold text-muted-foreground">보호자</dt>
+                  <dd className="mt-0.5 font-bold">
+                    {detailRow.dogs?.owners?.name ?? "-"} · {detailRow.dogs?.owners?.phone ?? "-"}
+                  </dd>
+                </div>
+                <div className="px-4 py-2.5 text-sm">
+                  <dt className="text-xs font-semibold text-muted-foreground">일정</dt>
+                  <dd className="mt-0.5 font-bold">
+                    {detailRow.service_type === "hotel" && detailRow.end_date
+                      ? `${detailRow.reserved_date} ~ ${detailRow.end_date}`
+                      : detailRow.end_date && detailRow.end_date > detailRow.reserved_date
+                        ? `${detailRow.reserved_date} ~ ${detailRow.end_date}`
+                        : detailRow.reserved_date}
+                    {" · "}
+                    {formatTime(detailRow.drop_off_time)} ~ {formatTime(detailRow.pick_up_time)}
+                  </dd>
+                </div>
+                <div className="px-4 py-2.5 text-sm">
+                  <dt className="text-xs font-semibold text-muted-foreground">이용권 적용</dt>
+                  <dd className="mt-0.5 font-bold">
+                    {detailRow.passes ? (
+                      <>
+                        {detailRow.passes.title} · {formatWon(detailRow.passes.price)}
+                      </>
+                    ) : (
+                      <span className="font-normal text-muted-foreground">미적용</span>
+                    )}
+                  </dd>
+                </div>
+                {detailRow.service_type === "kindergarten" ? (
+                  <div className="px-4 py-2.5 text-sm">
+                    <dt className="text-xs font-semibold text-muted-foreground">픽드랍</dt>
+                    <dd className="mt-0.5 font-bold">
+                      {!detailRow.pickup_requested && !detailRow.dropoff_requested ? (
+                        <span className="font-normal text-muted-foreground">신청 안 함</span>
+                      ) : (
+                        <>
+                          {detailRow.pickup_requested ? "픽업 " : ""}
+                          {detailRow.dropoff_requested ? "드랍 " : ""}
+                          {detailRow.pickup_passes
+                            ? `· ${detailRow.pickup_passes.title} · ${formatWon(detailRow.pickup_passes.price)}`
+                            : ""}
+                        </>
+                      )}
+                    </dd>
+                  </div>
+                ) : null}
+                {detailRow.memo ? (
+                  <div className="px-4 py-2.5 text-sm">
+                    <dt className="text-xs font-semibold text-muted-foreground">메모</dt>
+                    <dd className="mt-0.5 font-bold">{detailRow.memo}</dd>
+                  </div>
+                ) : null}
+              </dl>
+            </div>
+          ) : null}
         </DialogContent>
       </Dialog>
 

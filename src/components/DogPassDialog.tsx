@@ -13,6 +13,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -70,6 +72,7 @@ export function DogPassDialog({ pet }: { pet: { id: string; dbId: string; name: 
   const [open, setOpen] = useState(false);
   const [catalogType, setCatalogType] = useState("");
   const [catalogId, setCatalogId] = useState("");
+  const [dailyCareHours, setDailyCareHours] = useState("1");
 
   const dogPassesQuery = useQuery({
     queryKey: ["passes", "for-dog", pet.dbId],
@@ -106,12 +109,15 @@ export function DogPassDialog({ pet }: { pet: { id: string; dbId: string; name: 
     mutationFn: async () => {
       const catalog = (catalogQuery.data ?? []).find((c) => c.id === catalogId);
       if (!catalog) throw new Error("지급할 이용권을 선택해 주세요.");
+      const isDailyCare = catalog.pass_type === "daily_care";
+      const hours = Number(dailyCareHours || 0);
+      const pricePerHour = catalog.total_count > 0 ? catalog.price / (catalog.total_count / 60) : 0;
       const { error } = await supabase.from("passes").insert({
         dog_id: pet.dbId,
         pass_type: catalog.pass_type,
         title: catalog.title,
-        total_count: catalog.total_count,
-        price: catalog.price,
+        total_count: isDailyCare ? Math.round(hours * 60) : catalog.total_count,
+        price: isDailyCare ? Math.round(pricePerHour * hours) : catalog.price,
         payment_status: "paid",
         expires_on: catalog.expires_on,
         weight_class: catalog.weight_class,
@@ -126,11 +132,23 @@ export function DogPassDialog({ pet }: { pet: { id: string; dbId: string; name: 
       toast.success("이용권을 지급했습니다");
       setCatalogType("");
       setCatalogId("");
+      setDailyCareHours("1");
     },
     onError: (e: Error) => toast.error("지급에 실패했습니다", { description: e.message }),
   });
 
   const passes = dogPassesQuery.data ?? [];
+  const selectedCatalog = (catalogQuery.data ?? []).find((c) => c.id === catalogId);
+  const isDailyCareSelected = selectedCatalog?.pass_type === "daily_care";
+  const dailyCarePricePerHour =
+    selectedCatalog && selectedCatalog.total_count > 0
+      ? selectedCatalog.price / (selectedCatalog.total_count / 60)
+      : 0;
+  const previewTotal = selectedCatalog
+    ? isDailyCareSelected
+      ? Math.round(dailyCarePricePerHour * Number(dailyCareHours || 0))
+      : selectedCatalog.price
+    : 0;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -160,7 +178,7 @@ export function DogPassDialog({ pet }: { pet: { id: string; dbId: string; name: 
                 return (
                   <div
                     key={p.id}
-                    className={`rounded-lg border-2 p-3 ${
+                    className={`rounded-lg border p-3 ${
                       PASS_TYPE_BORDER[p.pass_type] ?? "border-border"
                     }`}
                   >
@@ -233,6 +251,26 @@ export function DogPassDialog({ pet }: { pet: { id: string; dbId: string; name: 
               </SelectContent>
             </Select>
           </div>
+
+          {isDailyCareSelected ? (
+            <div className="space-y-2">
+              <Label>이용 시간(시간)</Label>
+              <Input
+                type="number"
+                min="0"
+                value={dailyCareHours}
+                onChange={(e) => setDailyCareHours(e.target.value)}
+              />
+            </div>
+          ) : null}
+
+          {selectedCatalog ? (
+            <div className="flex items-center justify-between rounded-lg bg-secondary px-3 py-2 text-sm font-bold">
+              <span>합계</span>
+              <span className="text-primary">{formatWon(previewTotal)}</span>
+            </div>
+          ) : null}
+
           <p className="text-xs text-muted-foreground">
             이용권 관리에서 등록한 이용권 상품 중 하나를 선택해 이 반려견에게 지급합니다.
           </p>
