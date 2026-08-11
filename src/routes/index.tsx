@@ -6,8 +6,10 @@ import { CalendarDays, Dog, Ticket } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { getRememberMe, setRememberMe } from "@/integrations/supabase/auth-storage";
 import { supabase } from "@/integrations/supabase/client";
 import { loginWithUsername } from "@/lib/auth-login.functions";
 
@@ -55,7 +57,12 @@ function Landing() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMeState] = useState(false);
   const login = useServerFn(loginWithUsername);
+
+  useEffect(() => {
+    setRememberMeState(getRememberMe());
+  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -74,6 +81,7 @@ function Landing() {
     setLoading(true);
     try {
       const { accessToken, refreshToken } = await login({ data: { username, password } });
+      setRememberMe(rememberMe);
       const { error } = await supabase.auth.setSession({
         access_token: accessToken,
         refresh_token: refreshToken,
@@ -179,6 +187,21 @@ function Landing() {
             onChange={(e) => setPassword(e.target.value)}
           />
         </div>
+
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id={`remember-me-${idPrefix}`}
+            checked={rememberMe}
+            onCheckedChange={(v) => setRememberMeState(v === true)}
+          />
+          <Label
+            htmlFor={`remember-me-${idPrefix}`}
+            className="cursor-pointer text-sm font-normal text-muted-foreground"
+          >
+            자동 로그인
+          </Label>
+        </div>
+
         <Button type="submit" className="w-full" disabled={loading}>
           로그인
         </Button>
