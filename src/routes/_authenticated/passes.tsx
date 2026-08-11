@@ -251,10 +251,10 @@ function PassesPage() {
           <button
             type="button"
             onClick={() => setFilterType("all")}
-            className={`rounded-full border px-3 py-1.5 text-xs font-bold transition-colors ${
+            className={`rounded-full border bg-secondary px-3 py-1.5 text-xs font-bold text-foreground transition-all ${
               filterType === "all"
-                ? "border-primary bg-primary text-primary-foreground"
-                : "border-border bg-transparent text-muted-foreground hover:bg-secondary"
+                ? "border-2 border-primary ring-2 ring-primary/40 ring-offset-1 ring-offset-background"
+                : "border-border hover:bg-secondary/70"
             }`}
           >
             전체 {passes.length}
@@ -264,10 +264,10 @@ function PassesPage() {
               key={t}
               type="button"
               onClick={() => setFilterType(t)}
-              className={`rounded-full border px-3 py-1.5 text-xs font-bold transition-all ${
+              className={`rounded-full px-3 py-1.5 text-xs font-bold transition-all ${PASS_TYPE_STYLES[t]} ${
                 filterType === t
-                  ? `${PASS_TYPE_STYLES[t]} scale-[1.03]`
-                  : "border-border bg-transparent text-muted-foreground hover:bg-secondary"
+                  ? "border-2 ring-2 ring-current ring-offset-1 ring-offset-background"
+                  : "border opacity-70 hover:opacity-100"
               }`}
             >
               {PASS_TYPE_LABELS[t]} {typeCounts[t] ?? 0}
