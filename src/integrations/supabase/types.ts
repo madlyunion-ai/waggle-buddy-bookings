@@ -120,10 +120,12 @@ export type Database = {
       }
       passes: {
         Row: {
+          active: boolean
           created_at: string
-          dog_id: string
+          dog_id: string | null
           expires_on: string | null
           id: string
+          memo: string | null
           paid_at: string | null
           pass_type: string
           payment_status: string
@@ -135,10 +137,12 @@ export type Database = {
           used_count: number
         }
         Insert: {
+          active?: boolean
           created_at?: string
-          dog_id: string
+          dog_id?: string | null
           expires_on?: string | null
           id?: string
+          memo?: string | null
           paid_at?: string | null
           pass_type?: string
           payment_status?: string
@@ -150,10 +154,12 @@ export type Database = {
           used_count?: number
         }
         Update: {
+          active?: boolean
           created_at?: string
-          dog_id?: string
+          dog_id?: string | null
           expires_on?: string | null
           id?: string
+          memo?: string | null
           paid_at?: string | null
           pass_type?: string
           payment_status?: string
