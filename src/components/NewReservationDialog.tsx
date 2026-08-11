@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -292,9 +291,6 @@ export function NewReservationDialog({
       <DialogContent className="max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>예약 등록</DialogTitle>
-          <DialogDescription>
-            예약 타입에 따라 날짜와 시간 입력 방식이 달라집니다.
-          </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2">
@@ -316,36 +312,40 @@ export function NewReservationDialog({
 
           <div className="space-y-2">
             <Label>회원 검색</Label>
-            <Input
-              value={memberSearch}
-              placeholder="이름 또는 전화번호로 검색"
-              onChange={(e) => {
-                setMemberSearch(e.target.value);
-                setMemberId("");
-                setPetId("");
-              }}
-            />
-            <Select
-              value={memberId}
-              onValueChange={(v) => {
-                setMemberId(v);
-                setPetId("");
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue
-                  placeholder={membersQuery.isLoading ? "회원을 불러오는 중…" : "회원을 선택하세요"}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {(membersQuery.data ?? []).map((m) => (
-                  <SelectItem key={`${m.source}-${m.id}`} value={m.id}>
-                    {m.name} · {m.phone ?? "연락처 없음"}
-                    {m.source === "user" ? " (직원)" : ""}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="grid grid-cols-2 gap-3">
+              <Input
+                value={memberSearch}
+                placeholder="이름 또는 전화번호로 검색"
+                onChange={(e) => {
+                  setMemberSearch(e.target.value);
+                  setMemberId("");
+                  setPetId("");
+                }}
+              />
+              <Select
+                value={memberId}
+                onValueChange={(v) => {
+                  setMemberId(v);
+                  setPetId("");
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder={
+                      membersQuery.isLoading ? "회원을 불러오는 중…" : "회원을 선택하세요"
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {(membersQuery.data ?? []).map((m) => (
+                    <SelectItem key={`${m.source}-${m.id}`} value={m.id}>
+                      {m.name} · {m.phone ?? "연락처 없음"}
+                      {m.source === "user" ? " (직원)" : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             {membersQuery.isError ? (
               <p className="text-xs font-semibold text-destructive">
                 외부 회원 목록을 불러오지 못했습니다.
@@ -525,8 +525,8 @@ export function NewReservationDialog({
               </div>
 
               <div className="space-y-2">
-                <Label>픽드랍 설정</Label>
                 <div className="flex items-center gap-4">
+                  <Label className="mb-0">픽드랍 설정</Label>
                   <label className="flex items-center gap-1.5 text-sm font-bold">
                     <input
                       type="checkbox"
