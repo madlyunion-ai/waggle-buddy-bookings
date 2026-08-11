@@ -37,6 +37,7 @@ import {
 } from "@/lib/kindergarten";
 
 const PICKUP_USAGE_MODES = [
+  { value: "none", label: "사용안함" },
   { value: "pickup", label: "픽업" },
   { value: "dropoff", label: "드랍" },
   { value: "round_trip", label: "왕복" },
@@ -86,7 +87,7 @@ export function NewReservationDialog({
   const [passId, setPassId] = useState("none");
   const [pickupPassId, setPickupPassId] = useState("none");
   const [pickupUsageMode, setPickupUsageMode] =
-    useState<(typeof PICKUP_USAGE_MODES)[number]["value"]>("round_trip");
+    useState<(typeof PICKUP_USAGE_MODES)[number]["value"]>("none");
 
   const fetchMembers = useServerFn(listExternalMembers);
   const fetchPets = useServerFn(listExternalPets);
@@ -214,7 +215,8 @@ export function NewReservationDialog({
       let appliedPickupPassId: string | null = null;
       if (serviceType === "kindergarten") {
         appliedPassId = passId !== "none" ? passId : null;
-        appliedPickupPassId = pickupPassId !== "none" ? pickupPassId : null;
+        appliedPickupPassId =
+          pickupUsageMode !== "none" && pickupPassId !== "none" ? pickupPassId : null;
       } else if (passId !== "none") {
         if (passId === "auto") {
           const { data: pass } = await supabase
@@ -284,7 +286,7 @@ export function NewReservationDialog({
       setPetId("");
       setPassId("none");
       setPickupPassId("none");
-      setPickupUsageMode("round_trip");
+      setPickupUsageMode("none");
     },
     onError: (e: Error) => toast.error("예약 등록에 실패했습니다", { description: e.message }),
   });
@@ -294,7 +296,7 @@ export function NewReservationDialog({
   useEffect(() => {
     if (open) {
       setDate(defaultDate);
-      setEndDate(addDays(defaultDate, 1));
+      setEndDate(serviceType === "kindergarten" ? defaultDate : addDays(defaultDate, 1));
       if (initialMember) {
         setMemberSearch(initialMember.name);
         setMemberId(initialMember.id);
@@ -330,7 +332,10 @@ export function NewReservationDialog({
                   type="button"
                   size="sm"
                   variant={serviceType === t ? "default" : "outline"}
-                  onClick={() => setServiceType(t)}
+                  onClick={() => {
+                    setServiceType(t);
+                    if (t === "kindergarten") setEndDate(date);
+                  }}
                 >
                   {SERVICE_LABELS[t]}
                 </Button>
@@ -578,41 +583,43 @@ export function NewReservationDialog({
 
               <div className="space-y-2">
                 <Label>픽드랍 설정</Label>
-                <Select value={pickupPassId} onValueChange={setPickupPassId} disabled={!petId}>
+                <Select
+                  value={pickupUsageMode}
+                  onValueChange={(v) => {
+                    const mode = v as (typeof PICKUP_USAGE_MODES)[number]["value"];
+                    setPickupUsageMode(mode);
+                    if (mode === "none") setPickupPassId("none");
+                  }}
+                >
                   <SelectTrigger>
-                    <SelectValue
-                      placeholder={
-                        !petId
-                          ? "강아지를 먼저 선택하세요"
-                          : availablePickupPasses.length === 0
-                            ? "적용 가능한 이용권이 없습니다"
-                            : "픽드랍 이용권을 선택하세요"
-                      }
-                    />
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">사용 안 함</SelectItem>
-                    {availablePickupPasses.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.title} · 잔여 {p.total_count - p.used_count}회
+                    {PICKUP_USAGE_MODES.map((m) => (
+                      <SelectItem key={m.value} value={m.value}>
+                        {m.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                {pickupPassId !== "none" ? (
-                  <Select
-                    value={pickupUsageMode}
-                    onValueChange={(v) =>
-                      setPickupUsageMode(v as (typeof PICKUP_USAGE_MODES)[number]["value"])
-                    }
-                  >
+                {pickupUsageMode !== "none" ? (
+                  <Select value={pickupPassId} onValueChange={setPickupPassId} disabled={!petId}>
                     <SelectTrigger>
-                      <SelectValue />
+                      <SelectValue
+                        placeholder={
+                          !petId
+                            ? "강아지를 먼저 선택하세요"
+                            : availablePickupPasses.length === 0
+                              ? "적용 가능한 이용권이 없습니다"
+                              : "픽드랍 이용권을 선택하세요"
+                        }
+                      />
                     </SelectTrigger>
                     <SelectContent>
-                      {PICKUP_USAGE_MODES.map((m) => (
-                        <SelectItem key={m.value} value={m.value}>
-                          {m.label}
+                      <SelectItem value="none">사용 안 함</SelectItem>
+                      {availablePickupPasses.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.title} · 잔여 {p.total_count - p.used_count}회
                         </SelectItem>
                       ))}
                     </SelectContent>
