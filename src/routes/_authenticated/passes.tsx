@@ -58,11 +58,23 @@ const WEIGHT_CLASSES = [
   { value: "medium", label: "중형(10~14.9kg)" },
   { value: "medium_large", label: "중대형(15~19.9kg)" },
   { value: "large", label: "대형(20kg이상)" },
+  { value: "etc", label: "기타" },
 ] as const;
 
 function weightClassLabel(value: string | null) {
   if (!value) return null;
   return WEIGHT_CLASSES.find((w) => w.value === value)?.label ?? value;
+}
+
+const AVAILABLE_DAYS = [
+  { value: "all", label: "전체" },
+  { value: "weekday", label: "평일" },
+  { value: "weekend", label: "주말" },
+] as const;
+
+function availableDaysLabel(value: string | null) {
+  if (!value) return null;
+  return AVAILABLE_DAYS.find((d) => d.value === value)?.label ?? value;
 }
 
 export const Route = createFileRoute("/_authenticated/passes")({
@@ -94,6 +106,7 @@ type PassRow = {
   memo: string | null;
   active: boolean;
   weight_class: string | null;
+  available_days: string | null;
   dogs: { id: string; name: string; owners: { name: string; phone: string } | null } | null;
 };
 
@@ -111,7 +124,7 @@ function PassesPage() {
       const { data, error } = await supabase
         .from("passes")
         .select(
-          "id, title, pass_type, total_count, used_count, price, purchased_on, expires_on, memo, active, weight_class, dogs(id, name, owners(name, phone))",
+          "id, title, pass_type, total_count, used_count, price, purchased_on, expires_on, memo, active, weight_class, available_days, dogs(id, name, owners(name, phone))",
         )
         .order("purchased_on", { ascending: false });
       if (error) throw error;
@@ -211,6 +224,11 @@ function PassesPage() {
                             {weightClassLabel(pass.weight_class)}
                           </span>
                         ) : null}
+                        {pass.pass_type === "hotel" && pass.available_days ? (
+                          <span className="block text-[10px]">
+                            이용가능: {availableDaysLabel(pass.available_days)}
+                          </span>
+                        ) : null}
                       </td>
                       <td className="px-4 py-3 text-center text-muted-foreground">
                         {pass.used_count}/{pass.total_count}회
@@ -279,6 +297,8 @@ function PassFormFields({
   setPassType,
   weightClass,
   setWeightClass,
+  availableDays,
+  setAvailableDays,
   title,
   setTitle,
   totalCount,
@@ -298,6 +318,8 @@ function PassFormFields({
   setPassType: (v: ServiceType) => void;
   weightClass: string;
   setWeightClass: (v: string) => void;
+  availableDays: string;
+  setAvailableDays: (v: string) => void;
   title: string;
   setTitle: (v: string) => void;
   totalCount: string;
@@ -326,9 +348,9 @@ function PassFormFields({
                 key={t}
                 type="button"
                 onClick={() => setPassType(t)}
-                className={`flex flex-col items-center gap-1.5 rounded-xl border-2 px-2 py-3 text-xs font-bold transition-all ${
+                className={`flex flex-col items-center gap-1.5 rounded-xl border px-2 py-3 text-xs font-bold shadow-none transition-all ${
                   isActive
-                    ? `${SERVICE_STYLES[t]} scale-[1.03] shadow-sm`
+                    ? `${SERVICE_STYLES[t]} scale-[1.03]`
                     : "border-border bg-transparent text-muted-foreground hover:bg-secondary"
                 }`}
               >
@@ -383,6 +405,28 @@ function PassFormFields({
           <Input type="number" min="0" value={price} onChange={(e) => setPrice(e.target.value)} />
         </div>
       </div>
+
+      {passType === "hotel" ? (
+        <div className="space-y-2">
+          <Label>이용가능 요일</Label>
+          <div className="grid grid-cols-3 gap-2">
+            {AVAILABLE_DAYS.map((d) => (
+              <button
+                key={d.value}
+                type="button"
+                onClick={() => setAvailableDays(d.value)}
+                className={`rounded-lg border px-2 py-2 text-sm font-bold transition-colors ${
+                  availableDays === d.value
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border bg-transparent text-muted-foreground hover:bg-secondary"
+                }`}
+              >
+                {d.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       <div className="space-y-2">
         <Label>유효기간 (발급일로부터)</Label>
@@ -439,6 +483,7 @@ function NewPassDialog() {
   const [open, setOpen] = useState(false);
   const [passType, setPassType] = useState<ServiceType>("kindergarten");
   const [weightClass, setWeightClass] = useState("");
+  const [availableDays, setAvailableDays] = useState("all");
   const [title, setTitle] = useState("");
   const [totalCount, setTotalCount] = useState("10");
   const [price, setPrice] = useState("300000");
@@ -450,6 +495,7 @@ function NewPassDialog() {
   function reset() {
     setPassType("kindergarten");
     setWeightClass("");
+    setAvailableDays("all");
     setTitle("");
     setTotalCount("10");
     setPrice("300000");
@@ -465,6 +511,7 @@ function NewPassDialog() {
       const { error } = await supabase.from("passes").insert({
         pass_type: passType,
         weight_class: passType === "kindergarten" ? weightClass || null : null,
+        available_days: passType === "hotel" ? availableDays || null : null,
         title: title.trim(),
         total_count: Number(totalCount),
         price: Number(price),
@@ -506,6 +553,8 @@ function NewPassDialog() {
           setPassType={setPassType}
           weightClass={weightClass}
           setWeightClass={setWeightClass}
+          availableDays={availableDays}
+          setAvailableDays={setAvailableDays}
           title={title}
           setTitle={setTitle}
           totalCount={totalCount}
@@ -541,6 +590,7 @@ function EditPassDialog({
   const queryClient = useQueryClient();
   const [passType, setPassType] = useState<ServiceType>("kindergarten");
   const [weightClass, setWeightClass] = useState("");
+  const [availableDays, setAvailableDays] = useState("all");
   const [title, setTitle] = useState("");
   const [totalCount, setTotalCount] = useState("10");
   const [price, setPrice] = useState("0");
@@ -557,6 +607,7 @@ function EditPassDialog({
     setLoadedFor(row.id);
     setPassType((row.pass_type as ServiceType) ?? "kindergarten");
     setWeightClass(row.weight_class ?? "");
+    setAvailableDays(row.available_days ?? "all");
     setTitle(row.title);
     setTotalCount(String(row.total_count));
     setPrice(String(row.price));
@@ -574,6 +625,7 @@ function EditPassDialog({
         .update({
           pass_type: passType,
           weight_class: passType === "kindergarten" ? weightClass || null : null,
+          available_days: passType === "hotel" ? availableDays || null : null,
           title: title.trim(),
           total_count: Number(totalCount),
           price: Number(price),
@@ -621,6 +673,8 @@ function EditPassDialog({
             setPassType={setPassType}
             weightClass={weightClass}
             setWeightClass={setWeightClass}
+            availableDays={availableDays}
+            setAvailableDays={setAvailableDays}
             title={title}
             setTitle={setTitle}
             totalCount={totalCount}

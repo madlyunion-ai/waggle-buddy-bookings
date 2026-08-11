@@ -115,6 +115,7 @@ export type Database = {
       passes: {
         Row: {
           active: boolean;
+          available_days: string | null;
           created_at: string;
           dog_id: string | null;
           expires_on: string | null;
@@ -133,6 +134,7 @@ export type Database = {
         };
         Insert: {
           active?: boolean;
+          available_days?: string | null;
           created_at?: string;
           dog_id?: string | null;
           expires_on?: string | null;
@@ -151,6 +153,7 @@ export type Database = {
         };
         Update: {
           active?: boolean;
+          available_days?: string | null;
           created_at?: string;
           dog_id?: string | null;
           expires_on?: string | null;
