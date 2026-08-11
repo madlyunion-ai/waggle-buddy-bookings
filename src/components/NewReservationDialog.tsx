@@ -42,11 +42,16 @@ export function NewReservationDialog({
   open: openProp,
   onOpenChange,
   hideTrigger,
+  initialMember,
+  initialPetId,
 }: {
   defaultDate: string;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   hideTrigger?: boolean;
+  /** 헤더 검색 등에서 특정 회원/반려견을 미리 선택된 상태로 열 때 사용 */
+  initialMember?: { id: string; name: string };
+  initialPetId?: string;
 }) {
   const queryClient = useQueryClient();
   const [openState, setOpenState] = useState(false);
@@ -275,8 +280,16 @@ export function NewReservationDialog({
     if (open) {
       setDate(defaultDate);
       setEndDate(addDays(defaultDate, 1));
+      if (initialMember) {
+        setMemberSearch(initialMember.name);
+        setMemberId(initialMember.id);
+      }
+      if (initialPetId) {
+        setPetId(initialPetId);
+      }
     }
-  }, [open, defaultDate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, defaultDate, initialMember?.id, initialPetId]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

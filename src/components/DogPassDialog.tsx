@@ -67,7 +67,15 @@ type CatalogPass = {
 };
 
 /** 반려견이 보유한 이용권을 확인하고, 이용권 관리에 등록된 상품을 지급하는 다이얼로그 */
-export function DogPassDialog({ pet }: { pet: { id: string; dbId: string; name: string } }) {
+export function DogPassDialog({
+  pet,
+  triggerLabel = "이용권",
+  triggerClassName = "h-8 px-2.5 text-xs",
+}: {
+  pet: { id: string; dbId: string; name: string };
+  triggerLabel?: string;
+  triggerClassName?: string;
+}) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [catalogType, setCatalogType] = useState("");
@@ -153,8 +161,8 @@ export function DogPassDialog({ pet }: { pet: { id: string; dbId: string; name: 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" variant="outline" className="h-8 px-2.5 text-xs">
-          <Ticket className="size-3.5" /> 이용권
+        <Button size="sm" variant="outline" className={triggerClassName}>
+          <Ticket className="size-3.5" /> {triggerLabel}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-md">

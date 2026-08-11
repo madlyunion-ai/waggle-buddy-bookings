@@ -233,6 +233,7 @@ function PassesPage() {
         .select(
           "id, title, pass_type, total_count, used_count, price, purchased_on, expires_on, memo, active, weight_class, available_days, trip_type, pricing_basis, dogs(id, name, owners(name, phone))",
         )
+        .is("dog_id", null)
         .order("purchased_on", { ascending: false });
       if (error) throw error;
       return (data ?? []) as unknown as PassRow[];
