@@ -33,6 +33,14 @@ const PASS_TYPE_LABELS: Record<string, string> = {
 
 const PASS_TYPES = ["kindergarten", "hotel", "daily_care", "grooming", "pickup_dropoff"] as const;
 
+const PASS_TYPE_BORDER: Record<string, string> = {
+  kindergarten: "border-primary/40",
+  hotel: "border-accent/50",
+  daily_care: "border-rose-300/60",
+  grooming: "border-warning/50",
+  pickup_dropoff: "border-sky-300/60",
+};
+
 type DogPass = {
   id: string;
   title: string;
@@ -150,7 +158,12 @@ export function DogPassDialog({ pet }: { pet: { id: string; dbId: string; name: 
               {passes.map((p) => {
                 const remaining = Math.max(0, p.total_count - p.used_count);
                 return (
-                  <div key={p.id} className="rounded-lg border border-border p-3">
+                  <div
+                    key={p.id}
+                    className={`rounded-lg border-2 p-3 ${
+                      PASS_TYPE_BORDER[p.pass_type] ?? "border-border"
+                    }`}
+                  >
                     <div className="flex items-center justify-between gap-2">
                       <span className="truncate text-sm font-bold">{p.title}</span>
                       <span
@@ -162,10 +175,11 @@ export function DogPassDialog({ pet }: { pet: { id: string; dbId: string; name: 
                       </span>
                     </div>
                     <div className="mt-1 flex items-end justify-between gap-2">
-                      <div className="text-xs text-muted-foreground">
-                        <p>{PASS_TYPE_LABELS[p.pass_type] ?? p.pass_type}</p>
-                        <p className="mt-0.5">{p.expires_on ? `~${p.expires_on}까지` : "무제한"}</p>
-                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {PASS_TYPE_LABELS[p.pass_type] ?? p.pass_type}
+                        {" · "}
+                        {p.expires_on ? `~${p.expires_on}까지` : "무제한"}
+                      </p>
                       <div className="shrink-0 text-right">
                         <p className="text-xs text-muted-foreground">
                           잔여 <span className="font-bold text-blue-600">{remaining}</span>
@@ -183,7 +197,7 @@ export function DogPassDialog({ pet }: { pet: { id: string; dbId: string; name: 
 
         <div className="space-y-2 border-t border-border pt-3">
           <p className="text-xs font-semibold text-muted-foreground">이용권 추가</p>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-10 gap-2">
             <Select
               value={catalogType}
               onValueChange={(v) => {
@@ -191,7 +205,7 @@ export function DogPassDialog({ pet }: { pet: { id: string; dbId: string; name: 
                 setCatalogId("");
               }}
             >
-              <SelectTrigger>
+              <SelectTrigger className="col-span-3">
                 <SelectValue placeholder="타입 선택" />
               </SelectTrigger>
               <SelectContent>
@@ -203,7 +217,7 @@ export function DogPassDialog({ pet }: { pet: { id: string; dbId: string; name: 
               </SelectContent>
             </Select>
             <Select value={catalogId} onValueChange={setCatalogId} disabled={!catalogType}>
-              <SelectTrigger>
+              <SelectTrigger className="col-span-7">
                 <SelectValue
                   placeholder={!catalogType ? "타입을 먼저 선택하세요" : "이용권 선택"}
                 />
