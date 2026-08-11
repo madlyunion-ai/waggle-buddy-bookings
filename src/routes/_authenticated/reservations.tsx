@@ -247,9 +247,11 @@ function ReservationsPage() {
                       <div className="flex min-w-0 items-center justify-center gap-1">
                         <div className="hidden min-w-0 text-center sm:block">
                           <p className="truncate">{row.dogs?.owners?.name ?? "보호자 미확인"}</p>
-                          <p className="truncate text-xs text-muted-foreground">
-                            {row.dogs?.owners?.phone ?? "-"}
-                          </p>
+                          {row.dogs?.owners?.phone ? (
+                            <p className="truncate text-xs text-muted-foreground">
+                              {row.dogs.owners.phone}
+                            </p>
+                          ) : null}
                         </div>
                         <OwnerQuickInfoDialog
                           name={row.dogs?.owners?.name ?? "보호자 미확인"}
