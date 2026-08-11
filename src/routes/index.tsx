@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 
-import { CalendarDays, Dog, Ticket } from "lucide-react";
+import { CalendarDays, Dog, Eye, EyeOff, Ticket } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -58,6 +58,8 @@ function Landing() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMeState] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [mobileError, setMobileError] = useState<string | null>(null);
   const login = useServerFn(loginWithUsername);
 
   useEffect(() => {
@@ -79,6 +81,7 @@ function Landing() {
   async function signIn(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
+    setMobileError(null);
     try {
       const { accessToken, refreshToken } = await login({ data: { username, password } });
       setRememberMe(rememberMe);
@@ -88,9 +91,10 @@ function Landing() {
       });
       if (error) throw new Error(error.message);
       navigate({ to: "/dashboard", replace: true });
-    } catch (err) {
+    } catch {
+      setMobileError("이메일 또는 비밀번호가 올바르지 않습니다.");
       toast.error("로그인에 실패했습니다", {
-        description: err instanceof Error ? err.message : "아이디 또는 비밀번호를 확인해 주세요.",
+        description: "아이디 또는 비밀번호를 확인해 주세요.",
       });
     } finally {
       setLoading(false);
@@ -99,17 +103,94 @@ function Landing() {
 
   return (
     <div className="paw-grid min-h-screen">
-      {/* 모바일: 타이틀 + 서브타이틀 + 로그인 폼만 스크롤 없이 중앙 표시 */}
-      <div className="flex min-h-screen flex-col items-center justify-center px-4 py-8 sm:hidden">
+      {/* 모바일: 피그마 로그인 화면 시안 반영 */}
+      <div className="flex min-h-screen flex-col items-center justify-center bg-[#F2F5F7] px-7 py-8 sm:hidden">
         <div className="w-full max-w-md">
-          <div className="mb-6 text-center">
-            <h1 className="text-2xl font-extrabold">허그앤멍 예약관리시스템</h1>
-            <p className="mt-1 text-sm text-muted-foreground">원장·직원 전용 관리 시스템입니다.</p>
+          <div className="flex flex-col items-center gap-2 pb-6 pt-6 text-center">
+            <div className="flex items-center gap-0.5">
+              <span className="text-[28px] font-semibold leading-[34px] text-[#037FED]">
+                허그앤멍
+              </span>
+              <span className="text-2xl font-semibold leading-7 text-black">예약관리시스템</span>
+            </div>
+            <p className="text-base font-medium leading-6 text-[#9EA2AE]">
+              원장 및 직원 전용 관리시스템입니다.
+            </p>
           </div>
-          <div className="surface-card p-6">
-            <form className="space-y-4" onSubmit={signIn}>
-              {renderLoginFields("m")}
-            </form>
+
+          <form
+            className="flex flex-col rounded-xl border border-[#DDDDDD] bg-white px-5 py-7"
+            onSubmit={signIn}
+          >
+            <div className="flex flex-col gap-3">
+              <div
+                className={`flex items-center gap-3 rounded-xl border bg-white px-3 py-3 transition-colors focus-within:border-[#037FED] focus-within:ring-[3px] focus-within:ring-[#037FED]/15 ${
+                  mobileError ? "border-[#E0392C]" : "border-[#CCCCCC]"
+                }`}
+              >
+                <input
+                  id="username-m"
+                  autoComplete="username"
+                  required
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="이메일"
+                  className="flex-1 border-none bg-transparent text-base leading-6 text-black outline-none placeholder:text-[#9EA2AE]"
+                />
+              </div>
+
+              <div
+                className={`flex items-center gap-3 rounded-xl border bg-white px-3 py-3 transition-colors focus-within:border-[#037FED] focus-within:ring-[3px] focus-within:ring-[#037FED]/15 ${
+                  mobileError ? "border-[#E0392C]" : "border-[#CCCCCC]"
+                }`}
+              >
+                <input
+                  id="password-m"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="비밀번호"
+                  className="flex-1 border-none bg-transparent text-base leading-6 text-black outline-none placeholder:text-[#9EA2AE]"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="grid place-items-center text-[#9EA2AE]"
+                  aria-label={showPassword ? "비밀번호 숨기기" : "비밀번호 표시"}
+                >
+                  {showPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
+                </button>
+              </div>
+            </div>
+
+            {mobileError ? (
+              <span className="px-1 pt-1 text-xs leading-[1.4em] text-[#E0392C]">
+                {mobileError}
+              </span>
+            ) : null}
+
+            <label className="flex cursor-pointer select-none items-center gap-2 py-3">
+              <Checkbox
+                checked={rememberMe}
+                onCheckedChange={(v) => setRememberMeState(v === true)}
+                className="size-6 rounded-lg border-2 border-[#037FED] shadow-none data-[state=checked]:border-[#037FED] data-[state=checked]:bg-[#037FED] data-[state=checked]:text-white"
+              />
+              <span className="text-sm font-medium leading-5 text-[#4D5461]">자동로그인</span>
+            </label>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full rounded-xl bg-[#037FED] py-4 text-lg font-semibold leading-6 text-white transition-colors hover:bg-[#0270CE] active:opacity-90 disabled:opacity-60"
+            >
+              {loading ? "로그인 중…" : "로그인"}
+            </button>
+          </form>
+
+          <div className="flex items-center justify-between py-4">
+            <span className="text-sm font-medium leading-5 text-[#6D717F]">Ver.1.0.0</span>
           </div>
         </div>
       </div>
