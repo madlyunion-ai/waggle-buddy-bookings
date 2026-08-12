@@ -56,10 +56,16 @@ const NAV_GROUPS = [
   },
 ] as const;
 
-/** 모바일 하단 탭바(홈 바) 메뉴 */
+/** 모바일 하단 탭바(홈 바) 메뉴 - 가운데 항목이 캘린더(Home) 강조 버튼 */
 const BOTTOM_NAV = [
-  { to: "/dashboard", label: "Home", icon: Home, match: (p: string) => p === "/dashboard" },
   { to: "/dogs", label: "반려견", icon: Dog, match: (p: string) => p === "/dogs" },
+  {
+    to: "/dashboard",
+    label: "Home",
+    icon: Home,
+    match: (p: string) => p === "/dashboard",
+    center: true,
+  },
   {
     to: "/passes-usage",
     label: "이용권",
@@ -123,7 +129,7 @@ export function AppShell({
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-30 border-b border-[#cccccc] bg-[#17214c] text-white">
-        <div className="flex h-[52px] items-center gap-3 px-4 lg:px-6">
+        <div className="hidden h-[52px] items-center gap-3 px-4 lg:flex lg:px-6">
           <Link to="/dashboard" className="flex shrink-0 items-baseline gap-2">
             <span className="font-display text-[17px] font-semibold tracking-tight text-white">
               허그앤멍 예약관리시스템
@@ -216,7 +222,7 @@ export function AppShell({
           ))}
         </aside>
 
-        <main className="min-w-0 flex-1 px-4 pb-20 pt-4 lg:px-6 lg:pb-4">
+        <main className="min-w-0 flex-1 px-4 pb-24 pt-4 lg:px-6 lg:pb-4">
           {title || action ? (
             <div className="mb-2.5 flex flex-wrap items-end justify-between gap-3 sm:mb-5">
               <div>
@@ -242,16 +248,30 @@ export function AppShell({
 
       <StaffEditDialog row={editingSelf ? selfRow : null} onOpenChange={(v) => setEditingSelf(v)} />
 
-      {/* 모바일 하단 탭바(홈 바) */}
-      <nav className="fixed inset-x-0 bottom-0 z-30 flex items-stretch border-t border-border bg-white pb-[env(safe-area-inset-bottom)] lg:hidden">
+      {/* 모바일 하단 탭바(홈 바): 가운데 캘린더(Home) 탭을 원형으로 강조 */}
+      <nav className="fixed inset-x-0 bottom-0 z-30 flex items-end justify-around border-t border-border bg-white pb-[max(10px,env(safe-area-inset-bottom))] pt-2 lg:hidden">
         {BOTTOM_NAV.map((item) => {
           const active = item.match(pathname);
+          if ("center" in item && item.center) {
+            return (
+              <Link
+                key={item.label}
+                to={item.to}
+                className="relative -mt-7 flex flex-col items-center gap-1"
+              >
+                <span className="flex size-14 items-center justify-center rounded-full bg-[#2f6fed] text-white shadow-lg ring-4 ring-white">
+                  <item.icon className="size-6" />
+                </span>
+                <span className="text-[11px] font-bold text-[#2f6fed]">{item.label}</span>
+              </Link>
+            );
+          }
           return (
             <Link
               key={item.label}
               to={item.to}
-              className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-semibold ${
-                active ? "text-primary" : "text-muted-foreground"
+              className={`flex flex-col items-center gap-1 py-1 text-[11px] font-semibold ${
+                active ? "text-[#2f6fed]" : "text-muted-foreground"
               }`}
             >
               <item.icon className="size-5" />

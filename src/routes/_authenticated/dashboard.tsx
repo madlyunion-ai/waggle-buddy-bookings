@@ -900,7 +900,7 @@ function DashboardPage() {
         <button
           type="button"
           onClick={() => setCreateDate(selected)}
-          className="fixed bottom-[76px] right-5 z-40 flex items-center gap-1.5 rounded-full bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-lg transition-transform active:scale-95 lg:hidden"
+          className="fixed bottom-24 right-5 z-40 flex items-center gap-1.5 rounded-full bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-lg transition-transform active:scale-95 lg:hidden"
         >
           <Plus className="size-4" />
           예약하기
