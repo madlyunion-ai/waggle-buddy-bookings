@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Ticket } from "lucide-react";
+import { BedDouble, CalendarCheck, Car, Clock, Scissors, Ticket, Wallet } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -49,6 +49,24 @@ const PASS_TYPE_BORDER: Record<string, string> = {
   grooming: "border-warning/50",
   pickup_dropoff: "border-gray-300/60",
   balance: "border-amber-800/40",
+};
+
+const PASS_TYPE_ICONS: Record<string, typeof CalendarCheck> = {
+  kindergarten: CalendarCheck,
+  hotel: BedDouble,
+  daily_care: Clock,
+  grooming: Scissors,
+  pickup_dropoff: Car,
+  balance: Wallet,
+};
+
+const PASS_TYPE_ICON_STYLES: Record<string, string> = {
+  kindergarten: "bg-primary/10 text-primary",
+  hotel: "bg-accent/20 text-accent-foreground",
+  daily_care: "bg-rose-300/15 text-rose-500",
+  grooming: "bg-warning/20 text-warning-foreground",
+  pickup_dropoff: "bg-gray-300/25 text-gray-600",
+  balance: "bg-amber-800/10 text-amber-800",
 };
 
 type DogPass = {
@@ -191,49 +209,57 @@ export function DogPassDialog({
             <div className="space-y-2">
               {passes.map((p) => {
                 const remaining = Math.max(0, p.total_count - p.used_count);
+                const Icon = PASS_TYPE_ICONS[p.pass_type] ?? Ticket;
                 return (
                   <div
                     key={p.id}
-                    className={`rounded-lg border p-3 ${
+                    className={`rounded-xl border bg-card p-3 shadow-sm ${
                       PASS_TYPE_BORDER[p.pass_type] ?? "border-border"
                     }`}
                   >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="truncate text-sm font-bold">{p.title}</span>
+                    <div className="flex items-center gap-2.5">
                       <span
-                        className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                          p.active ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                        className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${
+                          PASS_TYPE_ICON_STYLES[p.pass_type] ?? "bg-secondary text-foreground"
                         }`}
                       >
-                        {p.active ? "활성화" : "비활성화"}
+                        <Icon className="size-4" />
                       </span>
-                    </div>
-                    <div className="mt-1 flex items-end justify-between gap-2">
-                      <p className="text-xs text-muted-foreground">
-                        {PASS_TYPE_LABELS[p.pass_type] ?? p.pass_type}
-                        {" · "}
-                        {p.expires_on ? `~${p.expires_on}까지` : "무제한"}
-                      </p>
-                      <div className="shrink-0 text-right">
-                        <p className="text-xs text-muted-foreground">
-                          {p.pass_type === "balance" ? (
-                            <>
-                              잔여{" "}
-                              <span className="font-bold text-blue-600">
-                                {formatWon(remaining)}
-                              </span>
-                            </>
-                          ) : (
-                            <>
-                              잔여 <span className="font-bold text-blue-600">{remaining}</span>
-                              <span style={{ color: "#222222" }}>/{p.total_count}</span>회
-                            </>
-                          )}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="truncate text-sm font-bold">{p.title}</span>
+                          <span
+                            className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                              p.active
+                                ? "bg-primary/10 text-primary"
+                                : "bg-muted text-muted-foreground"
+                            }`}
+                          >
+                            {p.active ? "활성화" : "비활성화"}
+                          </span>
+                        </div>
+                        <p className="truncate text-xs text-muted-foreground">
+                          {PASS_TYPE_LABELS[p.pass_type] ?? p.pass_type}
+                          {" · "}
+                          {p.expires_on ? `~${p.expires_on}까지` : "무제한"}
                         </p>
-                        {p.pass_type !== "balance" ? (
-                          <p className="mt-0.5 text-base font-bold">{formatWon(p.price)}</p>
-                        ) : null}
                       </div>
+                    </div>
+                    <div className="mt-2 flex items-end justify-between gap-2 border-t border-border/60 pt-2">
+                      <p className="text-xs text-muted-foreground">
+                        {p.pass_type === "balance" ? (
+                          <>
+                            잔여{" "}
+                            <span className="font-bold text-blue-600">{formatWon(remaining)}</span>
+                          </>
+                        ) : (
+                          <>
+                            잔여 <span className="font-bold text-blue-600">{remaining}</span>
+                            <span className="text-foreground">/{p.total_count}</span>회
+                          </>
+                        )}
+                      </p>
+                      <p className="text-base font-bold">{formatWon(p.price)}</p>
                     </div>
                   </div>
                 );
