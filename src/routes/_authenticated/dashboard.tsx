@@ -422,7 +422,7 @@ function DashboardPage() {
           onTouchStart={handleCalendarTouchStart}
           onTouchEnd={handleCalendarTouchEnd}
         >
-          <div className="mb-0 flex items-center justify-between px-4 sm:mb-4 sm:px-0">
+          <div className="mb-0 flex items-center justify-between bg-background px-4 py-1 sm:mb-4 sm:bg-transparent sm:px-0 sm:py-0">
             <div className="flex items-center gap-2">
               <h2 className="text-lg font-bold">
                 {anchor.getFullYear()}년 {anchor.getMonth() + 1}월
