@@ -259,11 +259,13 @@ export function NewReservationDialog({
 
   const serviceCost = passApplied ? 0 : rawServiceCost;
 
-  const pickupCost = (() => {
-    if (pickupUsageMode === "none" || pickupPassApplied) return 0;
+  const rawPickupCost = (() => {
+    if (pickupUsageMode === "none") return 0;
     const multiplier = pickupUsageMode === "round_trip" ? 2 : 1;
     return pickupUnitPrice * multiplier;
   })();
+
+  const pickupCost = pickupPassApplied ? 0 : rawPickupCost;
 
   const totalPrice = serviceCost + pickupCost;
 
@@ -328,7 +330,7 @@ export function NewReservationDialog({
   );
   const availablePickupPasses = ownedPasses.filter(
     (p) =>
-      p.pass_type === "pickup_dropoff" &&
+      (p.pass_type === "pickup_dropoff" || p.pass_type === "balance") &&
       p.payment_status === "paid" &&
       p.used_count < p.total_count,
   );
@@ -412,6 +414,9 @@ export function NewReservationDialog({
       }
       const appliedPickupPassId =
         pickupUsageMode !== "none" && pickupPassId !== "none" ? pickupPassId : null;
+      const appliedPickupPassType = appliedPickupPassId
+        ? (availablePickupPasses.find((p) => p.id === appliedPickupPassId)?.pass_type ?? null)
+        : null;
 
       const times =
         serviceType === "grooming"
@@ -452,7 +457,8 @@ export function NewReservationDialog({
         deductions.push({ id: appliedPassId, amount });
       }
       if (appliedPickupPassId) {
-        deductions.push({ id: appliedPickupPassId, amount: 1 });
+        const amount = appliedPickupPassType === "balance" ? rawPickupCost : 1;
+        deductions.push({ id: appliedPickupPassId, amount });
       }
       for (const { id, amount } of deductions) {
         if (amount <= 0) continue;
@@ -838,7 +844,10 @@ export function NewReservationDialog({
                     <SelectItem value="none">사용 안 함</SelectItem>
                     {availablePickupPasses.map((p) => (
                       <SelectItem key={p.id} value={p.id}>
-                        {p.title} · 잔여 {p.total_count - p.used_count}회
+                        {p.title} · 잔여{" "}
+                        {p.pass_type === "balance"
+                          ? formatWon(p.total_count - p.used_count)
+                          : `${p.total_count - p.used_count}회`}
                       </SelectItem>
                     ))}
                   </SelectContent>
