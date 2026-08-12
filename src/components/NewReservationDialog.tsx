@@ -69,24 +69,45 @@ function timeToMinutes(time: string) {
   return h * 60 + m;
 }
 
-/** 시작일~종료일을 하나의 range date-picker로 선택하는 필드 */
+/**
+ * 시작일~종료일을 하나의 range date-picker로 선택하는 필드.
+ * 팝오버를 열 때마다 선택 상태를 초기화해, 항상 "시작일 클릭 → 종료일 클릭" 2단계로 동작하게 한다.
+ * (react-day-picker의 기본 range 동작은 이미 완성된 range가 있으면 시작일이 고정된 채 끝만 바뀌어 요구사항과 달랐다)
+ */
 function DateRangeField({
   from,
   to,
   onChange,
+  minNights = 0,
 }: {
   from: string;
   to: string;
   onChange: (from: string, to: string) => void;
+  /** 시작일과 종료일을 같은 날로 선택하지 못하게 강제할 최소 박수 (예: 호텔은 1) */
+  minNights?: number;
 }) {
   const [open, setOpen] = useState(false);
+  const [draftFrom, setDraftFrom] = useState<string | null>(null);
   const fromDate = new Date(`${from}T00:00:00`);
-  const range: DateRange = { from: fromDate, to: new Date(`${to}T00:00:00`) };
+
+  const displayed: DateRange | undefined = draftFrom
+    ? { from: new Date(`${draftFrom}T00:00:00`), to: undefined }
+    : undefined;
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (next) setDraftFrom(null);
+      }}
+    >
       <PopoverTrigger asChild>
-        <Button type="button" variant="outline" className="w-full justify-start font-normal">
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full justify-start bg-white font-normal hover:bg-white"
+        >
           <CalendarIcon className="size-4 shrink-0 opacity-60" />
           {from === to ? from : `${from} ~ ${to}`}
         </Button>
@@ -94,15 +115,21 @@ function DateRangeField({
       <PopoverContent className="w-auto p-0" align="start">
         <Calendar
           mode="range"
-          selected={range}
+          selected={displayed}
           defaultMonth={fromDate}
           numberOfMonths={1}
-          onSelect={(next) => {
-            if (!next?.from) return;
-            const nextFrom = toDateKey(next.from);
-            const nextTo = next.to ? toDateKey(next.to) : nextFrom;
+          onSelect={(_, selectedDay) => {
+            const clickedKey = toDateKey(selectedDay);
+            if (!draftFrom) {
+              setDraftFrom(clickedKey);
+              return;
+            }
+            if (minNights > 0 && clickedKey === draftFrom) return;
+            const nextFrom = draftFrom <= clickedKey ? draftFrom : clickedKey;
+            const nextTo = draftFrom <= clickedKey ? clickedKey : draftFrom;
             onChange(nextFrom, nextTo);
-            if (next.to) setOpen(false);
+            setDraftFrom(null);
+            setOpen(false);
           }}
         />
       </PopoverContent>
@@ -590,9 +617,10 @@ export function NewReservationDialog({
                   <DateRangeField
                     from={date}
                     to={endDate}
+                    minNights={1}
                     onChange={(f, t) => {
                       setDate(f);
-                      setEndDate(f === t ? addDays(f, 1) : t);
+                      setEndDate(t);
                     }}
                   />
                 </div>
