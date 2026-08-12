@@ -66,17 +66,22 @@ function ReservationsPage() {
   const [keyword, setKeyword] = useState("");
   const [service, setService] = useState<string>("all");
   const [status, setStatus] = useState<string>("all");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   const query = useQuery({
-    queryKey: ["reservations", "all"],
+    queryKey: ["reservations", "all", startDate, endDate],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let request = supabase
         .from("reservations")
         .select(
           "id, reserved_date, end_date, drop_off_time, pick_up_time, status, service_type, memo, created_at, dogs(name, breed, owners(name, phone, external_id))",
         )
         .order("reserved_date", { ascending: false })
         .limit(500);
+      if (startDate) request = request.gte("reserved_date", startDate);
+      if (endDate) request = request.lte("reserved_date", endDate);
+      const { data, error } = await request;
       if (error) throw error;
       return (data ?? []) as unknown as Row[];
     },
@@ -111,6 +116,37 @@ function ReservationsPage() {
         </Button>
       }
     >
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <span className="text-sm font-semibold text-muted-foreground">기간 검색</span>
+        <Input
+          type="date"
+          className="w-[150px] bg-white"
+          value={startDate}
+          max={endDate || undefined}
+          onChange={(e) => setStartDate(e.target.value)}
+        />
+        <span className="text-sm text-muted-foreground">~</span>
+        <Input
+          type="date"
+          className="w-[150px] bg-white"
+          value={endDate}
+          min={startDate || undefined}
+          onChange={(e) => setEndDate(e.target.value)}
+        />
+        {startDate || endDate ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setStartDate("");
+              setEndDate("");
+            }}
+          >
+            초기화
+          </Button>
+        ) : null}
+      </div>
+
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <div className="relative max-w-sm flex-1">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
