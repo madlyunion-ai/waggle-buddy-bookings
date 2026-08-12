@@ -412,7 +412,7 @@ function DashboardPage() {
     >
       <div
         className={`grid grid-cols-1 gap-4 sm:mt-0 sm:h-auto lg:h-[calc(100vh-6rem)] lg:min-h-[560px] lg:grid-cols-[80%_20%] ${
-          mobileHomeTab === "calendar" ? "-mt-4 h-[calc(100dvh-176px)]" : "mt-2 h-auto"
+          mobileHomeTab === "calendar" ? "mt-0 h-[calc(100dvh-192px)]" : "mt-2 h-auto"
         }`}
       >
         <section
