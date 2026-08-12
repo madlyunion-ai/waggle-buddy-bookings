@@ -484,7 +484,7 @@ function DashboardPage() {
             </div>
           </div>
 
-          <div className="mb-1 grid grid-cols-7 gap-0 border-b border-border px-4 pb-1.5 text-center text-xs font-bold sm:mb-1.5 sm:gap-1.5 sm:border-b-0 sm:px-0 sm:pb-0">
+          <div className="mb-1 grid grid-cols-7 gap-0 border-b border-border bg-background px-4 pb-1.5 text-center text-xs font-bold sm:mb-1.5 sm:gap-1.5 sm:border-b-0 sm:bg-transparent sm:px-0 sm:pb-0">
             {["일", "월", "화", "수", "목", "금", "토"].map((d, i) => (
               <div
                 key={d}
@@ -549,7 +549,7 @@ function DashboardPage() {
                             }
                           }}
                           className={`flex min-h-[44px] max-h-[92px] cursor-pointer flex-col items-stretch gap-0.5 overflow-hidden border-b border-border/60 p-1 text-left align-top transition-colors sm:min-h-[114px] sm:max-h-none sm:gap-1 sm:rounded-xl sm:border sm:p-1.5 ${
-                            isSelected ? "bg-primary/5" : !isMonth ? "bg-[#f3f3f3]" : ""
+                            isSelected ? "bg-primary/5" : !isMonth ? "bg-blue-50" : ""
                           } ${isToday ? `${sm("border-2 border-primary")}` : sm("border")} ${
                             isSelected
                               ? sm("bg-primary/8")
