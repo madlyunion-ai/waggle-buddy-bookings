@@ -1,10 +1,12 @@
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { Plus } from "lucide-react";
+import { CalendarIcon, Plus } from "lucide-react";
+import type { DateRange } from "react-day-picker";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Dialog,
   DialogContent,
@@ -15,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -64,6 +67,47 @@ function formatDuration(totalMinutes: number) {
 function timeToMinutes(time: string) {
   const [h = 0, m = 0] = time.split(":").map(Number);
   return h * 60 + m;
+}
+
+/** 시작일~종료일을 하나의 range date-picker로 선택하는 필드 */
+function DateRangeField({
+  from,
+  to,
+  onChange,
+}: {
+  from: string;
+  to: string;
+  onChange: (from: string, to: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const fromDate = new Date(`${from}T00:00:00`);
+  const range: DateRange = { from: fromDate, to: new Date(`${to}T00:00:00`) };
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button type="button" variant="outline" className="w-full justify-start font-normal">
+          <CalendarIcon className="size-4 shrink-0 opacity-60" />
+          {from === to ? from : `${from} ~ ${to}`}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="start">
+        <Calendar
+          mode="range"
+          selected={range}
+          defaultMonth={fromDate}
+          numberOfMonths={1}
+          onSelect={(next) => {
+            if (!next?.from) return;
+            const nextFrom = toDateKey(next.from);
+            const nextTo = next.to ? toDateKey(next.to) : nextFrom;
+            onChange(nextFrom, nextTo);
+            if (next.to) setOpen(false);
+          }}
+        />
+      </PopoverContent>
+    </Popover>
+  );
 }
 
 export function NewReservationDialog({
@@ -217,9 +261,6 @@ export function NewReservationDialog({
       p.payment_status === "paid" &&
       p.used_count < p.total_count,
   );
-
-  const selectedPass = availablePasses.find((p) => p.id === passId);
-  const selectedPickupPass = availablePickupPasses.find((p) => p.id === pickupPassId);
 
   const create = useMutation({
     mutationFn: async () => {
@@ -545,39 +586,31 @@ export function NewReservationDialog({
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <Label>입실일</Label>
-                  <Input
-                    type="date"
-                    value={date}
-                    onChange={(e) => {
-                      setDate(e.target.value);
-                      if (e.target.value >= endDate) setEndDate(addDays(e.target.value, 1));
+                  <Label>날짜</Label>
+                  <DateRangeField
+                    from={date}
+                    to={endDate}
+                    onChange={(f, t) => {
+                      setDate(f);
+                      setEndDate(f === t ? addDays(f, 1) : t);
                     }}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>퇴실일</Label>
-                  <Input
-                    type="date"
-                    min={addDays(date, 1)}
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                  />
+                  <Label>입실 / 퇴실 시간</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="time"
+                      value={dropOff}
+                      onChange={(e) => setDropOff(e.target.value)}
+                    />
+                    <Input type="time" value={pickUp} onChange={(e) => setPickUp(e.target.value)} />
+                  </div>
                 </div>
               </div>
               <p className="rounded-lg bg-secondary px-3 py-2 text-sm font-semibold">
                 숙박 기간: {stayLabel(date, endDate)}
               </p>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label>입실 시간</Label>
-                  <Input type="time" value={dropOff} onChange={(e) => setDropOff(e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <Label>퇴실 시간</Label>
-                  <Input type="time" value={pickUp} onChange={(e) => setPickUp(e.target.value)} />
-                </div>
-              </div>
             </div>
           ) : serviceType === "grooming" ? (
             <div className="grid grid-cols-2 gap-3">
@@ -602,53 +635,36 @@ export function NewReservationDialog({
               </div>
             </div>
           ) : serviceType === "kindergarten" ? (
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label>시작일</Label>
-                  <Input
-                    type="date"
-                    value={date}
-                    onChange={(e) => {
-                      setDate(e.target.value);
-                      if (e.target.value > endDate) setEndDate(e.target.value);
-                    }}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>종료일</Label>
-                  <Input
-                    type="date"
-                    min={date}
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                  />
-                </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>날짜</Label>
+                <DateRangeField
+                  from={date}
+                  to={endDate}
+                  onChange={(f, t) => {
+                    setDate(f);
+                    setEndDate(t);
+                  }}
+                />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label>등원</Label>
+              <div className="space-y-2">
+                <Label>등원 / 하원</Label>
+                <div className="flex gap-2">
                   <Input type="time" value={dropOff} onChange={(e) => setDropOff(e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <Label>하원</Label>
                   <Input type="time" value={pickUp} onChange={(e) => setPickUp(e.target.value)} />
                 </div>
               </div>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label>날짜 (하루)</Label>
+                <Label>날짜</Label>
                 <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label>등원</Label>
+              <div className="space-y-2">
+                <Label>등원 / 하원</Label>
+                <div className="flex gap-2">
                   <Input type="time" value={dropOff} onChange={(e) => setDropOff(e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <Label>하원</Label>
                   <Input type="time" value={pickUp} onChange={(e) => setPickUp(e.target.value)} />
                 </div>
               </div>
@@ -746,16 +762,6 @@ export function NewReservationDialog({
             </div>
           </div>
 
-          {selectedPass || selectedPickupPass ? (
-            <p className="text-xs text-muted-foreground">
-              적용된 이용권은{" "}
-              {serviceType === "daily_care"
-                ? "등록 시 이용시간만큼 잔여시간이"
-                : "등록 시 잔여 횟수가 1회"}{" "}
-              차감됩니다.
-            </p>
-          ) : null}
-
           <div className="space-y-2">
             <Label>메모</Label>
             <Textarea
@@ -768,18 +774,16 @@ export function NewReservationDialog({
         </div>
         <DialogFooter>
           <div className="space-y-2">
-            <div className="space-y-1 rounded-lg bg-secondary px-3 py-2.5">
-              {pickupCost > 0 ? (
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>
+            <div className="flex items-center justify-between rounded-lg bg-secondary px-3 py-2.5 text-sm font-bold">
+              <span>총액</span>
+              <span className="flex items-baseline gap-2">
+                {pickupCost > 0 ? (
+                  <span className="text-xs font-normal text-muted-foreground">
                     이용료 {formatWon(serviceCost)} + 픽드랍비 {formatWon(pickupCost)}
                   </span>
-                </div>
-              ) : null}
-              <div className="flex items-center justify-between text-sm font-bold">
-                <span>총액</span>
+                ) : null}
                 <span className="text-primary">{formatWon(totalPrice)}</span>
-              </div>
+              </span>
             </div>
             <Button
               className="w-full"
