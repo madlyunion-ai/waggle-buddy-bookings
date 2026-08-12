@@ -5,7 +5,6 @@ import {
   CalendarCheck,
   CalendarDays,
   Dog,
-  Home,
   LogOut,
   MapPin,
   Settings,
@@ -56,13 +55,13 @@ const NAV_GROUPS = [
   },
 ] as const;
 
-/** 모바일 하단 탭바(홈 바) 메뉴 - 가운데 항목이 캘린더(Home) 강조 버튼 */
+/** 모바일 하단 탭바(홈 바) 메뉴 - 가운데 항목이 캘린더 강조 버튼 */
 const BOTTOM_NAV = [
   { to: "/dogs", label: "반려견", icon: Dog, match: (p: string) => p === "/dogs" },
   {
     to: "/dashboard",
-    label: "Home",
-    icon: Home,
+    label: "캘린더",
+    icon: CalendarDays,
     match: (p: string) => p === "/dashboard",
     center: true,
   },
@@ -246,38 +245,49 @@ export function AppShell({
 
       <StaffEditDialog row={editingSelf ? selfRow : null} onOpenChange={(v) => setEditingSelf(v)} />
 
-      {/* 모바일 하단 탭바(홈 바): 가운데 캘린더(Home) 탭을 원형으로 강조 */}
-      <nav className="fixed inset-x-0 bottom-0 z-30 flex items-end justify-around border-t border-border bg-white pb-[max(10px,env(safe-area-inset-bottom))] pt-2 lg:hidden">
-        {BOTTOM_NAV.map((item) => {
-          const active = item.match(pathname);
-          if ("center" in item && item.center) {
+      {/* 모바일 하단 탭바: 가운데 캘린더 탭을 노치(패인 곡선) 안에 원형 버튼으로 강조 */}
+      <div className="fixed inset-x-0 bottom-0 z-30 lg:hidden">
+        <svg
+          viewBox="0 0 100 22"
+          preserveAspectRatio="none"
+          className="absolute inset-x-0 bottom-0 h-16 w-full text-white"
+          style={{ filter: "drop-shadow(0 -2px 8px rgba(15,23,42,0.08))" }}
+        >
+          <path d="M0,0 H35 C42,0 40,13 50,13 C60,13 58,0 65,0 H100 V22 H0 Z" fill="currentColor" />
+        </svg>
+        <nav className="relative flex h-16 items-end justify-around pb-[max(8px,env(safe-area-inset-bottom))]">
+          {BOTTOM_NAV.map((item) => {
+            const active = item.match(pathname);
+            if ("center" in item && item.center) {
+              return (
+                <Link
+                  key={item.label}
+                  to={item.to}
+                  className="relative -mt-9 flex flex-1 flex-col items-center gap-1"
+                >
+                  <span className="relative flex size-14 items-center justify-center rounded-full bg-gradient-to-br from-[#4f46e5] to-[#2f6fed] text-white shadow-xl">
+                    <item.icon className="size-6" />
+                    <span className="absolute -bottom-0.5 -right-0.5 size-3 rounded-full bg-white/30" />
+                  </span>
+                  <span className="text-[11px] font-bold text-[#2f6fed]">{item.label}</span>
+                </Link>
+              );
+            }
             return (
               <Link
                 key={item.label}
                 to={item.to}
-                className="relative -mt-7 flex flex-col items-center gap-1"
+                className={`flex flex-1 flex-col items-center gap-1 py-1 text-[11px] font-semibold ${
+                  active ? "text-[#2f6fed]" : "text-muted-foreground"
+                }`}
               >
-                <span className="flex size-14 items-center justify-center rounded-full bg-[#2f6fed] text-white shadow-lg ring-4 ring-white">
-                  <item.icon className="size-6" />
-                </span>
-                <span className="text-[11px] font-bold text-[#2f6fed]">{item.label}</span>
+                <item.icon className="size-5" />
+                {item.label}
               </Link>
             );
-          }
-          return (
-            <Link
-              key={item.label}
-              to={item.to}
-              className={`flex flex-col items-center gap-1 py-1 text-[11px] font-semibold ${
-                active ? "text-[#2f6fed]" : "text-muted-foreground"
-              }`}
-            >
-              <item.icon className="size-5" />
-              {item.label}
-            </Link>
-          );
-        })}
-      </nav>
+          })}
+        </nav>
+      </div>
     </div>
   );
 }
