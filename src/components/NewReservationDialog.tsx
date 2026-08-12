@@ -702,17 +702,17 @@ export function NewReservationDialog({
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">
-                {!petId
-                  ? "강아지를 선택하면 보유 이용권을 확인할 수 있습니다."
-                  : passesQuery.isLoading
+              {petId ? (
+                <p className="text-xs text-muted-foreground">
+                  {passesQuery.isLoading
                     ? "이용권을 불러오는 중…"
                     : availablePasses.length === 0
                       ? "사용 가능한(결제완료) 이용권이 없습니다."
                       : serviceType === "daily_care"
                         ? "등원~하원 시간만큼 차감됩니다."
                         : "등록 시 1회 차감됩니다."}
-              </p>
+                </p>
+              ) : null}
             </div>
 
             <div className="space-y-2">
