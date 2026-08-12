@@ -163,9 +163,18 @@ export function AppShell({
             </Button>
           </div>
         </div>
-        {mobileSubTabs ? (
-          <nav className="flex items-center gap-5 bg-[#2f6fed] px-4 lg:hidden">{mobileSubTabs}</nav>
-        ) : null}
+        <nav className="flex items-center justify-between gap-3 bg-[#2f6fed] px-4 pt-4 lg:hidden">
+          <div className="flex items-center gap-5">{mobileSubTabs}</div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={signOut}
+            className="h-7 shrink-0 px-2 text-xs text-white/90 hover:bg-white/10 hover:text-white"
+          >
+            <LogOut className="size-3.5" />
+            로그아웃
+          </Button>
+        </nav>
       </header>
 
       <div className="flex">

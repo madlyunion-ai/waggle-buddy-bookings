@@ -1,8 +1,8 @@
 import { Link } from "@tanstack/react-router";
 
 const TAB_CLASS = (active: boolean) =>
-  `relative shrink-0 whitespace-nowrap px-1 py-2.5 text-sm font-bold transition-colors ${
-    active ? "text-white" : "text-white/80"
+  `relative shrink-0 whitespace-nowrap px-1 py-2.5 text-sm transition-colors ${
+    active ? "font-bold text-white" : "font-normal text-white/80"
   }`;
 
 function ActiveUnderline() {
