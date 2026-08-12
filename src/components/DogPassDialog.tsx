@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -168,7 +167,6 @@ export function DogPassDialog({
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{pet.name} 이용권</DialogTitle>
-          <DialogDescription>보유한 이용권을 확인하고 새 이용권을 지급합니다.</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-2">

@@ -6,13 +6,7 @@ import { Search, Ticket } from "lucide-react";
 import { DogPassDialog } from "@/components/DogPassDialog";
 import { NewReservationDialog } from "@/components/NewReservationDialog";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { listLocalPets, type LocalPet } from "@/lib/petsync.functions";
 import { GENDER_LABELS, ageLabel, toDateKey } from "@/lib/kindergarten";
 
@@ -102,7 +96,6 @@ export function HeaderDogSearch() {
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>{selectedPet?.name ?? ""}</DialogTitle>
-            <DialogDescription>반려견 기본 정보입니다.</DialogDescription>
           </DialogHeader>
           {selectedPet ? (
             <div className="space-y-3">

@@ -17,15 +17,24 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { deleteLocalStaff, updateLocalStaff, type StaffRoleInput as StaffRole } from "@/lib/staff.functions";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  deleteLocalStaff,
+  updateLocalStaff,
+  type StaffRoleInput as StaffRole,
+} from "@/lib/staff.functions";
 
 export type EditableStaffRow = {
   id: string;
@@ -129,7 +138,6 @@ export function StaffEditDialog({
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>직원 정보 수정</DialogTitle>
-            <DialogDescription>이 시스템에서 직접 등록한 직원만 수정할 수 있습니다.</DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-3">
@@ -222,7 +230,9 @@ export function StaffEditDialog({
                 />
               </div>
             </div>
-            <p className="text-xs text-muted-foreground">비밀번호를 비워두면 기존 비밀번호가 유지됩니다.</p>
+            <p className="text-xs text-muted-foreground">
+              비밀번호를 비워두면 기존 비밀번호가 유지됩니다.
+            </p>
           </div>
 
           <DialogFooter className="sm:justify-between">

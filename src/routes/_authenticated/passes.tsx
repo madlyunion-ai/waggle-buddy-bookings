@@ -29,7 +29,6 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -822,7 +821,6 @@ function NewPassDialog() {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>이용권 등록</DialogTitle>
-          <DialogDescription>새로운 이용권 상품을 등록합니다.</DialogDescription>
         </DialogHeader>
         <PassFormFields
           passType={passType}
@@ -964,10 +962,6 @@ function EditPassDialog({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>이용권 수정</DialogTitle>
-            <DialogDescription>
-              유치원 이용권의 유효기간은 오늘 날짜 기준으로 다시 계산됩니다. 변경하지 않으려면 0으로
-              두세요.
-            </DialogDescription>
           </DialogHeader>
           <PassFormFields
             passType={passType}

@@ -12,7 +12,6 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -306,7 +305,6 @@ function NewStaffDialog({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>직원 추가</DialogTitle>
-          <DialogDescription>원장 또는 선생님 계정을 새로 등록합니다.</DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-3">

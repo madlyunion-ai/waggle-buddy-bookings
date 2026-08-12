@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -149,9 +148,6 @@ export function ReserveDialog({ pet }: { pet: ExternalPet }) {
       <DialogContent className="max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{pet.name} 예약</DialogTitle>
-          <DialogDescription>
-            {ownerName} · {pet.breed ?? "견종 미입력"} · 예약 타입에 따라 입력 방식이 달라집니다.
-          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">

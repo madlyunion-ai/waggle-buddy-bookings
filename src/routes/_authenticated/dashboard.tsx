@@ -33,7 +33,6 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -855,7 +854,6 @@ function DashboardPage() {
         <DialogContent className="max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{dayListDate ? formatDateKorean(dayListDate) : ""} 예약</DialogTitle>
-            <DialogDescription>이 날짜의 모든 예약 목록입니다.</DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
             {(dayListDate
@@ -899,9 +897,6 @@ function DashboardPage() {
         <DialogContent className="max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>예약 상세</DialogTitle>
-            <DialogDescription>
-              {detailRow ? (detailRow.dogs?.name ?? "삭제된 강아지") : ""} 예약 정보입니다.
-            </DialogDescription>
           </DialogHeader>
           {detailRow ? (
             <div className="space-y-3">

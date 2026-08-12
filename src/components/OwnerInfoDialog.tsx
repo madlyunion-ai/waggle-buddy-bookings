@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -62,7 +61,6 @@ export function OwnerInfoDialog({ pet }: Props) {
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>보호자 정보</DialogTitle>
-          <DialogDescription>{pet.name} 보호자의 회원 정보입니다.</DialogDescription>
         </DialogHeader>
 
         {memberQuery.isLoading ? (
