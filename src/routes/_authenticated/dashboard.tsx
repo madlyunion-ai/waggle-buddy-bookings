@@ -451,7 +451,7 @@ function DashboardPage() {
             ))}
           </div>
 
-          <div className="grid min-h-0 flex-1 grid-rows-6 gap-0 overflow-hidden border-b border-border pb-3 sm:gap-1.5 sm:border-b-0 sm:pb-0">
+          <div className="grid min-h-0 flex-1 grid-rows-[repeat(6,minmax(78px,1fr))] gap-0 border-b border-border pb-3 sm:grid-rows-6 sm:gap-1.5 sm:overflow-hidden sm:border-b-0 sm:pb-0">
             {weeks.map((week, weekIdx) => {
               const weekKeys = week.map((d) => toDateKey(d));
               const { placed, hiddenCountByCol } = computeWeekLanes(
