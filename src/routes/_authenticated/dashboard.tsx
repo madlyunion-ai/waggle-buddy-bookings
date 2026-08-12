@@ -902,9 +902,14 @@ function DashboardPage() {
                 )
               : []
             ).map((r) => (
-              <div
+              <button
                 key={r.id}
-                className="flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2"
+                type="button"
+                onClick={() => {
+                  setDayListDate(null);
+                  setDetailRow(r);
+                }}
+                className="flex w-full cursor-pointer items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-left transition-colors hover:bg-secondary/50"
               >
                 <Badge
                   variant="outline"
@@ -923,7 +928,7 @@ function DashboardPage() {
                 <Badge className={`shrink-0 text-[10px] ${STATUS_STYLES[r.status]}`}>
                   {STATUS_LABELS[r.status]}
                 </Badge>
-              </div>
+              </button>
             ))}
           </div>
         </DialogContent>
