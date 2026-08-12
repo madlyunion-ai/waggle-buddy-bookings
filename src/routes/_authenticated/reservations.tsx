@@ -128,23 +128,27 @@ function ReservationsPage() {
         </>
       }
     >
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <span className="text-sm font-semibold text-muted-foreground">기간 검색</span>
-        <Input
-          type="date"
-          className="w-[150px] bg-white"
-          value={startDate}
-          max={endDate || undefined}
-          onChange={(e) => setStartDate(e.target.value)}
-        />
-        <span className="text-sm text-muted-foreground">~</span>
-        <Input
-          type="date"
-          className="w-[150px] bg-white"
-          value={endDate}
-          min={startDate || undefined}
-          onChange={(e) => setEndDate(e.target.value)}
-        />
+      <div className="mb-2 flex flex-wrap items-center gap-2 sm:mb-3">
+        <span className="w-full text-sm font-semibold text-muted-foreground sm:w-auto">
+          기간 검색
+        </span>
+        <div className="flex flex-1 items-center gap-2 sm:flex-none">
+          <Input
+            type="date"
+            className="h-[43px] flex-1 bg-white sm:h-9 sm:w-[150px] sm:flex-none"
+            value={startDate}
+            max={endDate || undefined}
+            onChange={(e) => setStartDate(e.target.value)}
+          />
+          <span className="shrink-0 text-sm text-muted-foreground">~</span>
+          <Input
+            type="date"
+            className="h-[43px] flex-1 bg-white sm:h-9 sm:w-[150px] sm:flex-none"
+            value={endDate}
+            min={startDate || undefined}
+            onChange={(e) => setEndDate(e.target.value)}
+          />
+        </div>
         {startDate || endDate ? (
           <Button
             variant="ghost"
@@ -159,43 +163,45 @@ function ReservationsPage() {
         ) : null}
       </div>
 
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <div className="relative max-w-sm flex-1">
+      <div className="mb-2 flex flex-col gap-2 sm:mb-4 sm:flex-row sm:flex-wrap sm:items-center">
+        <div className="relative w-full sm:max-w-sm sm:flex-1">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            className="bg-white pl-9 placeholder:text-sm"
+            className="h-[43px] bg-white pl-9 placeholder:text-sm sm:h-9"
             placeholder="강아지 이름, 견종, 보호자 검색"
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
           />
         </div>
-        <Select value={service} onValueChange={setService}>
-          <SelectTrigger className="w-[150px] bg-white">
-            <SelectValue placeholder="서비스" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">전체 서비스</SelectItem>
-            {Object.entries(SERVICE_LABELS).map(([value, label]) => (
-              <SelectItem key={value} value={value}>
-                {label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className="w-[130px] bg-white">
-            <SelectValue placeholder="상태" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">전체 상태</SelectItem>
-            {Object.entries(STATUS_LABELS).map(([value, label]) => (
-              <SelectItem key={value} value={value}>
-                {label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <span className="ml-auto text-sm text-muted-foreground">
+        <div className="grid grid-cols-2 gap-2 sm:contents">
+          <Select value={service} onValueChange={setService}>
+            <SelectTrigger className="h-[43px] bg-white sm:h-9 sm:w-[150px]">
+              <SelectValue placeholder="서비스" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">전체 서비스</SelectItem>
+              {Object.entries(SERVICE_LABELS).map(([value, label]) => (
+                <SelectItem key={value} value={value}>
+                  {label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={status} onValueChange={setStatus}>
+            <SelectTrigger className="h-[43px] bg-white sm:h-9 sm:w-[130px]">
+              <SelectValue placeholder="상태" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">전체 상태</SelectItem>
+              {Object.entries(STATUS_LABELS).map(([value, label]) => (
+                <SelectItem key={value} value={value}>
+                  {label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <span className="text-xs text-muted-foreground sm:ml-auto sm:text-sm">
           총 {rows.length.toLocaleString("ko-KR")}건
         </span>
       </div>
