@@ -135,7 +135,7 @@ export function AppShell({
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-30 border-b border-[#cccccc] bg-[#17214c] text-white">
+      <header className="sticky top-0 z-30 border-b border-[#cccccc] bg-[#2f6fed] text-white lg:bg-[#17214c]">
         <div className="hidden h-[52px] items-center gap-3 px-4 lg:flex lg:px-6">
           <Link to="/dashboard" className="flex shrink-0 items-baseline gap-2">
             <span className="font-display text-[17px] font-semibold tracking-tight text-white">
@@ -171,7 +171,7 @@ export function AppShell({
             </Button>
           </div>
         </div>
-        <nav className="flex items-center justify-between gap-3 bg-[#2f6fed] pl-4 pr-2 pt-4 lg:hidden">
+        <nav className="flex items-center justify-between gap-3 rounded-b-[24px] bg-[#2f6fed] pl-4 pr-2 pt-4 lg:hidden">
           <div className="flex flex-1 items-center gap-5">{mobileSubTabs}</div>
           {hideLogoutOnMobile ? null : (
             <Button
