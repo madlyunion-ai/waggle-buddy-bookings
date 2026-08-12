@@ -11,6 +11,7 @@ import {
   Scissors,
   Search,
   Ticket,
+  Wallet,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -48,9 +49,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { SERVICE_TYPES, formatWon, type ServiceType } from "@/lib/kindergarten";
 
-type PassType = ServiceType | "pickup_dropoff";
+type PassType = ServiceType | "pickup_dropoff" | "balance";
 
-const PASS_TYPES: PassType[] = [...SERVICE_TYPES, "pickup_dropoff"];
+const PASS_TYPES: PassType[] = [...SERVICE_TYPES, "pickup_dropoff", "balance"];
 
 /** 이용권 등록 폼 전용 상품 구분 명칭 (예약 시스템의 SERVICE_LABELS와 별개) */
 const PASS_TYPE_LABELS: Record<PassType, string> = {
@@ -59,6 +60,7 @@ const PASS_TYPE_LABELS: Record<PassType, string> = {
   daily_care: "데이케어",
   grooming: "미용 기본",
   pickup_dropoff: "픽드랍",
+  balance: "금액권",
 };
 
 const PASS_TYPE_STYLES: Record<PassType, string> = {
@@ -67,6 +69,7 @@ const PASS_TYPE_STYLES: Record<PassType, string> = {
   daily_care: "bg-rose-300/10 text-rose-400/80 border-rose-300/45",
   grooming: "bg-warning/20 text-warning-foreground/70 border-warning/35",
   pickup_dropoff: "bg-sky-300/10 text-sky-500/80 border-sky-300/45",
+  balance: "bg-emerald-300/10 text-emerald-500/80 border-emerald-300/45",
 };
 
 const PASS_TYPE_ICONS: Record<PassType, typeof CalendarCheck> = {
@@ -75,6 +78,7 @@ const PASS_TYPE_ICONS: Record<PassType, typeof CalendarCheck> = {
   daily_care: Clock,
   grooming: Scissors,
   pickup_dropoff: Car,
+  balance: Wallet,
 };
 
 const PASS_TYPE_HELP: Record<PassType, string> = {
@@ -83,6 +87,7 @@ const PASS_TYPE_HELP: Record<PassType, string> = {
   daily_care: "30분 또는 1시간 단위",
   pickup_dropoff: "편도 또는 왕복 상품",
   grooming: "정액 또는 kg당 기본 시술",
+  balance: "체중·횟수 구분 없이 충전금액만 설정",
 };
 
 const PASS_NAME_PLACEHOLDER: Record<PassType, string> = {
@@ -91,6 +96,7 @@ const PASS_NAME_PLACEHOLDER: Record<PassType, string> = {
   daily_care: "예: 주 2회 10회권",
   pickup_dropoff: "예: 주 2회 10회권",
   grooming: "예: 주 2회 10회권",
+  balance: "예: 충전 금액권 10만원",
 };
 
 const TRIP_TYPES = [
@@ -389,7 +395,13 @@ function PassesPage() {
                         {weightClassLabel(pass.weight_class) ?? "-"}
                       </td>
                       <td className="px-4 py-3 text-center text-muted-foreground">
-                        {pass.dogs ? (
+                        {pass.pass_type === "balance" ? (
+                          pass.dogs ? (
+                            <>잔여 {formatWon(remaining)}</>
+                          ) : (
+                            <>충전 {formatWon(pass.total_count)}</>
+                          )
+                        ) : pass.dogs ? (
                           <>
                             {formatCount(pass.used_count)}/{formatCount(pass.total_count)}회
                             <span className="ml-1 text-[10px]">
@@ -560,25 +572,34 @@ function PassFormFields({
         />
       </div>
 
-      <div className="space-y-2">
-        <Label>
-          반려견 체중 구분 <span className="text-destructive">*</span>
-        </Label>
-        <Select value={weightClass} onValueChange={setWeightClass}>
-          <SelectTrigger>
-            <SelectValue placeholder="체중 구분을 선택하세요" />
-          </SelectTrigger>
-          <SelectContent>
-            {WEIGHT_CLASSES.map((w) => (
-              <SelectItem key={w.value} value={w.value}>
-                {w.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      {passType !== "balance" ? (
+        <div className="space-y-2">
+          <Label>
+            반려견 체중 구분 <span className="text-destructive">*</span>
+          </Label>
+          <Select value={weightClass} onValueChange={setWeightClass}>
+            <SelectTrigger>
+              <SelectValue placeholder="체중 구분을 선택하세요" />
+            </SelectTrigger>
+            <SelectContent>
+              {WEIGHT_CLASSES.map((w) => (
+                <SelectItem key={w.value} value={w.value}>
+                  {w.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      ) : null}
 
-      {passType === "kindergarten" ? (
+      {passType === "balance" ? (
+        <div className="space-y-2">
+          <Label>
+            충전금액 <span className="text-destructive">*</span>
+          </Label>
+          <CommaNumberInput value={price} onChange={setPrice} />
+        </div>
+      ) : passType === "kindergarten" ? (
         <>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
@@ -778,17 +799,24 @@ function NewPassDialog() {
       const isDailyCare = passType === "daily_care";
       const isPickupDropoff = passType === "pickup_dropoff";
       const isGrooming = passType === "grooming";
+      const isBalance = passType === "balance";
       const expiresOn = isKindergarten
         ? computeExpiresOn(Number(validityValue), validityUnit)
         : null;
       const { error } = await supabase.from("passes").insert({
         pass_type: passType,
         title: title.trim(),
-        total_count: isKindergarten ? Number(totalCount) : isDailyCare ? Number(dailyCareUnit) : 1,
+        total_count: isBalance
+          ? Number(price)
+          : isKindergarten
+            ? Number(totalCount)
+            : isDailyCare
+              ? Number(dailyCareUnit)
+              : 1,
         price: Number(price),
         trip_type: isPickupDropoff ? tripType || null : null,
         pricing_basis: isGrooming ? pricingBasis || null : null,
-        weight_class: weightClass || null,
+        weight_class: isBalance ? null : weightClass || null,
         available_days: null,
         expires_on: expiresOn,
         memo: memo.trim() || null,
@@ -909,6 +937,7 @@ function EditPassDialog({
       const isDailyCare = passType === "daily_care";
       const isPickupDropoff = passType === "pickup_dropoff";
       const isGrooming = passType === "grooming";
+      const isBalance = passType === "balance";
       const newExpiresOn = isKindergarten
         ? computeExpiresOn(Number(validityValue), validityUnit)
         : null;
@@ -917,15 +946,17 @@ function EditPassDialog({
         .update({
           pass_type: passType,
           title: title.trim(),
-          total_count: isKindergarten
-            ? Number(totalCount)
-            : isDailyCare
-              ? Number(dailyCareUnit)
-              : 1,
+          total_count: isBalance
+            ? Number(price)
+            : isKindergarten
+              ? Number(totalCount)
+              : isDailyCare
+                ? Number(dailyCareUnit)
+                : 1,
           price: Number(price),
           trip_type: isPickupDropoff ? tripType || null : null,
           pricing_basis: isGrooming ? pricingBasis || null : null,
-          weight_class: weightClass || null,
+          weight_class: isBalance ? null : weightClass || null,
           available_days: null,
           memo: memo.trim() || null,
           active,

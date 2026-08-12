@@ -30,9 +30,17 @@ const PASS_TYPE_LABELS: Record<string, string> = {
   daily_care: "데이케어",
   grooming: "미용 기본",
   pickup_dropoff: "픽드랍",
+  balance: "금액권",
 };
 
-const PASS_TYPES = ["kindergarten", "hotel", "daily_care", "grooming", "pickup_dropoff"] as const;
+const PASS_TYPES = [
+  "kindergarten",
+  "hotel",
+  "daily_care",
+  "grooming",
+  "pickup_dropoff",
+  "balance",
+] as const;
 
 const PASS_TYPE_BORDER: Record<string, string> = {
   kindergarten: "border-primary/40",
@@ -40,6 +48,7 @@ const PASS_TYPE_BORDER: Record<string, string> = {
   daily_care: "border-rose-300/60",
   grooming: "border-warning/50",
   pickup_dropoff: "border-sky-300/60",
+  balance: "border-emerald-300/60",
 };
 
 type DogPass = {
@@ -206,10 +215,23 @@ export function DogPassDialog({
                       </p>
                       <div className="shrink-0 text-right">
                         <p className="text-xs text-muted-foreground">
-                          잔여 <span className="font-bold text-blue-600">{remaining}</span>
-                          <span style={{ color: "#222222" }}>/{p.total_count}</span>회
+                          {p.pass_type === "balance" ? (
+                            <>
+                              잔여{" "}
+                              <span className="font-bold text-blue-600">
+                                {formatWon(remaining)}
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              잔여 <span className="font-bold text-blue-600">{remaining}</span>
+                              <span style={{ color: "#222222" }}>/{p.total_count}</span>회
+                            </>
+                          )}
                         </p>
-                        <p className="mt-0.5 text-base font-bold">{formatWon(p.price)}</p>
+                        {p.pass_type !== "balance" ? (
+                          <p className="mt-0.5 text-base font-bold">{formatWon(p.price)}</p>
+                        ) : null}
                       </div>
                     </div>
                   </div>

@@ -240,8 +240,8 @@ export function NewReservationDialog({
   const passApplied = passId !== "none";
   const pickupPassApplied = pickupUsageMode !== "none" && pickupPassId !== "none";
 
-  const serviceCost = (() => {
-    if (passApplied) return 0;
+  // 이용권 적용 여부와 무관한 실제 이용료 (금액권 차감액 계산에도 사용)
+  const rawServiceCost = (() => {
     if (serviceType === "kindergarten") {
       const days = Math.max(1, nightsBetween(date, endDate) + 1);
       return unitPrice * days;
@@ -256,6 +256,8 @@ export function NewReservationDialog({
     }
     return unitPrice;
   })();
+
+  const serviceCost = passApplied ? 0 : rawServiceCost;
 
   const pickupCost = (() => {
     if (pickupUsageMode === "none" || pickupPassApplied) return 0;
@@ -287,31 +289,42 @@ export function NewReservationDialog({
 
   const pet = (petsQuery.data ?? []).find((p) => p.id === petId) ?? null;
 
-  // 선택한 반려견이 실제로 보유한 이용권 목록 (동기화된 강아지 기준)
+  /** 회원/강아지 검색 없이 이미 정해진 강아지로 예약하는 화면(반려견 리스트, 헤더 검색)에서도 선택된 것으로 취급 */
+  const hasSelectedDog = usingKnownDog || !!petId;
+
+  // 선택한 반려견이 실제로 보유한 이용권 목록
   const passesQuery = useQuery({
-    queryKey: ["passes", "for-external-pet", petId],
+    queryKey: ["passes", "for-reservation-dog", usingKnownDog ? initialDogId : petId],
     queryFn: async () => {
-      const { data: dog } = await supabase
-        .from("dogs")
-        .select("id")
-        .eq("external_id", petId)
-        .maybeSingle();
-      if (!dog) return [];
+      let dogId: string | null = null;
+      if (usingKnownDog) {
+        dogId = initialDogId ?? null;
+      } else {
+        const { data: dog } = await supabase
+          .from("dogs")
+          .select("id")
+          .eq("external_id", petId)
+          .maybeSingle();
+        dogId = dog?.id ?? null;
+      }
+      if (!dogId) return [];
       const { data, error } = await supabase
         .from("passes")
         .select("id, title, pass_type, total_count, used_count, payment_status, expires_on")
-        .eq("dog_id", dog.id)
+        .eq("dog_id", dogId)
         .order("purchased_on", { ascending: true });
       if (error) throw error;
       return data ?? [];
     },
-    enabled: open && !!petId,
+    enabled: open && hasSelectedDog,
   });
 
   const ownedPasses = passesQuery.data ?? [];
   const availablePasses = ownedPasses.filter(
     (p) =>
-      p.pass_type === serviceType && p.payment_status === "paid" && p.used_count < p.total_count,
+      (p.pass_type === serviceType || p.pass_type === "balance") &&
+      p.payment_status === "paid" &&
+      p.used_count < p.total_count,
   );
   const availablePickupPasses = ownedPasses.filter(
     (p) =>
@@ -381,6 +394,7 @@ export function NewReservationDialog({
       // 이용권 적용: 반려견이 실제로 보유한 이용권 중에서만 선택 가능
       // ("자동"이면 사용 가능한 이용권을 자동 적용)
       let appliedPassId: string | null = null;
+      let appliedPassType: string | null = null;
       if (passId === "auto") {
         const { data: pass } = await supabase
           .from("passes")
@@ -389,9 +403,12 @@ export function NewReservationDialog({
           .eq("pass_type", serviceType)
           .eq("payment_status", "paid")
           .order("purchased_on", { ascending: true });
-        appliedPassId = (pass ?? []).find((p) => p.used_count < p.total_count)?.id ?? null;
+        const usable = (pass ?? []).find((p) => p.used_count < p.total_count);
+        appliedPassId = usable?.id ?? null;
+        appliedPassType = usable ? serviceType : null;
       } else if (passId !== "none") {
         appliedPassId = passId;
+        appliedPassType = availablePasses.find((p) => p.id === passId)?.pass_type ?? null;
       }
       const appliedPickupPassId =
         pickupUsageMode !== "none" && pickupPassId !== "none" ? pickupPassId : null;
@@ -423,13 +440,15 @@ export function NewReservationDialog({
       });
       if (error) throw error;
 
-      // 이용권 적용 시 차감: 데이케어는 등원~하원 시간(분)만큼, 그 외는 1회
+      // 이용권 적용 시 차감: 금액권은 이용료(원)만큼, 데이케어는 등원~하원 시간(분)만큼, 그 외는 1회
       const deductions: { id: string; amount: number }[] = [];
       if (appliedPassId) {
         const amount =
-          serviceType === "daily_care"
-            ? Math.max(0, timeToMinutes(pickUp) - timeToMinutes(dropOff))
-            : 1;
+          appliedPassType === "balance"
+            ? rawServiceCost
+            : serviceType === "daily_care"
+              ? Math.max(0, timeToMinutes(pickUp) - timeToMinutes(dropOff))
+              : 1;
         deductions.push({ id: appliedPassId, amount });
       }
       if (appliedPickupPassId) {
@@ -735,11 +754,11 @@ export function NewReservationDialog({
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label>이용권 적용</Label>
-              <Select value={passId} onValueChange={setPassId} disabled={!petId}>
+              <Select value={passId} onValueChange={setPassId} disabled={!hasSelectedDog}>
                 <SelectTrigger>
                   <SelectValue
                     placeholder={
-                      !petId
+                      !hasSelectedDog
                         ? "강아지를 먼저 선택하세요"
                         : availablePasses.length === 0
                           ? "적용 가능한 이용권이 없습니다"
@@ -755,15 +774,16 @@ export function NewReservationDialog({
                   {availablePasses.map((p) => (
                     <SelectItem key={p.id} value={p.id}>
                       {p.title} · 잔여{" "}
-                      {serviceType === "daily_care"
-                        ? formatDuration(p.total_count - p.used_count)
-                        : `${p.total_count - p.used_count}회`}
-                      {p.expires_on ? ` · ${p.expires_on}까지` : ""}
+                      {p.pass_type === "balance"
+                        ? formatWon(p.total_count - p.used_count)
+                        : serviceType === "daily_care"
+                          ? formatDuration(p.total_count - p.used_count)
+                          : `${p.total_count - p.used_count}회`}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {petId ? (
+              {hasSelectedDog ? (
                 <p className="text-xs text-muted-foreground">
                   {passesQuery.isLoading
                     ? "이용권을 불러오는 중…"
@@ -798,11 +818,15 @@ export function NewReservationDialog({
                 </SelectContent>
               </Select>
               {pickupUsageMode !== "none" ? (
-                <Select value={pickupPassId} onValueChange={setPickupPassId} disabled={!petId}>
+                <Select
+                  value={pickupPassId}
+                  onValueChange={setPickupPassId}
+                  disabled={!hasSelectedDog}
+                >
                   <SelectTrigger>
                     <SelectValue
                       placeholder={
-                        !petId
+                        !hasSelectedDog
                           ? "강아지를 먼저 선택하세요"
                           : availablePickupPasses.length === 0
                             ? "적용 가능한 이용권이 없습니다"
@@ -848,7 +872,7 @@ export function NewReservationDialog({
             </div>
             <Button
               className="w-full"
-              disabled={!petId || hotelInvalid || create.isPending}
+              disabled={!hasSelectedDog || hotelInvalid || create.isPending}
               onClick={() => create.mutate()}
             >
               등록하기

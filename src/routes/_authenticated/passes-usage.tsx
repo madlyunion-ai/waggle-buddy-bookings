@@ -14,6 +14,7 @@ const PASS_TYPE_LABELS: Record<string, string> = {
   daily_care: "데이케어",
   grooming: "미용 기본",
   pickup_dropoff: "픽드랍",
+  balance: "금액권",
 };
 
 function formatCount(value: number) {
@@ -140,7 +141,9 @@ function PassesUsagePage() {
                         {PASS_TYPE_LABELS[r.pass_type] ?? r.pass_type}
                       </td>
                       <td className="px-4 py-3 text-center text-muted-foreground">
-                        {formatCount(remaining)}/{formatCount(r.total_count)}
+                        {r.pass_type === "balance"
+                          ? `${formatWon(remaining)} / ${formatWon(r.total_count)}`
+                          : `${formatCount(remaining)}/${formatCount(r.total_count)}`}
                       </td>
                       <td className="px-4 py-3 text-center text-muted-foreground">
                         {formatWon(r.price)}
