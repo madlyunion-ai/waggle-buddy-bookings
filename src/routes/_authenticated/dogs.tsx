@@ -74,6 +74,7 @@ function DogsPage() {
   return (
     <AppShell
       title="반려견 리스트"
+      hideTitleOnMobile
       description={
         <span className="hidden sm:inline">
           데이터베이스에 저장된 반려견 목록입니다. 페이지 진입 시 외부 회원 시스템과 자동
@@ -179,28 +180,37 @@ function DogsPage() {
                     <td className="hidden px-4 py-3 text-center text-muted-foreground sm:table-cell">
                       {pet.weight ? `${pet.weight}kg` : "-"}
                     </td>
-                    <td className="px-4 py-3 text-center text-muted-foreground">
+                    <td className="px-2 py-3 text-center text-muted-foreground sm:px-4">
                       <div className="flex min-w-0 items-center justify-center gap-1">
-                        <span className="hidden truncate sm:inline">
+                        <span className="min-w-0 truncate">
                           {pet.ownerNames[0] ?? "보호자 미확인"}
                           {pet.ownerPhone ? ` · ${pet.ownerPhone}` : ""}
                         </span>
                         <OwnerInfoDialog pet={pet} />
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-center">
-                      <div className="flex items-center justify-center gap-2">
+                    <td className="px-2 py-3 text-center sm:px-4">
+                      <div className="flex items-center justify-center gap-1 sm:gap-2">
                         <NewReservationDialog
                           defaultDate={toDateKey(new Date())}
                           initialDogId={pet.dbId}
                           initialPetName={pet.name}
                           trigger={
-                            <Button size="sm" variant="outline" className="h-8 px-2.5 text-xs">
-                              <CalendarPlus className="size-3.5" /> 예약하기
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 px-2 text-[11px] sm:h-8 sm:px-2.5 sm:text-xs"
+                            >
+                              <CalendarPlus className="hidden size-3.5 sm:inline" />
+                              <span className="sm:hidden">예약</span>
+                              <span className="hidden sm:inline">예약하기</span>
                             </Button>
                           }
                         />
-                        <DogPassDialog pet={pet} />
+                        <DogPassDialog
+                          pet={pet}
+                          triggerClassName="h-7 px-2 text-[11px] sm:h-8 sm:px-2.5 sm:text-xs"
+                        />
                       </div>
                     </td>
                   </tr>

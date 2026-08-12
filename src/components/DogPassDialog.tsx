@@ -189,7 +189,7 @@ export function DogPassDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button size="sm" variant="outline" className={triggerClassName}>
-          <Ticket className="size-3.5" /> {triggerLabel}
+          <Ticket className="hidden size-3.5 sm:inline" /> {triggerLabel}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">

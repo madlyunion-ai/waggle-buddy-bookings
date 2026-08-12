@@ -70,12 +70,15 @@ export function AppShell({
   description,
   action,
   sidebarAction,
+  hideTitleOnMobile,
   children,
 }: {
   title?: string;
   description?: ReactNode;
   action?: ReactNode;
   sidebarAction?: ReactNode;
+  /** 모바일 해상도에서 페이지 타이틀(h1)을 숨김 */
+  hideTitleOnMobile?: boolean;
   children: ReactNode;
 }) {
   const navigate = useNavigate();
@@ -216,7 +219,15 @@ export function AppShell({
           {title || action ? (
             <div className="mb-2.5 flex flex-wrap items-end justify-between gap-3 sm:mb-5">
               <div>
-                {title ? <h1 className="text-[16px] font-bold sm:text-2xl">{title}</h1> : null}
+                {title ? (
+                  <h1
+                    className={`text-[16px] font-bold sm:text-2xl ${
+                      hideTitleOnMobile ? "hidden sm:block" : ""
+                    }`}
+                  >
+                    {title}
+                  </h1>
+                ) : null}
                 {description ? (
                   <p className="mt-1 text-sm text-muted-foreground">{description}</p>
                 ) : null}
