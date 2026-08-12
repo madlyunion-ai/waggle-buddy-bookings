@@ -89,7 +89,14 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   component: DashboardPage,
 });
 
-type PassInfo = { id: string; title: string; pass_type: string; price: number } | null;
+type PassInfo = {
+  id: string;
+  title: string;
+  pass_type: string;
+  price: number;
+  total_count: number;
+  used_count: number;
+} | null;
 
 type Row = {
   id: string;
@@ -115,7 +122,7 @@ type Row = {
 };
 
 const SELECT_COLUMNS =
-  "id, reserved_date, end_date, drop_off_time, pick_up_time, status, service_type, memo, pass_id, pickup_pass_id, pickup_requested, dropoff_requested, dogs(id, name, breed, owners(name, phone)), passes!reservations_pass_id_fkey(id, title, pass_type, price), pickup_passes:passes!reservations_pickup_pass_id_fkey(id, title, pass_type, price)";
+  "id, reserved_date, end_date, drop_off_time, pick_up_time, status, service_type, memo, pass_id, pickup_pass_id, pickup_requested, dropoff_requested, dogs(id, name, breed, owners(name, phone)), passes!reservations_pass_id_fkey(id, title, pass_type, price, total_count, used_count), pickup_passes:passes!reservations_pickup_pass_id_fkey(id, title, pass_type, price, total_count, used_count)";
 
 const PASS_TYPE_LABELS: Record<string, string> = {
   kindergarten: "유치원 이용권",
@@ -123,6 +130,7 @@ const PASS_TYPE_LABELS: Record<string, string> = {
   daily_care: "데이케어",
   grooming: "미용 기본",
   pickup_dropoff: "픽드랍",
+  balance: "금액권",
 };
 
 /** 모바일 캘린더 라인 목록용 솔리드 텍스트 색상 */
@@ -802,8 +810,23 @@ function DashboardPage() {
                   <div>
                     <p className="truncate text-xs font-bold">{popoverRow.passes.title}</p>
                     <p className="mt-0.5 text-[11px] text-muted-foreground">
-                      {PASS_TYPE_LABELS[popoverRow.passes.pass_type] ?? popoverRow.passes.pass_type}{" "}
-                      · {formatWon(popoverRow.passes.price)}
+                      {popoverRow.passes.pass_type === "balance" ? (
+                        <>
+                          사용 {formatWon(popoverRow.passes.used_count)} / 잔액{" "}
+                          {formatWon(
+                            Math.max(
+                              0,
+                              popoverRow.passes.total_count - popoverRow.passes.used_count,
+                            ),
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          {PASS_TYPE_LABELS[popoverRow.passes.pass_type] ??
+                            popoverRow.passes.pass_type}{" "}
+                          · {formatWon(popoverRow.passes.price)}
+                        </>
+                      )}
                     </p>
                   </div>
                 ) : null}
@@ -820,7 +843,20 @@ function DashboardPage() {
                             : ""}
                     </p>
                     <p className="mt-0.5 text-[11px] text-muted-foreground">
-                      {formatWon(popoverRow.pickup_passes.price)}
+                      {popoverRow.pickup_passes.pass_type === "balance" ? (
+                        <>
+                          사용 {formatWon(popoverRow.pickup_passes.used_count)} / 잔액{" "}
+                          {formatWon(
+                            Math.max(
+                              0,
+                              popoverRow.pickup_passes.total_count -
+                                popoverRow.pickup_passes.used_count,
+                            ),
+                          )}
+                        </>
+                      ) : (
+                        formatWon(popoverRow.pickup_passes.price)
+                      )}
                     </p>
                   </div>
                 ) : null}
