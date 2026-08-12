@@ -47,8 +47,8 @@ const PASS_TYPE_BORDER: Record<string, string> = {
   hotel: "border-accent/50",
   daily_care: "border-rose-300/60",
   grooming: "border-warning/50",
-  pickup_dropoff: "border-sky-300/60",
-  balance: "border-emerald-300/60",
+  pickup_dropoff: "border-gray-300/60",
+  balance: "border-amber-800/40",
 };
 
 type DogPass = {

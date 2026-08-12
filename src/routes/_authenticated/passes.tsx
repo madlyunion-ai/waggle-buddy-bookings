@@ -68,8 +68,8 @@ const PASS_TYPE_STYLES: Record<PassType, string> = {
   hotel: "bg-accent/20 text-accent-foreground/70 border-accent/35",
   daily_care: "bg-rose-300/10 text-rose-400/80 border-rose-300/45",
   grooming: "bg-warning/20 text-warning-foreground/70 border-warning/35",
-  pickup_dropoff: "bg-sky-300/10 text-sky-500/80 border-sky-300/45",
-  balance: "bg-emerald-300/10 text-emerald-500/80 border-emerald-300/45",
+  pickup_dropoff: "bg-gray-300/15 text-gray-500/90 border-gray-300/45",
+  balance: "bg-amber-800/10 text-amber-800/80 border-amber-800/30",
 };
 
 const PASS_TYPE_ICONS: Record<PassType, typeof CalendarCheck> = {
