@@ -14,8 +14,8 @@ export function MobileSubTabButton({
     <button
       type="button"
       onClick={onClick}
-      className={`whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-bold transition-colors ${
-        active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-secondary"
+      className={`flex-1 whitespace-nowrap rounded-full py-1.5 text-center text-sm font-bold transition-colors ${
+        active ? "bg-white text-foreground shadow-sm" : "text-muted-foreground"
       }`}
     >
       {children}
@@ -36,8 +36,8 @@ export function MobileSubTabLink({
   return (
     <Link
       to={to}
-      className={`whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-bold transition-colors ${
-        active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-secondary"
+      className={`flex-1 whitespace-nowrap rounded-full py-1.5 text-center text-sm font-bold transition-colors ${
+        active ? "bg-white text-foreground shadow-sm" : "text-muted-foreground"
       }`}
     >
       {children}

@@ -165,9 +165,11 @@ export function AppShell({
           </div>
         </div>
         {mobileSubTabs ? (
-          <nav className="flex items-center gap-1 overflow-x-auto bg-white px-4 py-1.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:hidden">
-            {mobileSubTabs}
-          </nav>
+          <div className="bg-white px-4 py-2 lg:hidden">
+            <nav className="flex items-center gap-1 rounded-full bg-secondary/70 p-1">
+              {mobileSubTabs}
+            </nav>
+          </div>
         ) : null}
       </header>
 
@@ -224,17 +226,13 @@ export function AppShell({
 
         <main className="min-w-0 flex-1 px-4 pb-24 pt-4 lg:px-6 lg:pb-4">
           {title || action ? (
-            <div className="mb-2.5 flex flex-wrap items-end justify-between gap-3 sm:mb-5">
+            <div
+              className={`mb-2.5 flex-wrap items-end justify-between gap-3 sm:mb-5 ${
+                hideTitleOnMobile ? "hidden sm:flex" : "flex"
+              }`}
+            >
               <div>
-                {title ? (
-                  <h1
-                    className={`text-[16px] font-bold sm:text-2xl ${
-                      hideTitleOnMobile ? "hidden sm:block" : ""
-                    }`}
-                  >
-                    {title}
-                  </h1>
-                ) : null}
+                {title ? <h1 className="text-[16px] font-bold sm:text-2xl">{title}</h1> : null}
                 {description ? (
                   <p className="mt-1 text-sm text-muted-foreground">{description}</p>
                 ) : null}
