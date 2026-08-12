@@ -135,7 +135,7 @@ export function AppShell({
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-30 border-b border-[#cccccc] bg-[#2f6fed] text-white lg:bg-[#17214c]">
+      <header className="sticky top-0 z-30 border-transparent bg-transparent text-white lg:border-b lg:border-[#cccccc] lg:bg-[#17214c]">
         <div className="hidden h-[52px] items-center gap-3 px-4 lg:flex lg:px-6">
           <Link to="/dashboard" className="flex shrink-0 items-baseline gap-2">
             <span className="font-display text-[17px] font-semibold tracking-tight text-white">
