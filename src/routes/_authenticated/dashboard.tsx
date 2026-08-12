@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   BedDouble,
   CalendarCheck,
@@ -250,6 +250,26 @@ function DashboardPage() {
     return () => mql.removeEventListener("change", update);
   }, []);
 
+  // 모바일 캘린더 좌우 스와이프로 이전/다음 달 이동
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  function handleCalendarTouchStart(e: React.TouchEvent) {
+    if (!isCompact) return;
+    const t = e.touches[0];
+    if (!t) return;
+    touchStartRef.current = { x: t.clientX, y: t.clientY };
+  }
+  function handleCalendarTouchEnd(e: React.TouchEvent) {
+    const start = touchStartRef.current;
+    touchStartRef.current = null;
+    if (!isCompact || !start) return;
+    const t = e.changedTouches[0];
+    if (!t) return;
+    const dx = t.clientX - start.x;
+    const dy = t.clientY - start.y;
+    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    setAnchor(new Date(anchor.getFullYear(), anchor.getMonth() + (dx < 0 ? 1 : -1), 1));
+  }
+
   const monthStart = toDateKey(new Date(anchor.getFullYear(), anchor.getMonth(), 1));
   const monthEnd = toDateKey(new Date(anchor.getFullYear(), anchor.getMonth() + 1, 0));
   const gridStart = toDateKey(monthMatrix(anchor)[0]!);
@@ -371,7 +391,11 @@ function DashboardPage() {
   return (
     <AppShell sidebarAction={<NewReservationDialog defaultDate={selected} />}>
       <div className="-mt-4 grid grid-cols-1 gap-4 sm:mt-0 lg:h-[calc(100vh-6rem)] lg:min-h-[560px] lg:grid-cols-[80%_20%]">
-        <section className="mx-[-1rem] flex min-h-0 flex-col overflow-hidden bg-white pt-1 sm:surface-card sm:mx-0 sm:bg-card sm:p-5 lg:h-full">
+        <section
+          className="mx-[-1rem] flex min-h-0 flex-col overflow-hidden bg-white pt-1 sm:surface-card sm:mx-0 sm:bg-card sm:p-5 lg:h-full"
+          onTouchStart={handleCalendarTouchStart}
+          onTouchEnd={handleCalendarTouchEnd}
+        >
           <div className="mb-0 flex items-center justify-between px-4 sm:mb-4 sm:px-0">
             <div className="flex items-center gap-2">
               <h2 className="text-lg font-bold">
