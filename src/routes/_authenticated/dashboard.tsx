@@ -133,14 +133,6 @@ const PASS_TYPE_LABELS: Record<string, string> = {
   balance: "금액권",
 };
 
-/** 모바일 캘린더 라인 목록용 솔리드 텍스트 색상 */
-const SERVICE_TEXT_SOLID: Record<ServiceType, string> = {
-  kindergarten: "text-primary",
-  hotel: "text-accent-foreground",
-  daily_care: "text-rose-500",
-  grooming: "text-warning-foreground",
-};
-
 /** 캘린더 막대(연속 예약 바)용 스타일 - 배경 불투명도 80%, 폰트는 흰색으로 통일 */
 const SERVICE_BAR_STYLES: Record<ServiceType, string> = {
   kindergarten: "bg-primary/80 text-white border-primary/25",
@@ -548,32 +540,15 @@ function DashboardPage() {
                               </span>
                             ) : null}
                           </div>
-
-                          {/* 모바일(360~390px): 여백 카드 없이 라인(리스트) 형태로 요약. 연박 예약이 상단에 오도록 정렬됨 */}
-                          {items.length > 0 ? (
-                            <div className="flex min-h-0 flex-1 flex-col gap-px overflow-hidden sm:hidden">
-                              {items.slice(0, 6).map((r) => (
-                                <span
-                                  key={`${key}-line-${r.id}`}
-                                  className={`truncate text-left text-[9px] font-semibold leading-tight ${SERVICE_TEXT_SOLID[r.service_type]}`}
-                                >
-                                  · {r.dogs?.name ?? "-"}{" "}
-                                  {r.service_type === "hotel" && r.end_date
-                                    ? `~${r.end_date.slice(5).replace("-", "/")}`
-                                    : formatTime(r.drop_off_time)}
-                                </span>
-                              ))}
-                            </div>
-                          ) : null}
                         </div>
                       );
                     })}
                   </div>
 
-                  {/* 데스크톱: 연박 예약이 여러 날짜에 걸쳐 하나의 막대로 이어지는 오버레이 */}
+                  {/* 연박 예약이 여러 날짜에 걸쳐 하나의 막대로 이어지는 오버레이 (모바일/데스크톱 공통) */}
                   <div
-                    className="pointer-events-none absolute inset-x-0 top-[28px] hidden grid-cols-7 gap-x-1.5 gap-y-1 px-1 pb-1 sm:grid"
-                    style={{ gridAutoRows: "17px" }}
+                    className="pointer-events-none absolute inset-x-0 top-[20px] grid grid-cols-7 gap-x-0.5 gap-y-px px-0.5 pb-1 sm:top-[28px] sm:gap-x-1.5 sm:gap-y-1 sm:px-1"
+                    style={{ gridAutoRows: isCompact ? "13px" : "17px" }}
                   >
                     {placed.map(({ seg, lane }) => (
                       <div
@@ -587,10 +562,10 @@ function DashboardPage() {
                           setSelected(weekKeys[seg.startCol]!);
                           setDetailRow(seg.row);
                         }}
-                        className={`pointer-events-auto mx-0.5 flex cursor-pointer items-center gap-1 truncate rounded-md border px-2 text-[10px] font-semibold leading-[16px] ${SERVICE_BAR_STYLES[seg.row.service_type]}`}
+                        className={`pointer-events-auto mx-px flex cursor-pointer items-center gap-0.5 truncate rounded border px-1 text-[8px] font-semibold leading-[12px] sm:mx-0.5 sm:gap-1 sm:rounded-md sm:px-2 sm:text-[10px] sm:leading-[16px] ${SERVICE_BAR_STYLES[seg.row.service_type]}`}
                       >
                         <span className="min-w-0 flex-1 truncate">{seg.row.dogs?.name ?? "-"}</span>
-                        <span className="shrink-0">
+                        <span className="hidden shrink-0 sm:inline">
                           {seg.span > 1
                             ? `~${(seg.row.end_date ?? seg.row.reserved_date).slice(5).replace("-", "/")}`
                             : formatTime(seg.row.drop_off_time)}
@@ -612,9 +587,10 @@ function DashboardPage() {
                             setSelected(key);
                             setDayListDate(key);
                           }}
-                          className="pointer-events-auto mx-0.5 flex items-center gap-1 truncate rounded-md px-1 text-[10px] font-bold text-primary hover:bg-primary/10"
+                          className="pointer-events-auto mx-px flex items-center gap-0.5 truncate rounded px-0.5 text-[8px] font-bold text-primary hover:bg-primary/10 sm:mx-0.5 sm:gap-1 sm:rounded-md sm:px-1 sm:text-[10px]"
                         >
-                          <Plus className="size-3" /> {hiddenCountByCol[colIdx] ?? 0}개 더보기
+                          <Plus className="size-2.5 sm:size-3" /> {hiddenCountByCol[colIdx] ?? 0}개
+                          더보기
                         </button>
                       ) : null,
                     )}
