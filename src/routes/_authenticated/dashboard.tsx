@@ -416,7 +416,7 @@ function DashboardPage() {
         }`}
       >
         <section
-          className={`${mobileHomeTab === "calendar" ? "flex h-full" : "hidden lg:flex"} mx-[-1rem] min-h-0 flex-col overflow-hidden bg-white pt-1 sm:surface-card sm:mx-0 sm:bg-card sm:p-5 lg:h-full`}
+          className={`${mobileHomeTab === "calendar" ? "flex h-full max-sm:rounded-t-[16px]" : "hidden lg:flex"} mx-[-1rem] min-h-0 flex-col overflow-hidden bg-white pt-1 sm:surface-card sm:mx-0 sm:bg-card sm:p-5 lg:h-full`}
           onTouchStart={handleCalendarTouchStart}
           onTouchEnd={handleCalendarTouchEnd}
         >
