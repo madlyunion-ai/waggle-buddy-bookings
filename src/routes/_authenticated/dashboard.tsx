@@ -410,7 +410,11 @@ function DashboardPage() {
         </>
       }
     >
-      <div className="-mt-4 grid grid-cols-1 gap-4 sm:mt-0 lg:h-[calc(100vh-6rem)] lg:min-h-[560px] lg:grid-cols-[80%_20%]">
+      <div
+        className={`grid grid-cols-1 gap-4 sm:mt-0 lg:h-[calc(100vh-6rem)] lg:min-h-[560px] lg:grid-cols-[80%_20%] ${
+          mobileHomeTab === "calendar" ? "-mt-4" : "mt-4"
+        }`}
+      >
         <section
           className={`${mobileHomeTab === "calendar" ? "flex" : "hidden lg:flex"} mx-[-1rem] min-h-0 flex-col overflow-hidden bg-white pt-1 sm:surface-card sm:mx-0 sm:bg-card sm:p-5 lg:h-full`}
           onTouchStart={handleCalendarTouchStart}
