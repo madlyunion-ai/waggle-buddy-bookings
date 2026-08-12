@@ -681,11 +681,11 @@ function DashboardPage() {
                       <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-secondary font-display text-xs font-extrabold text-primary">
                         {row.dogs?.name?.slice(0, 1) ?? "?"}
                       </div>
-                      <h3 className="min-w-0 flex-1 truncate text-sm font-bold">
-                        {row.dogs?.name ?? "삭제된 강아지"}
-                      </h3>
-                      {row.passes || row.pickup_passes ? (
-                        <div className="relative shrink-0">
+                      <div className="flex min-w-0 flex-1 items-center gap-1.5">
+                        <h3 className="min-w-0 truncate text-sm font-bold">
+                          {row.dogs?.name ?? "삭제된 강아지"}
+                        </h3>
+                        {row.passes || row.pickup_passes ? (
                           <button
                             type="button"
                             onClick={(e) => {
@@ -702,12 +702,12 @@ function DashboardPage() {
                                 setPassPopoverId(row.id);
                               }
                             }}
-                            className="cursor-pointer rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary"
+                            className="shrink-0 cursor-pointer rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary"
                           >
                             이용권
                           </button>
-                        </div>
-                      ) : null}
+                        ) : null}
+                      </div>
                       <Badge
                         variant="outline"
                         className={`shrink-0 text-[10px] ${SERVICE_STYLES[row.service_type]}`}

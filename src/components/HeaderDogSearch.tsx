@@ -7,8 +7,17 @@ import { DogPassDialog } from "@/components/DogPassDialog";
 import { NewReservationDialog } from "@/components/NewReservationDialog";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
 import { listLocalPets, type LocalPet } from "@/lib/petsync.functions";
 import { GENDER_LABELS, ageLabel, toDateKey } from "@/lib/kindergarten";
+
+const PASS_TYPE_LABELS: Record<string, string> = {
+  kindergarten: "유치원 이용권",
+  hotel: "호텔 이용권",
+  daily_care: "데이케어",
+  grooming: "미용 기본",
+  pickup_dropoff: "픽드랍",
+};
 
 /** 헤더 중앙 반려견 검색: 검색 → 기본정보 팝업 → 예약하기/이용권 지급으로 이어지는 진입점 */
 export function HeaderDogSearch() {
@@ -43,6 +52,21 @@ export function HeaderDogSearch() {
   }, []);
 
   const results = searchQuery.data?.pets ?? [];
+
+  const passesQuery = useQuery({
+    queryKey: ["passes", "for-dog", selectedPet?.dbId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("passes")
+        .select("id, title, pass_type, total_count, used_count")
+        .eq("dog_id", selectedPet!.dbId)
+        .order("purchased_on", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: selectedPet !== null,
+  });
+  const passes = passesQuery.data ?? [];
 
   return (
     <div ref={containerRef} className="relative w-full max-w-2xl">
@@ -133,6 +157,27 @@ export function HeaderDogSearch() {
                   </dd>
                 </div>
               </dl>
+
+              <div className="space-y-1.5">
+                <p className="text-xs font-semibold text-muted-foreground">보유 이용권</p>
+                {passesQuery.isLoading ? (
+                  <p className="text-xs text-muted-foreground">불러오는 중…</p>
+                ) : passes.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">보유한 이용권이 없습니다.</p>
+                ) : (
+                  <div className="flex flex-wrap gap-1.5">
+                    {passes.map((p) => (
+                      <span
+                        key={p.id}
+                        className="rounded-full border border-border bg-secondary px-2.5 py-1 text-[11px] font-semibold"
+                      >
+                        {PASS_TYPE_LABELS[p.pass_type] ?? p.pass_type} · 잔여{" "}
+                        {Math.max(0, p.total_count - p.used_count)}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               <div className="flex items-center gap-2">
                 <Button className="h-9 flex-1 text-sm" onClick={() => setReserveOpen(true)}>
