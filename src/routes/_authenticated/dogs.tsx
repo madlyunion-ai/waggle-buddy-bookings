@@ -104,7 +104,7 @@ function DogsPage() {
         </>
       }
     >
-      <div className="mb-2 flex flex-wrap items-center gap-2 sm:hidden">
+      <div className="mb-3 flex flex-wrap items-center gap-2 sm:hidden">
         <div className="relative w-full">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
