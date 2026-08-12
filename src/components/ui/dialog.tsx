@@ -81,7 +81,9 @@ const DialogContent = React.forwardRef<
         {...props}
       >
         {header}
-        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-4">{body}</div>
+        <div className="min-h-0 flex-1 space-y-4 overflow-x-hidden overflow-y-auto px-6 py-4">
+          {body}
+        </div>
         {footer}
         <DialogPrimitive.Close className="absolute right-4 top-3 rounded-sm opacity-70 ring-offset-background cursor-pointer transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
           <X className="h-4 w-4" />

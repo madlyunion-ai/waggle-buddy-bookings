@@ -591,7 +591,7 @@ export function NewReservationDialog({
             <>
               <div className="space-y-2">
                 <Label>회원 검색</Label>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <Input
                     value={memberSearch}
                     placeholder="이름 또는 전화번호로 검색"
@@ -632,7 +632,7 @@ export function NewReservationDialog({
                 ) : null}
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label>강아지</Label>
                   <Select value={petId} onValueChange={setPetId} disabled={!memberId}>
@@ -680,7 +680,7 @@ export function NewReservationDialog({
 
           {serviceType === "hotel" ? (
             <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label>날짜</Label>
                   <DateRangeField
@@ -698,10 +698,16 @@ export function NewReservationDialog({
                   <div className="flex gap-2">
                     <Input
                       type="time"
+                      className="min-w-0 flex-1"
                       value={dropOff}
                       onChange={(e) => setDropOff(e.target.value)}
                     />
-                    <Input type="time" value={pickUp} onChange={(e) => setPickUp(e.target.value)} />
+                    <Input
+                      type="time"
+                      className="min-w-0 flex-1"
+                      value={pickUp}
+                      onChange={(e) => setPickUp(e.target.value)}
+                    />
                   </div>
                 </div>
               </div>
@@ -710,7 +716,7 @@ export function NewReservationDialog({
               </p>
             </div>
           ) : serviceType === "grooming" ? (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>날짜</Label>
                 <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
@@ -732,7 +738,7 @@ export function NewReservationDialog({
               </div>
             </div>
           ) : serviceType === "kindergarten" ? (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>날짜</Label>
                 <DateRangeField
@@ -747,13 +753,23 @@ export function NewReservationDialog({
               <div className="space-y-2">
                 <Label>등원 / 하원</Label>
                 <div className="flex gap-2">
-                  <Input type="time" value={dropOff} onChange={(e) => setDropOff(e.target.value)} />
-                  <Input type="time" value={pickUp} onChange={(e) => setPickUp(e.target.value)} />
+                  <Input
+                    type="time"
+                    className="min-w-0 flex-1"
+                    value={dropOff}
+                    onChange={(e) => setDropOff(e.target.value)}
+                  />
+                  <Input
+                    type="time"
+                    className="min-w-0 flex-1"
+                    value={pickUp}
+                    onChange={(e) => setPickUp(e.target.value)}
+                  />
                 </div>
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>날짜</Label>
                 <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
@@ -761,14 +777,24 @@ export function NewReservationDialog({
               <div className="space-y-2">
                 <Label>등원 / 하원</Label>
                 <div className="flex gap-2">
-                  <Input type="time" value={dropOff} onChange={(e) => setDropOff(e.target.value)} />
-                  <Input type="time" value={pickUp} onChange={(e) => setPickUp(e.target.value)} />
+                  <Input
+                    type="time"
+                    className="min-w-0 flex-1"
+                    value={dropOff}
+                    onChange={(e) => setDropOff(e.target.value)}
+                  />
+                  <Input
+                    type="time"
+                    className="min-w-0 flex-1"
+                    value={pickUp}
+                    onChange={(e) => setPickUp(e.target.value)}
+                  />
                 </div>
               </div>
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>이용권 적용</Label>
               <Select value={passId} onValueChange={setPassId} disabled={!hasSelectedDog}>
