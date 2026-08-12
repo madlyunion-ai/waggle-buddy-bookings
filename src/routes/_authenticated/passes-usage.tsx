@@ -108,7 +108,7 @@ function PassesUsagePage() {
       </div>
 
       {/* 모바일: 카드 UI */}
-      <div className="space-y-2 sm:hidden">
+      <div className="space-y-3 sm:hidden">
         {usageQuery.isLoading ? (
           <p className="py-10 text-center text-sm text-muted-foreground">불러오는 중…</p>
         ) : filtered.length === 0 ? (
