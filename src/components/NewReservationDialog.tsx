@@ -38,7 +38,6 @@ import {
   nightsBetween,
   stayLabel,
   toDateKey,
-  type ServiceType,
 } from "@/lib/kindergarten";
 
 const PICKUP_USAGE_MODES = [
@@ -46,14 +45,6 @@ const PICKUP_USAGE_MODES = [
   { value: "pickup", label: "픽업" },
   { value: "dropoff", label: "드랍" },
   { value: "round_trip", label: "왕복" },
-] as const;
-
-const WEIGHT_CLASSES = [
-  { value: "small", label: "소형" },
-  { value: "small_medium", label: "중소형" },
-  { value: "medium", label: "중형" },
-  { value: "medium_large", label: "중대형" },
-  { value: "large", label: "대형" },
 ] as const;
 
 function formatDuration(totalMinutes: number) {
@@ -199,7 +190,7 @@ export function NewReservationDialog({
 
   const usingKnownDog = !!initialDogId;
 
-  const [serviceType, setServiceType] = useState<ServiceType>("kindergarten");
+  const [serviceType, setServiceType] = useState<string>("kindergarten");
   const [memberSearch, setMemberSearch] = useState("");
   const [memberId, setMemberId] = useState("");
   const [petId, setPetId] = useState("");
@@ -214,6 +205,26 @@ export function NewReservationDialog({
   const [pickupUsageMode, setPickupUsageMode] =
     useState<(typeof PICKUP_USAGE_MODES)[number]["value"]>("none");
   const [weightClass, setWeightClass] = useState<string>("small");
+
+  const optionsQuery = useQuery({
+    queryKey: ["reservation-options"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("reservation_options")
+        .select("kind, value, label")
+        .order("sort_order", { ascending: true });
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: open,
+  });
+  const weightClasses = (optionsQuery.data ?? []).filter((o) => o.kind === "weight_class");
+  const serviceTypeOptions = [
+    ...SERVICE_TYPES.map((t) => ({ value: t as string, label: SERVICE_LABELS[t] })),
+    ...(optionsQuery.data ?? [])
+      .filter((o) => o.kind === "service_type")
+      .map((o) => ({ value: o.value, label: o.label })),
+  ];
 
   const pricingQuery = useQuery({
     queryKey: ["reservation-pricing"],
@@ -533,23 +544,23 @@ export function NewReservationDialog({
           <div className="space-y-2">
             <Label>예약 타입</Label>
             <div className="grid grid-cols-4 gap-2">
-              {SERVICE_TYPES.map((t) => (
+              {serviceTypeOptions.map((t) => (
                 <Button
-                  key={t}
+                  key={t.value}
                   type="button"
                   size="sm"
-                  variant={serviceType === t ? "default" : "outline"}
+                  variant={serviceType === t.value ? "default" : "outline"}
                   onClick={() => {
-                    setServiceType(t);
-                    if (t === "kindergarten") setEndDate(date);
-                    if (t === "hotel") {
+                    setServiceType(t.value);
+                    if (t.value === "kindergarten") setEndDate(date);
+                    if (t.value === "hotel") {
                       const today = toDateKey(new Date());
                       setDate(today);
                       setEndDate(addDays(today, 1));
                     }
                   }}
                 >
-                  {SERVICE_LABELS[t]}
+                  {t.label}
                 </Button>
               ))}
             </div>
@@ -567,7 +578,7 @@ export function NewReservationDialog({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {WEIGHT_CLASSES.map((w) => (
+                    {weightClasses.map((w) => (
                       <SelectItem key={w.value} value={w.value}>
                         {w.label}
                       </SelectItem>
@@ -655,7 +666,7 @@ export function NewReservationDialog({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {WEIGHT_CLASSES.map((w) => (
+                      {weightClasses.map((w) => (
                         <SelectItem key={w.value} value={w.value}>
                           {w.label}
                         </SelectItem>

@@ -287,7 +287,7 @@ function DashboardPage() {
     return map;
   }, [monthQuery.data]);
 
-  const rows = sortForDisplay(byDate[selected] ?? []);
+  const rows = sortForDisplay((byDate[selected] ?? []).filter((r) => r.status !== "cancelled"));
 
   const updateStatus = useMutation({
     mutationFn: async ({ row, status }: { row: Row; status: ReservationStatus }) => {

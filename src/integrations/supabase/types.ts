@@ -315,6 +315,33 @@ export type Database = {
         };
         Relationships: [];
       };
+      reservation_options: {
+        Row: {
+          id: string;
+          kind: string;
+          value: string;
+          label: string;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          kind: string;
+          value: string;
+          label: string;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          kind?: string;
+          value?: string;
+          label?: string;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       staff: {
         Row: {
           branch_name: string | null;
