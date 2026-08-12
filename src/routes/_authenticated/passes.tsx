@@ -345,7 +345,99 @@ function PassesPage() {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-lg border border-border bg-card">
+      {/* 모바일: 카드 UI */}
+      <div className="space-y-2 sm:hidden">
+        {passesQuery.isLoading ? (
+          <p className="py-10 text-center text-sm text-muted-foreground">불러오는 중…</p>
+        ) : filteredPasses.length === 0 ? (
+          <p className="rounded-lg border border-dashed border-border py-10 text-center text-sm text-muted-foreground">
+            조건에 맞는 이용권이 없습니다.
+          </p>
+        ) : (
+          filteredPasses.map((pass) => {
+            const remaining = Math.max(0, pass.total_count - pass.used_count);
+            const Icon = PASS_TYPE_ICONS[pass.pass_type as PassType] ?? Ticket;
+            return (
+              <div key={pass.id} className="rounded-xl border border-border bg-card p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <span
+                    className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold ${
+                      PASS_TYPE_STYLES[pass.pass_type as PassType] ??
+                      "border-border text-muted-foreground"
+                    }`}
+                  >
+                    <Icon className="size-3" />
+                    {passTypeLabel(pass.pass_type)}
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <Switch
+                      checked={pass.active}
+                      onCheckedChange={(v) => toggleActive.mutate({ id: pass.id, active: v })}
+                    />
+                    <span className="text-[10px] text-muted-foreground">
+                      {pass.active ? "활성화" : "비활성화"}
+                    </span>
+                  </div>
+                </div>
+                <p className="mt-1.5 truncate text-sm font-bold">{pass.title}</p>
+                {pass.dogs ? (
+                  <p className="truncate text-xs text-muted-foreground">
+                    {pass.dogs.name} · {pass.dogs.owners?.name ?? "-"}
+                  </p>
+                ) : null}
+                <div className="mt-2 grid grid-cols-2 gap-y-1.5 border-t border-border/60 pt-2 text-xs">
+                  <span className="text-muted-foreground">반려견 체중</span>
+                  <span className="text-right font-semibold">
+                    {weightClassLabel(pass.weight_class) ?? "-"}
+                  </span>
+                  <span className="text-muted-foreground">과금 기준</span>
+                  <span className="text-right font-semibold">
+                    {pass.pass_type === "balance" ? (
+                      pass.dogs ? (
+                        `잔여 ${formatWon(remaining)}`
+                      ) : (
+                        `충전 ${formatWon(pass.total_count)}`
+                      )
+                    ) : pass.dogs ? (
+                      <>
+                        {formatCount(pass.used_count)}/{formatCount(pass.total_count)}회 (잔여{" "}
+                        {formatCount(remaining)})
+                      </>
+                    ) : pass.pass_type === "pickup_dropoff" ? (
+                      (tripTypeLabel(pass.trip_type) ?? "-")
+                    ) : pass.pass_type === "daily_care" ? (
+                      formatDuration(pass.total_count)
+                    ) : pass.pass_type === "kindergarten" ? (
+                      `${formatCount(pass.total_count)}회`
+                    ) : pass.pass_type === "grooming" ? (
+                      (pricingBasisLabel(pass.pricing_basis) ?? "-")
+                    ) : (
+                      "-"
+                    )}
+                  </span>
+                  <span className="text-muted-foreground">금액</span>
+                  <span className="text-right font-semibold">{formatWon(pass.price)}</span>
+                  <span className="text-muted-foreground">유효기간</span>
+                  <span className="text-right font-semibold">
+                    {pass.expires_on ? `~${pass.expires_on}` : "무제한"}
+                  </span>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-2 w-full"
+                  onClick={() => setEditing(pass)}
+                >
+                  <Pencil className="size-3.5" />
+                  수정
+                </Button>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      <div className="hidden overflow-hidden rounded-lg border border-border bg-card sm:block">
         <div className="overflow-x-auto">
           <table className="w-full min-w-0 text-[11px] sm:min-w-[900px] sm:text-sm">
             <thead className="bg-secondary/60 text-center text-xs font-bold text-muted-foreground">

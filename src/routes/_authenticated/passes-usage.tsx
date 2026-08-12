@@ -106,7 +106,57 @@ function PassesUsagePage() {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-lg border border-border bg-card">
+      {/* 모바일: 카드 UI */}
+      <div className="space-y-2 sm:hidden">
+        {usageQuery.isLoading ? (
+          <p className="py-10 text-center text-sm text-muted-foreground">불러오는 중…</p>
+        ) : filtered.length === 0 ? (
+          <p className="rounded-lg border border-dashed border-border py-10 text-center text-sm text-muted-foreground">
+            지급된 이용권이 없습니다.
+          </p>
+        ) : (
+          filtered.map((r) => {
+            const remaining = Math.max(0, r.total_count - r.used_count);
+            return (
+              <div key={r.id} className="rounded-xl border border-border bg-card p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="truncate text-sm font-bold">{r.dogs?.name ?? "-"}</span>
+                  <span
+                    className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                      r.active ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {r.active ? "활성화" : "비활성화"}
+                  </span>
+                </div>
+                <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                  {r.title} · {PASS_TYPE_LABELS[r.pass_type] ?? r.pass_type}
+                </p>
+                <div className="mt-2 grid grid-cols-2 gap-y-1.5 border-t border-border/60 pt-2 text-xs">
+                  <span className="text-muted-foreground">보호자</span>
+                  <span className="text-right font-semibold">{r.dogs?.owners?.name ?? "-"}</span>
+                  <span className="text-muted-foreground">잔여/총</span>
+                  <span className="text-right font-semibold">
+                    {r.pass_type === "balance"
+                      ? `${formatWon(remaining)} / ${formatWon(r.total_count)}`
+                      : `${formatCount(remaining)}/${formatCount(r.total_count)}`}
+                  </span>
+                  <span className="text-muted-foreground">금액</span>
+                  <span className="text-right font-semibold">{formatWon(r.price)}</span>
+                  <span className="text-muted-foreground">유효기간</span>
+                  <span className="text-right font-semibold">
+                    {r.expires_on ? `~${r.expires_on}` : "무제한"}
+                  </span>
+                  <span className="text-muted-foreground">지급일</span>
+                  <span className="text-right font-semibold">{r.purchased_on}</span>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      <div className="hidden overflow-hidden rounded-lg border border-border bg-card sm:block">
         <div className="overflow-x-auto">
           <table className="w-full min-w-0 text-[11px] sm:min-w-[820px] sm:text-sm">
             <thead className="bg-secondary/60 text-center text-xs font-bold text-muted-foreground">
