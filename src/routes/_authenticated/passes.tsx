@@ -277,11 +277,11 @@ function PassesPage() {
       hideTitleOnMobile
       mobileSubTabs={
         <>
-          <MobileSubTabLink to="/passes-usage" active={false}>
-            이용권 사용현황
-          </MobileSubTabLink>
           <MobileSubTabLink to="/passes" active>
             이용권 설정
+          </MobileSubTabLink>
+          <MobileSubTabLink to="/passes-usage" active={false}>
+            이용권 사용현황
           </MobileSubTabLink>
         </>
       }

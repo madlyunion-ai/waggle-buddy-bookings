@@ -42,8 +42,8 @@ const NAV_GROUPS = [
   {
     label: "이용권 · 정산",
     items: [
-      { to: "/passes-usage", label: "이용권 사용현황", icon: Ticket },
       { to: "/passes", label: "이용권 설정", icon: Ticket },
+      { to: "/passes-usage", label: "이용권 사용현황", icon: Ticket },
     ],
   },
   {
@@ -80,6 +80,7 @@ export function AppShell({
   sidebarAction,
   hideTitleOnMobile,
   mobileSubTabs,
+  hideLogoutOnMobile,
   children,
 }: {
   title?: string;
@@ -90,6 +91,8 @@ export function AppShell({
   hideTitleOnMobile?: boolean;
   /** 모바일 상단에 표시할 서브 메뉴(탭) 영역. 페이지별로 구성해 전달 */
   mobileSubTabs?: ReactNode;
+  /** 모바일 상단 바에서 로그아웃 버튼을 숨김 */
+  hideLogoutOnMobile?: boolean;
   children: ReactNode;
 }) {
   const navigate = useNavigate();
@@ -164,16 +167,18 @@ export function AppShell({
           </div>
         </div>
         <nav className="flex items-center justify-between gap-3 bg-[#2f6fed] px-4 pt-4 lg:hidden">
-          <div className="flex items-center gap-5">{mobileSubTabs}</div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={signOut}
-            className="h-7 shrink-0 px-2 text-xs text-white/90 hover:bg-white/10 hover:text-white"
-          >
-            <LogOut className="size-3.5" />
-            로그아웃
-          </Button>
+          <div className="flex flex-1 items-center gap-5">{mobileSubTabs}</div>
+          {hideLogoutOnMobile ? null : (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={signOut}
+              className="h-7 shrink-0 gap-1 px-2 text-xs text-white/90 hover:bg-white/10 hover:text-white"
+            >
+              <LogOut className="size-3.5" />
+              로그아웃
+            </Button>
+          )}
         </nav>
       </header>
 
