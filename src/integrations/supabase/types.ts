@@ -230,6 +230,7 @@ export type Database = {
           service_type: string;
           status: string;
           updated_at: string;
+          weight_class: string | null;
         };
         Insert: {
           checked_in_at?: string | null;
@@ -250,6 +251,7 @@ export type Database = {
           service_type?: string;
           status?: string;
           updated_at?: string;
+          weight_class?: string | null;
         };
         Update: {
           checked_in_at?: string | null;
@@ -270,6 +272,7 @@ export type Database = {
           service_type?: string;
           status?: string;
           updated_at?: string;
+          weight_class?: string | null;
         };
         Relationships: [
           {
@@ -287,6 +290,30 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      reservation_pricing: {
+        Row: {
+          id: string;
+          service_type: string;
+          weight_class: string;
+          price: number;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          service_type: string;
+          weight_class: string;
+          price?: number;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          service_type?: string;
+          weight_class?: string;
+          price?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
       };
       staff: {
         Row: {

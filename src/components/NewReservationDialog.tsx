@@ -31,6 +31,7 @@ import {
   SERVICE_TYPES,
   addDays,
   addMinutes,
+  formatWon,
   nightsBetween,
   stayLabel,
   toDateKey,
@@ -42,6 +43,14 @@ const PICKUP_USAGE_MODES = [
   { value: "pickup", label: "픽업" },
   { value: "dropoff", label: "드랍" },
   { value: "round_trip", label: "왕복" },
+] as const;
+
+const WEIGHT_CLASSES = [
+  { value: "small", label: "소형" },
+  { value: "small_medium", label: "중소형" },
+  { value: "medium", label: "중형" },
+  { value: "medium_large", label: "중대형" },
+  { value: "large", label: "대형" },
 ] as const;
 
 function formatDuration(totalMinutes: number) {
@@ -102,6 +111,39 @@ export function NewReservationDialog({
   const [pickupPassId, setPickupPassId] = useState("none");
   const [pickupUsageMode, setPickupUsageMode] =
     useState<(typeof PICKUP_USAGE_MODES)[number]["value"]>("none");
+  const [weightClass, setWeightClass] = useState<string>("small");
+
+  const pricingQuery = useQuery({
+    queryKey: ["reservation-pricing"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("reservation_pricing")
+        .select("service_type, weight_class, price");
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: open,
+  });
+
+  const unitPrice =
+    pricingQuery.data?.find((r) => r.service_type === serviceType && r.weight_class === weightClass)
+      ?.price ?? 0;
+
+  const totalPrice = (() => {
+    if (serviceType === "kindergarten") {
+      const days = Math.max(1, nightsBetween(date, endDate) + 1);
+      return unitPrice * days;
+    }
+    if (serviceType === "hotel") {
+      const nights = Math.max(1, nightsBetween(date, endDate));
+      return unitPrice * nights;
+    }
+    if (serviceType === "daily_care") {
+      const hours = Math.max(0, (timeToMinutes(pickUp) - timeToMinutes(dropOff)) / 60);
+      return Math.round(unitPrice * hours);
+    }
+    return unitPrice;
+  })();
 
   const fetchMembers = useServerFn(listExternalMembers);
   const fetchPets = useServerFn(listExternalPets);
@@ -252,6 +294,7 @@ export function NewReservationDialog({
             : null,
         ...times,
         memo: memo || null,
+        weight_class: weightClass || null,
         pass_id: appliedPassId,
         pickup_pass_id: appliedPickupPassId,
         pickup_requested:
@@ -369,8 +412,25 @@ export function NewReservationDialog({
           </div>
 
           {usingKnownDog ? (
-            <div className="rounded-lg border border-border bg-secondary/50 px-3 py-2.5 text-sm font-bold">
-              {initialPetName ?? "선택한 반려견"} 반려견으로 예약을 등록합니다.
+            <div className="space-y-2">
+              <div className="rounded-lg border border-border bg-secondary/50 px-3 py-2.5 text-sm font-bold">
+                {initialPetName ?? "선택한 반려견"} 반려견으로 예약을 등록합니다.
+              </div>
+              <div className="space-y-2">
+                <Label>반려견 체중</Label>
+                <Select value={weightClass} onValueChange={setWeightClass}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {WEIGHT_CLASSES.map((w) => (
+                      <SelectItem key={w.value} value={w.value}>
+                        {w.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           ) : (
             <>
@@ -417,31 +477,48 @@ export function NewReservationDialog({
                 ) : null}
               </div>
 
-              <div className="space-y-2">
-                <Label>강아지</Label>
-                <Select value={petId} onValueChange={setPetId} disabled={!memberId}>
-                  <SelectTrigger>
-                    <SelectValue
-                      placeholder={
-                        !memberId
-                          ? "회원을 먼저 선택하세요"
-                          : petsQuery.isLoading
-                            ? "불러오는 중…"
-                            : (petsQuery.data ?? []).length === 0
-                              ? "등록된 강아지가 없습니다."
-                              : "강아지를 선택하세요"
-                      }
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(petsQuery.data ?? []).map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.name}
-                        {p.breed ? ` · ${p.breed}` : ""}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>강아지</Label>
+                  <Select value={petId} onValueChange={setPetId} disabled={!memberId}>
+                    <SelectTrigger>
+                      <SelectValue
+                        placeholder={
+                          !memberId
+                            ? "회원을 먼저 선택하세요"
+                            : petsQuery.isLoading
+                              ? "불러오는 중…"
+                              : (petsQuery.data ?? []).length === 0
+                                ? "등록된 강아지가 없습니다."
+                                : "강아지를 선택하세요"
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(petsQuery.data ?? []).map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.name}
+                          {p.breed ? ` · ${p.breed}` : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>반려견 체중</Label>
+                  <Select value={weightClass} onValueChange={setWeightClass}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {WEIGHT_CLASSES.map((w) => (
+                        <SelectItem key={w.value} value={w.value}>
+                          {w.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </>
           )}
@@ -669,6 +746,11 @@ export function NewReservationDialog({
               onChange={(e) => setMemo(e.target.value)}
               placeholder="약 복용, 픽업 담당자 등"
             />
+          </div>
+
+          <div className="flex items-center justify-between rounded-lg bg-secondary px-3 py-2.5 text-sm font-bold">
+            <span>총액</span>
+            <span className="text-primary">{formatWon(totalPrice)}</span>
           </div>
         </div>
         <DialogFooter>

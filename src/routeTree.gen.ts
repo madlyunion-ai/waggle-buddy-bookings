@@ -15,6 +15,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedDogsRouteImport } from './routes/_authenticated/dogs'
 import { Route as AuthenticatedPassesRouteImport } from './routes/_authenticated/passes'
 import { Route as AuthenticatedPassesUsageRouteImport } from './routes/_authenticated/passes-usage'
+import { Route as AuthenticatedReservationSettingsRouteImport } from './routes/_authenticated/reservation-settings'
 import { Route as AuthenticatedReservationsRouteImport } from './routes/_authenticated/reservations'
 import { Route as AuthenticatedStaffRouteImport } from './routes/_authenticated/staff'
 
@@ -48,6 +49,12 @@ const AuthenticatedPassesUsageRoute =
     path: '/passes-usage',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedReservationSettingsRoute =
+  AuthenticatedReservationSettingsRouteImport.update({
+    id: '/reservation-settings',
+    path: '/reservation-settings',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedReservationsRoute =
   AuthenticatedReservationsRouteImport.update({
     id: '/reservations',
@@ -66,6 +73,7 @@ export interface FileRoutesByFullPath {
   '/dogs': typeof AuthenticatedDogsRoute
   '/passes': typeof AuthenticatedPassesRoute
   '/passes-usage': typeof AuthenticatedPassesUsageRoute
+  '/reservation-settings': typeof AuthenticatedReservationSettingsRoute
   '/reservations': typeof AuthenticatedReservationsRoute
   '/staff': typeof AuthenticatedStaffRoute
 }
@@ -75,6 +83,7 @@ export interface FileRoutesByTo {
   '/dogs': typeof AuthenticatedDogsRoute
   '/passes': typeof AuthenticatedPassesRoute
   '/passes-usage': typeof AuthenticatedPassesUsageRoute
+  '/reservation-settings': typeof AuthenticatedReservationSettingsRoute
   '/reservations': typeof AuthenticatedReservationsRoute
   '/staff': typeof AuthenticatedStaffRoute
 }
@@ -86,6 +95,7 @@ export interface FileRoutesById {
   '/_authenticated/dogs': typeof AuthenticatedDogsRoute
   '/_authenticated/passes': typeof AuthenticatedPassesRoute
   '/_authenticated/passes-usage': typeof AuthenticatedPassesUsageRoute
+  '/_authenticated/reservation-settings': typeof AuthenticatedReservationSettingsRoute
   '/_authenticated/reservations': typeof AuthenticatedReservationsRoute
   '/_authenticated/staff': typeof AuthenticatedStaffRoute
 }
@@ -97,6 +107,7 @@ export interface FileRouteTypes {
     | '/dogs'
     | '/passes'
     | '/passes-usage'
+    | '/reservation-settings'
     | '/reservations'
     | '/staff'
   fileRoutesByTo: FileRoutesByTo
@@ -106,6 +117,7 @@ export interface FileRouteTypes {
     | '/dogs'
     | '/passes'
     | '/passes-usage'
+    | '/reservation-settings'
     | '/reservations'
     | '/staff'
   id:
@@ -116,6 +128,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dogs'
     | '/_authenticated/passes'
     | '/_authenticated/passes-usage'
+    | '/_authenticated/reservation-settings'
     | '/_authenticated/reservations'
     | '/_authenticated/staff'
   fileRoutesById: FileRoutesById
@@ -169,6 +182,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPassesUsageRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/reservation-settings': {
+      id: '/_authenticated/reservation-settings'
+      path: '/reservation-settings'
+      fullPath: '/reservation-settings'
+      preLoaderRoute: typeof AuthenticatedReservationSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/reservations': {
       id: '/_authenticated/reservations'
       path: '/reservations'
@@ -191,6 +211,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDogsRoute: typeof AuthenticatedDogsRoute
   AuthenticatedPassesRoute: typeof AuthenticatedPassesRoute
   AuthenticatedPassesUsageRoute: typeof AuthenticatedPassesUsageRoute
+  AuthenticatedReservationSettingsRoute: typeof AuthenticatedReservationSettingsRoute
   AuthenticatedReservationsRoute: typeof AuthenticatedReservationsRoute
   AuthenticatedStaffRoute: typeof AuthenticatedStaffRoute
 }
@@ -200,6 +221,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDogsRoute: AuthenticatedDogsRoute,
   AuthenticatedPassesRoute: AuthenticatedPassesRoute,
   AuthenticatedPassesUsageRoute: AuthenticatedPassesUsageRoute,
+  AuthenticatedReservationSettingsRoute: AuthenticatedReservationSettingsRoute,
   AuthenticatedReservationsRoute: AuthenticatedReservationsRoute,
   AuthenticatedStaffRoute: AuthenticatedStaffRoute,
 }

@@ -8,6 +8,7 @@ import {
   LogOut,
   MapPin,
   Settings,
+  SlidersHorizontal,
   Ticket,
   Users,
 } from "lucide-react";
@@ -36,7 +37,6 @@ const NAV_GROUPS = [
     items: [
       { to: "/dogs", label: "반려견 리스트", icon: Dog },
       { to: "/reservations", label: "예약 정보", icon: CalendarCheck },
-      { to: "/staff", label: "직원 관리", icon: Users },
     ],
   },
   {
@@ -46,15 +46,23 @@ const NAV_GROUPS = [
       { to: "/passes", label: "이용권 설정", icon: Ticket },
     ],
   },
+  {
+    label: "운영 관리",
+    items: [
+      { to: "/staff", label: "직원 관리", icon: Users },
+      { to: "/reservation-settings", label: "예약 설정", icon: SlidersHorizontal },
+    ],
+  },
 ] as const;
 
 const MOBILE_NAV = [
   { to: "/dashboard", label: "오늘 현황", icon: CalendarDays },
   { to: "/dogs", label: "반려견 리스트", icon: Dog },
   { to: "/reservations", label: "예약 정보", icon: CalendarCheck },
-  { to: "/staff", label: "직원 관리", icon: Users },
   { to: "/passes-usage", label: "이용권 사용현황", icon: Ticket },
   { to: "/passes", label: "이용권 설정", icon: Ticket },
+  { to: "/staff", label: "직원 관리", icon: Users },
+  { to: "/reservation-settings", label: "예약 설정", icon: SlidersHorizontal },
 ] as const;
 
 export function AppShell({
