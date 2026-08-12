@@ -95,14 +95,14 @@ function PassesUsagePage() {
         </>
       }
     >
-      <div className="mb-4 flex flex-wrap items-center gap-2">
+      <div className="mb-2 flex flex-wrap items-center gap-2">
         <div className="relative max-w-sm flex-1 sm:w-72 sm:flex-none">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="반려견, 보호자, 이용권명 검색"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="bg-white pl-9 placeholder:text-sm"
+            className="h-[43px] bg-white pl-9 placeholder:text-sm"
           />
         </div>
       </div>

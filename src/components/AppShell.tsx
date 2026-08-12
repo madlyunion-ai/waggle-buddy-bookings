@@ -57,7 +57,12 @@ const NAV_GROUPS = [
 
 /** 모바일 하단 탭바(홈 바) 메뉴 - 가운데 항목이 캘린더 강조 버튼 */
 const BOTTOM_NAV = [
-  { to: "/dogs", label: "반려견", icon: Dog, match: (p: string) => p === "/dogs" },
+  {
+    to: "/dogs",
+    label: "반려견",
+    icon: Dog,
+    match: (p: string) => p === "/dogs" || p === "/reservations",
+  },
   {
     to: "/dashboard",
     label: "캘린더",
@@ -66,7 +71,7 @@ const BOTTOM_NAV = [
     center: true,
   },
   {
-    to: "/passes-usage",
+    to: "/passes",
     label: "이용권",
     icon: Ticket,
     match: (p: string) => p === "/passes-usage" || p === "/passes",

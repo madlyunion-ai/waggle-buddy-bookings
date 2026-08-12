@@ -6,6 +6,7 @@ import { CalendarPlus, ChevronLeft, ChevronRight, RefreshCw, Search } from "luci
 
 import { AppShell } from "@/components/AppShell";
 import { DogPassDialog } from "@/components/DogPassDialog";
+import { MobileSubTabLink } from "@/components/MobileSubTabs";
 import { NewReservationDialog } from "@/components/NewReservationDialog";
 import { OwnerInfoDialog } from "@/components/OwnerInfoDialog";
 import { Badge } from "@/components/ui/badge";
@@ -75,7 +76,6 @@ function DogsPage() {
     <AppShell
       title="반려견 리스트"
       hideTitleOnMobile
-      hideLogoutOnMobile
       description={
         <span className="hidden sm:inline">
           데이터베이스에 저장된 반려견 목록입니다. 페이지 진입 시 외부 회원 시스템과 자동
@@ -94,10 +94,21 @@ function DogsPage() {
         </Button>
       }
       mobileSubTabs={
-        <div className="relative w-full pb-4">
+        <>
+          <MobileSubTabLink to="/dogs" active>
+            반려견 목록
+          </MobileSubTabLink>
+          <MobileSubTabLink to="/reservations" active={false}>
+            반려견 예약리스트
+          </MobileSubTabLink>
+        </>
+      }
+    >
+      <div className="mb-2 flex flex-wrap items-center gap-2 sm:hidden">
+        <div className="relative w-full">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            className="h-9 bg-white pl-9 placeholder:text-sm"
+            className="h-[43px] bg-white pl-9 placeholder:text-sm"
             placeholder="반려견 이름, 견종, 보호자 검색"
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
@@ -106,8 +117,8 @@ function DogsPage() {
             }}
           />
         </div>
-      }
-    >
+      </div>
+
       <div className="mb-4 hidden flex-wrap items-center gap-2 sm:flex">
         <div className="relative max-w-sm flex-1">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />

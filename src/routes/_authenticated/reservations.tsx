@@ -4,6 +4,7 @@ import { useState } from "react";
 import { RefreshCw, Search } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
+import { MobileSubTabLink } from "@/components/MobileSubTabs";
 import { OwnerInfoDialog } from "@/components/OwnerInfoDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -100,6 +101,7 @@ function ReservationsPage() {
   return (
     <AppShell
       title="예약 정보"
+      hideTitleOnMobile
       description={
         <span className="hidden sm:inline">
           등록된 전체 예약 목록입니다. 서비스 종류와 상태로 필터링할 수 있습니다.
@@ -114,6 +116,16 @@ function ReservationsPage() {
         >
           <RefreshCw className={`size-4 ${query.isFetching ? "animate-spin" : ""}`} /> 새로고침
         </Button>
+      }
+      mobileSubTabs={
+        <>
+          <MobileSubTabLink to="/dogs" active={false}>
+            반려견 목록
+          </MobileSubTabLink>
+          <MobileSubTabLink to="/reservations" active>
+            반려견 예약리스트
+          </MobileSubTabLink>
+        </>
       }
     >
       <div className="mb-3 flex flex-wrap items-center gap-2">
