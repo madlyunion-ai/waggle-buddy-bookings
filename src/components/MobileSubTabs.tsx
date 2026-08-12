@@ -1,5 +1,14 @@
 import { Link } from "@tanstack/react-router";
 
+const TAB_CLASS = (active: boolean) =>
+  `relative shrink-0 whitespace-nowrap px-1 py-2.5 text-sm font-bold transition-colors ${
+    active ? "text-white" : "text-white/80"
+  }`;
+
+function ActiveUnderline() {
+  return <span className="absolute inset-x-0 -bottom-px h-[2px] rounded-full bg-white" />;
+}
+
 /** AppShell의 모바일 상단 서브 메뉴에 쓰는 탭 버튼 (같은 페이지 내부 상태 전환용) */
 export function MobileSubTabButton({
   active,
@@ -11,14 +20,9 @@ export function MobileSubTabButton({
   children: React.ReactNode;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`flex-1 whitespace-nowrap rounded-full py-1.5 text-center text-sm font-bold transition-colors ${
-        active ? "bg-white text-foreground shadow-sm" : "text-muted-foreground"
-      }`}
-    >
+    <button type="button" onClick={onClick} className={TAB_CLASS(active)}>
       {children}
+      {active ? <ActiveUnderline /> : null}
     </button>
   );
 }
@@ -34,13 +38,9 @@ export function MobileSubTabLink({
   children: React.ReactNode;
 }) {
   return (
-    <Link
-      to={to}
-      className={`flex-1 whitespace-nowrap rounded-full py-1.5 text-center text-sm font-bold transition-colors ${
-        active ? "bg-white text-foreground shadow-sm" : "text-muted-foreground"
-      }`}
-    >
+    <Link to={to} className={TAB_CLASS(active)}>
       {children}
+      {active ? <ActiveUnderline /> : null}
     </Link>
   );
 }

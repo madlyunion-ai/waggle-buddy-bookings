@@ -164,11 +164,7 @@ export function AppShell({
           </div>
         </div>
         {mobileSubTabs ? (
-          <div className="bg-white px-4 py-2 lg:hidden">
-            <nav className="flex items-center gap-1 rounded-full bg-secondary/70 p-1">
-              {mobileSubTabs}
-            </nav>
-          </div>
+          <nav className="flex items-center gap-5 bg-[#2f6fed] px-4 lg:hidden">{mobileSubTabs}</nav>
         ) : null}
       </header>
 
