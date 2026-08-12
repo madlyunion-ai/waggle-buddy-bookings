@@ -24,6 +24,21 @@ const SERVICE_UNIT_LABELS: Record<ServiceType, string> = {
   grooming: "1회 기준",
 };
 
+const PICKUP_DROPOFF_TYPE = "pickup_dropoff" as const;
+
+const PRICING_COLUMNS: {
+  type: ServiceType | typeof PICKUP_DROPOFF_TYPE;
+  label: string;
+  unit: string;
+}[] = [
+  ...SERVICE_TYPES.map((t) => ({
+    type: t,
+    label: SERVICE_LABELS[t],
+    unit: SERVICE_UNIT_LABELS[t],
+  })),
+  { type: PICKUP_DROPOFF_TYPE, label: "픽드랍", unit: "편도 1회 기준" },
+];
+
 export const Route = createFileRoute("/_authenticated/reservation-settings")({
   head: () => ({
     meta: [
@@ -74,11 +89,11 @@ function ReservationSettingsPage() {
 
   const save = useMutation({
     mutationFn: async () => {
-      const rows = SERVICE_TYPES.flatMap((t) =>
+      const rows = PRICING_COLUMNS.flatMap((c) =>
         WEIGHT_CLASSES.map((w) => ({
-          service_type: t,
+          service_type: c.type,
           weight_class: w.value,
-          price: Number(prices[buildKey(t, w.value)] || 0),
+          price: Number(prices[buildKey(c.type, w.value)] || 0),
         })),
       );
       const { error } = await supabase
@@ -109,10 +124,10 @@ function ReservationSettingsPage() {
             <thead className="bg-secondary/60 text-center text-xs font-bold text-muted-foreground">
               <tr>
                 <th className="px-4 py-3">체중 구분</th>
-                {SERVICE_TYPES.map((t) => (
-                  <th key={t} className="px-4 py-3">
-                    {SERVICE_LABELS[t]}
-                    <span className="block text-[10px] font-normal">{SERVICE_UNIT_LABELS[t]}</span>
+                {PRICING_COLUMNS.map((c) => (
+                  <th key={c.type} className="px-4 py-3">
+                    {c.label}
+                    <span className="block text-[10px] font-normal">{c.unit}</span>
                   </th>
                 ))}
               </tr>
@@ -120,7 +135,10 @@ function ReservationSettingsPage() {
             <tbody>
               {pricingQuery.isLoading ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-10 text-center text-muted-foreground">
+                  <td
+                    colSpan={PRICING_COLUMNS.length + 1}
+                    className="px-4 py-10 text-center text-muted-foreground"
+                  >
                     불러오는 중…
                   </td>
                 </tr>
@@ -128,10 +146,10 @@ function ReservationSettingsPage() {
                 WEIGHT_CLASSES.map((w) => (
                   <tr key={w.value} className="border-t border-border">
                     <td className="px-4 py-3 text-center font-bold">{w.label}</td>
-                    {SERVICE_TYPES.map((t) => {
-                      const key = buildKey(t, w.value);
+                    {PRICING_COLUMNS.map((c) => {
+                      const key = buildKey(c.type, w.value);
                       return (
-                        <td key={t} className="px-4 py-3">
+                        <td key={c.type} className="px-4 py-3">
                           <Input
                             type="number"
                             min="0"

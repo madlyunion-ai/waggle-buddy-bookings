@@ -129,7 +129,17 @@ export function NewReservationDialog({
     pricingQuery.data?.find((r) => r.service_type === serviceType && r.weight_class === weightClass)
       ?.price ?? 0;
 
-  const totalPrice = (() => {
+  const pickupUnitPrice =
+    pricingQuery.data?.find(
+      (r) => r.service_type === "pickup_dropoff" && r.weight_class === weightClass,
+    )?.price ?? 0;
+
+  // 이용권을 적용하면 해당 이용료는 차감되어 총액에서 제외된다
+  const passApplied = passId !== "none";
+  const pickupPassApplied = pickupUsageMode !== "none" && pickupPassId !== "none";
+
+  const serviceCost = (() => {
+    if (passApplied) return 0;
     if (serviceType === "kindergarten") {
       const days = Math.max(1, nightsBetween(date, endDate) + 1);
       return unitPrice * days;
@@ -144,6 +154,14 @@ export function NewReservationDialog({
     }
     return unitPrice;
   })();
+
+  const pickupCost = (() => {
+    if (pickupUsageMode === "none" || pickupPassApplied) return 0;
+    const multiplier = pickupUsageMode === "round_trip" ? 2 : 1;
+    return pickupUnitPrice * multiplier;
+  })();
+
+  const totalPrice = serviceCost + pickupCost;
 
   const fetchMembers = useServerFn(listExternalMembers);
   const fetchPets = useServerFn(listExternalPets);
@@ -748,9 +766,18 @@ export function NewReservationDialog({
             />
           </div>
 
-          <div className="flex items-center justify-between rounded-lg bg-secondary px-3 py-2.5 text-sm font-bold">
-            <span>총액</span>
-            <span className="text-primary">{formatWon(totalPrice)}</span>
+          <div className="space-y-1 rounded-lg bg-secondary px-3 py-2.5">
+            {pickupCost > 0 ? (
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>
+                  이용료 {formatWon(serviceCost)} + 픽드랍비 {formatWon(pickupCost)}
+                </span>
+              </div>
+            ) : null}
+            <div className="flex items-center justify-between text-sm font-bold">
+              <span>총액</span>
+              <span className="text-primary">{formatWon(totalPrice)}</span>
+            </div>
           </div>
         </div>
         <DialogFooter>
