@@ -145,6 +145,7 @@ export function DogPassDialog({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["passes"] });
+      queryClient.refetchQueries({ queryKey: ["passes", "for-dog", pet.dbId] });
       toast.success("이용권을 지급했습니다");
       setCatalogType("");
       setCatalogId("");
