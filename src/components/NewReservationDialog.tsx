@@ -73,6 +73,7 @@ function timeToMinutes(time: string) {
  * 시작일~종료일을 하나의 range date-picker로 선택하는 필드.
  * 팝오버를 열 때마다 선택 상태를 초기화해, 항상 "시작일 클릭 → 종료일 클릭" 2단계로 동작하게 한다.
  * (react-day-picker의 기본 range 동작은 이미 완성된 range가 있으면 시작일이 고정된 채 끝만 바뀌어 요구사항과 달랐다)
+ * 선택 즉시 반영하지 않고, 시작일~종료일 사이를 bar로 보여준 뒤 '적용' 버튼을 눌러야 확정된다.
  */
 function DateRangeField({
   from,
@@ -87,11 +88,17 @@ function DateRangeField({
   minNights?: number;
 }) {
   const [open, setOpen] = useState(false);
-  const [draftFrom, setDraftFrom] = useState<string | null>(null);
+  const [draft, setDraft] = useState<{ from: string | null; to: string | null }>({
+    from: null,
+    to: null,
+  });
   const fromDate = new Date(`${from}T00:00:00`);
 
-  const displayed: DateRange | undefined = draftFrom
-    ? { from: new Date(`${draftFrom}T00:00:00`), to: undefined }
+  const displayed: DateRange | undefined = draft.from
+    ? {
+        from: new Date(`${draft.from}T00:00:00`),
+        to: draft.to ? new Date(`${draft.to}T00:00:00`) : undefined,
+      }
     : undefined;
 
   return (
@@ -99,7 +106,7 @@ function DateRangeField({
       open={open}
       onOpenChange={(next) => {
         setOpen(next);
-        if (next) setDraftFrom(null);
+        if (next) setDraft({ from: null, to: null });
       }}
     >
       <PopoverTrigger asChild>
@@ -120,18 +127,39 @@ function DateRangeField({
           numberOfMonths={1}
           onSelect={(_, selectedDay) => {
             const clickedKey = toDateKey(selectedDay);
-            if (!draftFrom) {
-              setDraftFrom(clickedKey);
-              return;
-            }
-            if (minNights > 0 && clickedKey === draftFrom) return;
-            const nextFrom = draftFrom <= clickedKey ? draftFrom : clickedKey;
-            const nextTo = draftFrom <= clickedKey ? clickedKey : draftFrom;
-            onChange(nextFrom, nextTo);
-            setDraftFrom(null);
-            setOpen(false);
+            setDraft((prev) => {
+              if (!prev.from || prev.to) {
+                return { from: clickedKey, to: null };
+              }
+              if (minNights > 0 && clickedKey === prev.from) return prev;
+              const nextFrom = prev.from <= clickedKey ? prev.from : clickedKey;
+              const nextTo = prev.from <= clickedKey ? clickedKey : prev.from;
+              return { from: nextFrom, to: nextTo };
+            });
           }}
         />
+        <div className="flex items-center justify-between gap-2 border-t border-border px-3 py-2.5">
+          <p className="text-xs text-muted-foreground">
+            {draft.from && draft.to
+              ? `${draft.from} ~ ${draft.to}`
+              : draft.from
+                ? "종료일을 선택하세요"
+                : "시작일을 선택하세요"}
+          </p>
+          <Button
+            type="button"
+            size="sm"
+            className="h-7 px-3 text-xs"
+            disabled={!draft.from || !draft.to}
+            onClick={() => {
+              if (!draft.from || !draft.to) return;
+              onChange(draft.from, draft.to);
+              setOpen(false);
+            }}
+          >
+            적용
+          </Button>
+        </div>
       </PopoverContent>
     </Popover>
   );
