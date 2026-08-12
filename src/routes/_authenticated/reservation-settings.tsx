@@ -242,11 +242,13 @@ function OptionsManagerDialog({
       label: string;
     }) => {
       const value = `custom_${Date.now()}`;
+      const nextOrder =
+        (kind === "service_type" ? customServiceTypes.length : weightClasses.length) + 1;
       const { error } = await supabase.from("reservation_options").insert({
         kind,
         value,
         label: label.trim(),
-        sort_order: Date.now(),
+        sort_order: nextOrder,
       });
       if (error) throw error;
     },
