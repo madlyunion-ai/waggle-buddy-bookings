@@ -145,7 +145,7 @@ export function ReserveDialog({ pet }: { pet: ExternalPet }) {
           <CalendarPlus className="size-3.5" /> 예약하기
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[85vh] overflow-y-auto">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{pet.name} 예약</DialogTitle>
         </DialogHeader>

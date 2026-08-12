@@ -164,7 +164,7 @@ export function DogPassDialog({
           <Ticket className="size-3.5" /> {triggerLabel}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-md">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{pet.name} 이용권</DialogTitle>
         </DialogHeader>

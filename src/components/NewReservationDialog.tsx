@@ -399,7 +399,7 @@ export function NewReservationDialog({
         </DialogTrigger>
       )}
 
-      <DialogContent className="max-h-[85vh] overflow-y-auto">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>예약 등록</DialogTitle>
         </DialogHeader>
@@ -765,28 +765,30 @@ export function NewReservationDialog({
               placeholder="약 복용, 픽업 담당자 등"
             />
           </div>
-
-          <div className="space-y-1 rounded-lg bg-secondary px-3 py-2.5">
-            {pickupCost > 0 ? (
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>
-                  이용료 {formatWon(serviceCost)} + 픽드랍비 {formatWon(pickupCost)}
-                </span>
-              </div>
-            ) : null}
-            <div className="flex items-center justify-between text-sm font-bold">
-              <span>총액</span>
-              <span className="text-primary">{formatWon(totalPrice)}</span>
-            </div>
-          </div>
         </div>
         <DialogFooter>
-          <Button
-            disabled={!petId || hotelInvalid || create.isPending}
-            onClick={() => create.mutate()}
-          >
-            등록하기
-          </Button>
+          <div className="space-y-2">
+            <div className="space-y-1 rounded-lg bg-secondary px-3 py-2.5">
+              {pickupCost > 0 ? (
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>
+                    이용료 {formatWon(serviceCost)} + 픽드랍비 {formatWon(pickupCost)}
+                  </span>
+                </div>
+              ) : null}
+              <div className="flex items-center justify-between text-sm font-bold">
+                <span>총액</span>
+                <span className="text-primary">{formatWon(totalPrice)}</span>
+              </div>
+            </div>
+            <Button
+              className="w-full"
+              disabled={!petId || hotelInvalid || create.isPending}
+              onClick={() => create.mutate()}
+            >
+              등록하기
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

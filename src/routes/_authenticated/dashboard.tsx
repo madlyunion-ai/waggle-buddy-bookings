@@ -851,7 +851,7 @@ function DashboardPage() {
         open={dayListDate !== null}
         onOpenChange={(next) => setDayListDate(next ? dayListDate : null)}
       >
-        <DialogContent className="max-h-[80vh] overflow-y-auto">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>{dayListDate ? formatDateKorean(dayListDate) : ""} 예약</DialogTitle>
           </DialogHeader>
@@ -894,7 +894,7 @@ function DashboardPage() {
       </Dialog>
 
       <Dialog open={detailRow !== null} onOpenChange={(next) => !next && setDetailRow(null)}>
-        <DialogContent className="max-h-[85vh] overflow-y-auto">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>예약 상세</DialogTitle>
           </DialogHeader>
