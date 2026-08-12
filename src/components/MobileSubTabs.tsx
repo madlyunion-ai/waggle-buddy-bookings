@@ -6,7 +6,9 @@ const TAB_CLASS = (active: boolean) =>
   }`;
 
 function ActiveUnderline() {
-  return <span className="absolute inset-x-0 -bottom-px h-[2px] rounded-full bg-white" />;
+  return (
+    <span className="absolute -bottom-px left-1/2 h-[6px] w-[10px] -translate-x-1/2 rounded-t-[99px] bg-white" />
+  );
 }
 
 /** AppShell의 모바일 상단 서브 메뉴에 쓰는 탭 버튼 (같은 페이지 내부 상태 전환용) */
