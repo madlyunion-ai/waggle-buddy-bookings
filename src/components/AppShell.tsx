@@ -280,7 +280,7 @@ export function AppShell({
                   to={item.to}
                   className="relative -mt-9 flex flex-1 flex-col items-center gap-1"
                 >
-                  <span className="relative flex size-14 items-center justify-center rounded-full bg-gradient-to-br from-[#4f46e5] to-[#2f6fed] text-white shadow-xl">
+                  <span className="relative flex size-14 items-center justify-center rounded-full bg-[#2f6fed] text-white shadow-xl">
                     <item.icon className="size-6" />
                     <span className="absolute -bottom-0.5 -right-0.5 size-3 rounded-full bg-white/30" />
                   </span>
