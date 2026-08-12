@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Search } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
+import { MobileSubTabLink } from "@/components/MobileSubTabs";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { formatWon } from "@/lib/kindergarten";
@@ -82,6 +83,16 @@ function PassesUsagePage() {
     <AppShell
       title="이용권 사용현황"
       description="반려견에게 지급된 이용권의 사용 현황을 확인합니다."
+      mobileSubTabs={
+        <>
+          <MobileSubTabLink to="/passes-usage" active>
+            이용권 사용현황
+          </MobileSubTabLink>
+          <MobileSubTabLink to="/passes" active={false}>
+            이용권 설정
+          </MobileSubTabLink>
+        </>
+      }
     >
       <div className="mb-4 sm:w-72">
         <div className="relative">

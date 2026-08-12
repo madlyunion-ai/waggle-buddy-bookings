@@ -16,6 +16,7 @@ import {
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/AppShell";
+import { MobileSubTabLink } from "@/components/MobileSubTabs";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -273,6 +274,16 @@ function PassesPage() {
       title="이용권 설정"
       description="이용권 상품을 등록하고 관리합니다."
       action={<NewPassDialog />}
+      mobileSubTabs={
+        <>
+          <MobileSubTabLink to="/passes-usage" active={false}>
+            이용권 사용현황
+          </MobileSubTabLink>
+          <MobileSubTabLink to="/passes" active>
+            이용권 설정
+          </MobileSubTabLink>
+        </>
+      }
     >
       <div className="mb-6 grid gap-4 sm:grid-cols-2">
         <div className="surface-card flex items-center gap-4 p-5">

@@ -18,6 +18,7 @@ import {
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/AppShell";
+import { MobileSubTabButton } from "@/components/MobileSubTabs";
 import { NewReservationDialog } from "@/components/NewReservationDialog";
 import {
   AlertDialog,
@@ -234,6 +235,7 @@ function DashboardPage() {
   const [dayListDate, setDayListDate] = useState<string | null>(null);
   const [emptyDayAlertOpen, setEmptyDayAlertOpen] = useState(false);
   const [isCompact, setIsCompact] = useState(false);
+  const [mobileHomeTab, setMobileHomeTab] = useState<"calendar" | "usage">("calendar");
   const [detailRow, setDetailRow] = useState<Row | null>(null);
   const [passPopoverId, setPassPopoverId] = useState<string | null>(null);
   const [passPopoverAnchor, setPassPopoverAnchor] = useState<{
@@ -389,10 +391,28 @@ function DashboardPage() {
   const monthlyStatsTitle = `${anchor.getMonth() + 1}월 전체 예약현황`;
 
   return (
-    <AppShell sidebarAction={<NewReservationDialog defaultDate={selected} />}>
+    <AppShell
+      sidebarAction={<NewReservationDialog defaultDate={selected} />}
+      mobileSubTabs={
+        <>
+          <MobileSubTabButton
+            active={mobileHomeTab === "calendar"}
+            onClick={() => setMobileHomeTab("calendar")}
+          >
+            캘린더
+          </MobileSubTabButton>
+          <MobileSubTabButton
+            active={mobileHomeTab === "usage"}
+            onClick={() => setMobileHomeTab("usage")}
+          >
+            이용현황
+          </MobileSubTabButton>
+        </>
+      }
+    >
       <div className="-mt-4 grid grid-cols-1 gap-4 sm:mt-0 lg:h-[calc(100vh-6rem)] lg:min-h-[560px] lg:grid-cols-[80%_20%]">
         <section
-          className="mx-[-1rem] flex min-h-0 flex-col overflow-hidden bg-white pt-1 sm:surface-card sm:mx-0 sm:bg-card sm:p-5 lg:h-full"
+          className={`${mobileHomeTab === "calendar" ? "flex" : "hidden lg:flex"} mx-[-1rem] min-h-0 flex-col overflow-hidden bg-white pt-1 sm:surface-card sm:mx-0 sm:bg-card sm:p-5 lg:h-full`}
           onTouchStart={handleCalendarTouchStart}
           onTouchEnd={handleCalendarTouchEnd}
         >
@@ -629,12 +649,14 @@ function DashboardPage() {
           ) : null}
         </section>
 
-        {/* 모바일: 전체예약현황 카드를 캘린더 아래에 표시 */}
-        <div className="lg:hidden">
+        {/* 모바일: 전체예약현황 카드를 이용현황 탭에 표시 */}
+        <div className={mobileHomeTab === "usage" ? "lg:hidden" : "hidden"}>
           <MonthlyStatsCard title={monthlyStatsTitle} items={monthlyStatsItems} />
         </div>
 
-        <div className="flex h-full min-h-0 flex-col gap-3">
+        <div
+          className={`${mobileHomeTab === "usage" ? "flex" : "hidden lg:flex"} h-full min-h-0 flex-col gap-3`}
+        >
           <div className="hidden lg:block">
             <MonthlyStatsCard title={monthlyStatsTitle} items={monthlyStatsItems} />
           </div>
@@ -873,15 +895,17 @@ function DashboardPage() {
         hideTrigger
       />
 
-      {/* 모바일 전용 FAB: 예약하기 */}
-      <button
-        type="button"
-        onClick={() => setCreateDate(selected)}
-        className="fixed bottom-5 right-5 z-40 flex items-center gap-1.5 rounded-full bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-lg transition-transform active:scale-95 lg:hidden"
-      >
-        <Plus className="size-4" />
-        예약하기
-      </button>
+      {/* 모바일 전용 FAB: 예약하기 (캘린더 탭에서만 표시, 하단 탭바 위에 배치) */}
+      {mobileHomeTab === "calendar" ? (
+        <button
+          type="button"
+          onClick={() => setCreateDate(selected)}
+          className="fixed bottom-[76px] right-5 z-40 flex items-center gap-1.5 rounded-full bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-lg transition-transform active:scale-95 lg:hidden"
+        >
+          <Plus className="size-4" />
+          예약하기
+        </button>
+      ) : null}
 
       <Dialog
         open={dayListDate !== null}

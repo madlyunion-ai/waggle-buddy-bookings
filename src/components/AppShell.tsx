@@ -1,10 +1,11 @@
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   CalendarCheck,
   CalendarDays,
   Dog,
+  Home,
   LogOut,
   MapPin,
   Settings,
@@ -55,14 +56,16 @@ const NAV_GROUPS = [
   },
 ] as const;
 
-const MOBILE_NAV = [
-  { to: "/dashboard", label: "오늘 현황", icon: CalendarDays },
-  { to: "/dogs", label: "반려견 리스트", icon: Dog },
-  { to: "/reservations", label: "예약 정보", icon: CalendarCheck },
-  { to: "/passes-usage", label: "이용권 사용현황", icon: Ticket },
-  { to: "/passes", label: "이용권 설정", icon: Ticket },
-  { to: "/staff", label: "직원 관리", icon: Users },
-  { to: "/reservation-settings", label: "예약 설정", icon: SlidersHorizontal },
+/** 모바일 하단 탭바(홈 바) 메뉴 */
+const BOTTOM_NAV = [
+  { to: "/dashboard", label: "Home", icon: Home, match: (p: string) => p === "/dashboard" },
+  { to: "/dogs", label: "반려견", icon: Dog, match: (p: string) => p === "/dogs" },
+  {
+    to: "/passes-usage",
+    label: "이용권",
+    icon: Ticket,
+    match: (p: string) => p === "/passes-usage" || p === "/passes",
+  },
 ] as const;
 
 export function AppShell({
@@ -71,6 +74,7 @@ export function AppShell({
   action,
   sidebarAction,
   hideTitleOnMobile,
+  mobileSubTabs,
   children,
 }: {
   title?: string;
@@ -79,9 +83,12 @@ export function AppShell({
   sidebarAction?: ReactNode;
   /** 모바일 해상도에서 페이지 타이틀(h1)을 숨김 */
   hideTitleOnMobile?: boolean;
+  /** 모바일 상단에 표시할 서브 메뉴(탭) 영역. 페이지별로 구성해 전달 */
+  mobileSubTabs?: ReactNode;
   children: ReactNode;
 }) {
   const navigate = useNavigate();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const queryClient = useQueryClient();
   const fetchProfile = useServerFn(getCurrentStaffProfile);
   const profile = useQuery({
@@ -151,17 +158,11 @@ export function AppShell({
             </Button>
           </div>
         </div>
-        <nav className="flex items-center gap-4 overflow-x-auto bg-white px-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:hidden">
-          {MOBILE_NAV.map((item) => (
-            <Link
-              key={item.label}
-              to={item.to}
-              className="whitespace-nowrap border-b-2 border-transparent py-2.5 text-sm font-medium text-muted-foreground data-[status=active]:border-primary data-[status=active]:font-bold data-[status=active]:text-foreground"
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
+        {mobileSubTabs ? (
+          <nav className="flex items-center gap-1 overflow-x-auto bg-white px-4 py-1.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:hidden">
+            {mobileSubTabs}
+          </nav>
+        ) : null}
       </header>
 
       <div className="flex">
@@ -215,7 +216,7 @@ export function AppShell({
           ))}
         </aside>
 
-        <main className="min-w-0 flex-1 px-4 py-4 lg:px-6">
+        <main className="min-w-0 flex-1 px-4 pb-20 pt-4 lg:px-6 lg:pb-4">
           {title || action ? (
             <div className="mb-2.5 flex flex-wrap items-end justify-between gap-3 sm:mb-5">
               <div>
@@ -240,6 +241,25 @@ export function AppShell({
       </div>
 
       <StaffEditDialog row={editingSelf ? selfRow : null} onOpenChange={(v) => setEditingSelf(v)} />
+
+      {/* 모바일 하단 탭바(홈 바) */}
+      <nav className="fixed inset-x-0 bottom-0 z-30 flex items-stretch border-t border-border bg-white pb-[env(safe-area-inset-bottom)] lg:hidden">
+        {BOTTOM_NAV.map((item) => {
+          const active = item.match(pathname);
+          return (
+            <Link
+              key={item.label}
+              to={item.to}
+              className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-semibold ${
+                active ? "text-primary" : "text-muted-foreground"
+              }`}
+            >
+              <item.icon className="size-5" />
+              {item.label}
+            </Link>
+          );
+        })}
+      </nav>
     </div>
   );
 }
