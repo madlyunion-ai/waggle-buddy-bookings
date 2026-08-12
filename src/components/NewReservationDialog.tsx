@@ -1,6 +1,6 @@
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { CalendarIcon, Plus } from "lucide-react";
 import type { DateRange } from "react-day-picker";
 import { toast } from "sonner";
@@ -142,6 +142,7 @@ export function NewReservationDialog({
   open: openProp,
   onOpenChange,
   hideTrigger,
+  trigger,
   initialMember,
   initialPetId,
   initialDogId,
@@ -151,6 +152,8 @@ export function NewReservationDialog({
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   hideTrigger?: boolean;
+  /** 기본 "예약 등록" 버튼 대신 사용할 트리거. 반려견 리스트 등 다른 화면에서 재사용할 때 지정 */
+  trigger?: ReactNode;
   /** 헤더 검색 등에서 특정 회원/반려견을 미리 선택된 상태로 열 때 사용 */
   initialMember?: { id: string; name: string };
   initialPetId?: string;
@@ -461,9 +464,11 @@ export function NewReservationDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       {hideTrigger ? null : (
         <DialogTrigger asChild>
-          <Button>
-            <Plus className="size-4" /> 예약 등록
-          </Button>
+          {trigger ?? (
+            <Button>
+              <Plus className="size-4" /> 예약 등록
+            </Button>
+          )}
         </DialogTrigger>
       )}
 

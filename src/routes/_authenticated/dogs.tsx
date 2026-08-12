@@ -2,17 +2,17 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, RefreshCw, Search } from "lucide-react";
+import { CalendarPlus, ChevronLeft, ChevronRight, RefreshCw, Search } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
 import { DogPassDialog } from "@/components/DogPassDialog";
+import { NewReservationDialog } from "@/components/NewReservationDialog";
 import { OwnerInfoDialog } from "@/components/OwnerInfoDialog";
-import { ReserveDialog } from "@/components/ReserveDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { listLocalPets, syncPetsToDb } from "@/lib/petsync.functions";
-import { GENDER_LABELS, ageLabel } from "@/lib/kindergarten";
+import { GENDER_LABELS, ageLabel, toDateKey } from "@/lib/kindergarten";
 
 export const Route = createFileRoute("/_authenticated/dogs")({
   head: () => ({
@@ -190,7 +190,16 @@ function DogsPage() {
                     </td>
                     <td className="px-4 py-3 text-center">
                       <div className="flex items-center justify-center gap-2">
-                        <ReserveDialog pet={pet} />
+                        <NewReservationDialog
+                          defaultDate={toDateKey(new Date())}
+                          initialDogId={pet.dbId}
+                          initialPetName={pet.name}
+                          trigger={
+                            <Button size="sm" variant="outline" className="h-8 px-2.5 text-xs">
+                              <CalendarPlus className="size-3.5" /> 예약하기
+                            </Button>
+                          }
+                        />
                         <DogPassDialog pet={pet} />
                       </div>
                     </td>
