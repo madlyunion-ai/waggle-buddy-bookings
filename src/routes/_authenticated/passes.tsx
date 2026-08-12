@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState, type ComponentProps } from "react";
+import { useState, type ComponentProps, type ReactNode } from "react";
 import {
   BedDouble,
   CalendarCheck,
@@ -274,6 +274,7 @@ function PassesPage() {
       title="이용권 설정"
       description="이용권 상품을 등록하고 관리합니다."
       action={<NewPassDialog />}
+      hideTitleOnMobile
       mobileSubTabs={
         <>
           <MobileSubTabLink to="/passes-usage" active={false}>
@@ -285,7 +286,7 @@ function PassesPage() {
         </>
       }
     >
-      <div className="mb-6 grid gap-4 sm:grid-cols-2">
+      <div className="mb-6 hidden gap-4 sm:grid sm:grid-cols-2">
         <div className="surface-card flex items-center gap-4 p-5">
           <div className="flex size-10 items-center justify-center rounded-xl bg-secondary text-primary">
             <Ticket className="size-5" />
@@ -305,6 +306,19 @@ function PassesPage() {
           </div>
         </div>
       </div>
+
+      {/* 모바일 전용 FAB: 이용권 등록 */}
+      <NewPassDialog
+        trigger={
+          <button
+            type="button"
+            className="fixed bottom-24 right-5 z-40 flex items-center gap-1.5 rounded-full bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-lg transition-transform active:scale-95 sm:hidden"
+          >
+            <Plus className="size-4" />
+            이용권 등록
+          </button>
+        }
+      />
 
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative sm:w-64">
@@ -865,7 +879,7 @@ function PassFormFields({
   );
 }
 
-function NewPassDialog() {
+function NewPassDialog({ trigger }: { trigger?: ReactNode }) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [passType, setPassType] = useState<PassType>("kindergarten");
@@ -945,9 +959,11 @@ function NewPassDialog() {
       }}
     >
       <DialogTrigger asChild>
-        <Button>
-          <Plus className="size-4" /> 이용권 등록
-        </Button>
+        {trigger ?? (
+          <Button>
+            <Plus className="size-4" /> 이용권 등록
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
