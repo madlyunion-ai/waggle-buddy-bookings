@@ -171,7 +171,7 @@ export function AppShell({
             </Button>
           </div>
         </div>
-        <nav className="flex items-center justify-between gap-3 bg-[#2f6fed] pb-4 pl-4 pr-2 pt-4 lg:hidden">
+        <nav className="flex items-center justify-between gap-3 bg-[#2f6fed] pl-4 pr-2 pt-4 lg:hidden">
           <div className="flex flex-1 items-center gap-5">{mobileSubTabs}</div>
           {hideLogoutOnMobile ? null : (
             <Button
@@ -187,7 +187,7 @@ export function AppShell({
         </nav>
       </header>
 
-      <div className="flex">
+      <div className="flex bg-[#2f6fed] lg:bg-transparent">
         <aside className="sticky top-[52px] hidden h-[calc(100vh-52px)] w-56 shrink-0 overflow-y-auto border-r border-border bg-sidebar px-3 py-4 lg:block">
           <div className="relative mb-4 flex items-center gap-2.5 rounded-lg border border-border bg-card px-3 py-2.5">
             <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 font-display text-sm font-extrabold text-primary">
